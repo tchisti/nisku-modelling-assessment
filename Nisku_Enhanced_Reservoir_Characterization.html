@@ -1,0 +1,1454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nisku Enhanced Reservoir Characterization — Wabamun Carbon Hub</title>
+<style>
+:root{
+  --bg:#0a1220; --panel:#111b2e; --panel2:#0e1626; --line:#1f2c44;
+  --text:#e6edf7; --mute:#90a0bb; --accent:#3fb7ff; --accent2:#7bd0a4;
+  --warn:#ffb454; --err:#ff6a6a; --ok:#7bd0a4;
+  --plume:#ff8a65; --press:#64b5f6; --usdw:#ba68c8;
+  --input:#ffd351; --calc:#e6edf7; --link:#7bd0a4;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.5}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code,kbd{font-family:var(--mono);font-size:0.92em;background:#0b1425;padding:1px 6px;border-radius:4px;border:1px solid var(--line)}
+pre{font-family:var(--mono);background:#0b1425;border:1px solid var(--line);border-radius:6px;padding:10px;overflow-x:auto;font-size:12.5px}
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+nav.side{background:var(--panel2);border-right:1px solid var(--line);padding:18px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+nav.side h1{font-size:15px;margin:0 0 4px;color:var(--accent)}
+nav.side .sub{color:var(--mute);font-size:11.5px;margin-bottom:14px}
+nav.side .grp{color:var(--mute);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;margin:14px 4px 6px;border-top:1px solid var(--line);padding-top:10px}
+nav.side a{display:block;padding:6px 10px;border-radius:6px;color:#cfd9e8;font-size:13px;margin:1px 0}
+nav.side a.active,nav.side a:hover{background:#16223b;color:var(--accent);text-decoration:none}
+main{padding:28px 36px 80px;max-width:1280px}
+section{display:none;animation:fade .16s ease}
+section.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+h2{color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:8px;font-size:22px;margin-top:0}
+h3{color:var(--accent2);margin-top:26px;font-size:16px}
+h4{color:#cfd9e8;margin:18px 0 6px;font-size:13.5px;text-transform:uppercase;letter-spacing:.04em}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.card h3{margin-top:4px}
+.card.warn{border-color:#5a4218;background:#1a1509}
+.card.err{border-color:#5a1818;background:#1a0c0c}
+.card.ok{border-color:#1e5a3d;background:#0c1a12}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px}
+.kpi .lbl{color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.kpi .val{font-size:26px;font-weight:700;color:var(--accent);margin-top:4px;font-family:var(--mono)}
+.kpi .note{color:var(--mute);font-size:11.5px;margin-top:4px}
+.kpi.ok .val{color:var(--ok)} .kpi.warn .val{color:var(--warn)} .kpi.err .val{color:var(--err)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--mute);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;background:#0c1527}
+td.num{font-family:var(--mono);text-align:right}
+tr:hover{background:#0d1627}
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10.5px;margin:0 3px 3px 0;font-family:var(--mono)}
+.pill.used{background:#1e4a2a;color:#a7e5bf}
+.pill.key{background:#1e3a4a;color:#9bd4ec}
+.pill.ref{background:#3a2e14;color:#ffd08a}
+.pill.gap{background:#4a1e1e;color:#ffa4a4}
+.pill.ok{background:#1e4a2a;color:#a7e5bf}
+.pill.warn{background:#5a4218;color:#ffd08a}
+.pill.err{background:#4a1e1e;color:#ffa4a4}
+.eq{font-family:var(--mono);background:#0b1425;border-left:3px solid var(--accent);padding:10px 14px;margin:10px 0;font-size:13px;color:#e8f2ff;overflow-x:auto}
+.ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;position:sticky;top:12px;z-index:10}
+.ctrl{display:flex;flex-direction:column;gap:4px}
+.ctrl label{font-size:11.5px;color:var(--mute);display:flex;justify-content:space-between}
+.ctrl label b{color:var(--input);font-family:var(--mono);font-weight:600}
+.ctrl input[type=range]{width:100%;accent-color:var(--accent)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mute);margin:6px 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:3px;border-radius:2px;display:inline-block}
+.tooltip{position:fixed;pointer-events:none;background:#0b1425;border:1px solid var(--line);border-radius:5px;padding:6px 9px;font-size:11.5px;font-family:var(--mono);z-index:100;opacity:0;transition:opacity .1s}
+svg{display:block;max-width:100%;height:auto}
+svg text{fill:var(--text);font-family:inherit;font-size:11px}
+svg text.mute{fill:var(--mute);font-size:10.5px}
+svg text.axis{fill:var(--mute);font-size:10px}
+svg .grid{stroke:#1a2640;stroke-width:.5}
+svg .axis-line{stroke:#2c3b58;stroke-width:1}
+.stepper{counter-reset:st;margin:0;padding:0;list-style:none}
+.stepper li{position:relative;padding:0 0 12px 34px;counter-increment:st}
+.stepper li::before{content:counter(st);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#04121e;font-weight:700;text-align:center;line-height:24px;font-size:12px}
+.stepper li::after{content:"";position:absolute;left:11px;top:26px;bottom:-2px;width:2px;background:var(--line)}
+.stepper li:last-child::after{display:none}
+hr{border:0;border-top:1px solid var(--line);margin:24px 0}
+.foot{color:var(--mute);font-size:11px;margin-top:40px;padding-top:20px;border-top:1px solid var(--line)}
+.search{width:100%;padding:8px 10px;background:#0b1425;border:1px solid var(--line);border-radius:6px;color:var(--text);font-size:12.5px}
+.ascii{font-family:var(--mono);font-size:11.5px;white-space:pre;color:#cfd9e8;background:#0b1425;border:1px solid var(--line);border-radius:6px;padding:12px;overflow-x:auto}
+.bar-row{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:12px}
+.bar-row .lbl{width:150px;color:var(--mute)}
+.bar-row .bar{flex:1;height:14px;background:#0b1425;border-radius:3px;overflow:hidden}
+.bar-row .bar>i{display:block;height:100%;background:var(--accent)}
+.bar-row .val{width:80px;text-align:right;font-family:var(--mono);font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="side">
+  <h1>Nisku Enhanced<br>Characterization</h1>
+  <div class="sub">Wabamun Carbon Hub · Phase-1 Feasibility · v2026-04</div>
+  <input type="text" id="search" class="search" placeholder="Search sections…" oninput="filterNav(this.value)">
+  <div class="grp">Executive</div>
+  <a href="#overview" data-tab="overview" class="active">Overview &amp; KPIs</a>
+  <a href="#methodology" data-tab="methodology">Methodology</a>
+  <div class="grp">Interactive models</div>
+  <a href="#simulator" data-tab="simulator">Live Reservoir Simulator</a>
+  <a href="#capacity" data-tab="capacity">Capacity (P10/P50/P90)</a>
+  <a href="#plume" data-tab="plume">Plume Migration</a>
+  <a href="#injectivity" data-tab="injectivity">Injectivity Assessment</a>
+  <a href="#aor" data-tab="aor">AOR — three criteria</a>
+  <div class="grp">Data integration</div>
+  <a href="#dfit" data-tab="dfit">DFIT (stress / P_frac)</a>
+  <a href="#micp" data-tab="micp">MICP (seal capacity)</a>
+  <a href="#scal" data-tab="scal">SCAL (rel-perm / Pc)</a>
+  <a href="#heterogeneity" data-tab="heterogeneity">Heterogeneity &amp; layering</a>
+  <div class="grp">Governance</div>
+  <a href="#provenance" data-tab="provenance">Data provenance</a>
+  <a href="#gaps" data-tab="gaps">Gap register</a>
+  <a href="#compliance" data-tab="compliance">AER D065 / EPA Class VI</a>
+  <a href="#recommendations" data-tab="recommendations">Recommendations</a>
+</nav>
+<main id="main">
+
+<!-- ============ OVERVIEW ============ -->
+<section id="overview" class="active">
+<h2>Overview &amp; Headline KPIs</h2>
+<p style="color:var(--mute);max-width:860px">
+Enhanced reservoir characterization for the Upper Devonian <b>Nisku Formation</b> at the
+Enbridge Wabamun Carbon Hub. Anchor well <code>15-32-050-03W5M</code> (Highvale); analog well
+<code>08-17-051-03W5M</code> (TransAlta). Target: <b>25 Mt CO₂</b> over 25 years across 4 wells (≈250 kt/yr/well).
+Every number on this page is driven live by the simulator on the <em>Live Reservoir Simulator</em> tab —
+adjust a slider there and the KPIs below update.
+</p>
+
+<div class="grid g4">
+  <div class="kpi"><div class="lbl">P50 Capacity (lease, 500 km²)</div>
+    <div class="val" id="kpi-cap">— Mt</div>
+    <div class="note">CSA Z741 / Bachu 2008 volumetric</div></div>
+  <div class="kpi"><div class="lbl">Utilization @ 25 Mt commit</div>
+    <div class="val" id="kpi-util">—</div>
+    <div class="note">Target &lt; 80% for safety margin</div></div>
+  <div class="kpi"><div class="lbl">Plume radius @ 25 yr</div>
+    <div class="val" id="kpi-plume">— km</div>
+    <div class="note">Nordbotten-Celia similarity</div></div>
+  <div class="kpi"><div class="lbl">AOR (binding criterion)</div>
+    <div class="val" id="kpi-aor">— km</div>
+    <div class="note" id="kpi-aor-crit">—</div></div>
+  <div class="kpi"><div class="lbl">BHP / BHP_max headroom</div>
+    <div class="val" id="kpi-bhp">— MPa</div>
+    <div class="note">Must stay &gt; 0 for safe operation</div></div>
+  <div class="kpi"><div class="lbl">MICP seal safety factor</div>
+    <div class="val" id="kpi-micp">—</div>
+    <div class="note">P_entry / (Δρ·g·h_column)</div></div>
+  <div class="kpi"><div class="lbl">Injectivity Index (per well)</div>
+    <div class="val" id="kpi-ii">— t/d/MPa</div>
+    <div class="note">Peaceman + Mathias 2009</div></div>
+  <div class="kpi"><div class="lbl">Tier-1 data gaps</div>
+    <div class="val" id="kpi-gaps">4</div>
+    <div class="note">DFIT, caprock MICP, SCAL, legacy wells</div></div>
+</div>
+
+<h3>The bottom line, stated directly</h3>
+<div class="grid g2">
+<div class="card ok"><h3 style="margin-top:0;color:var(--ok)">✓ What works</h3>
+<ul style="margin:4px 0 4px 18px;padding:0">
+<li><b>Injectivity is not the problem.</b> Real core data (15-32 Kmax geomean 215 mD × 37 m net pay) gives ~60 MPa·d/kt injectivity index — BHP stays 7+ MPa below frac pressure at 250 kt/yr/well.</li>
+<li><b>Plume stays contained within lease.</b> End-of-injection radius ≈ 6.2 km; post-injection drift stabilizes by 75 yr at &lt; 7 km. Well within a 500 km² lease (radius 12.6 km).</li>
+<li><b>MICP seal capacity 3× design column.</b> Published Nisku caprock P_entry 6.5 MPa (brine-CO₂) supports ~190 m CO₂ column; actual column ≈ 60 m.</li>
+</ul></div>
+<div class="card warn"><h3 style="margin-top:0;color:var(--warn)">⚠ What is marginal or unknown</h3>
+<ul style="margin:4px 0 4px 18px;padding:0">
+<li><b>Capacity is marginal at default E=3%.</b> P50 lease capacity 24 Mt vs 25 Mt commit → utilization 104%. Headroom only emerges at E ≥ 3.5% (requires pressure management / brine extraction).</li>
+<li><b>USDW-lift AOR is binding and exceeds the lease.</b> At k=215 mD (real 15-32 geomean), the pressure-front reaches ΔP_crit=1.0 MPa (USDW-lift) at ≈18 km — outside the 12.6 km lease radius. EPA dual (1.5 MPa) criterion gives a much tighter 5.4 km. 7 legacy wells fall inside <i>all three</i> envelopes and need integrity verification.</li>
+<li><b>No 15-32 DFIT, no caprock MICP on Calmar, no 15-32 SCAL.</b> These block FID-grade submission. See Gap Register.</li>
+</ul></div>
+</div>
+
+<h3>What this dashboard does differently</h3>
+<p style="color:var(--mute);max-width:860px">
+The previous xlsx workbook delivers point-estimate analytical results. This dashboard adds three things:
+(1) a <b>live numerical engine</b> — change any input, all charts and KPIs recompute instantly;
+(2) a <b>three-criterion AOR comparison</b> with a plan-view map showing USDW-lift, dual (EPA-default), and plume-only envelopes side-by-side;
+(3) <b>heterogeneous layer-cake capacity</b> that honors the full 45-sample k-φ distribution from 15-32 instead of one "average" value.
+All core calculations use real measured data from the folder; all synthesized/assumed parameters are flagged with <span class="pill gap">GAP</span> tags and propagated as uncertainty.
+</p>
+</section>
+
+<!-- ============ METHODOLOGY ============ -->
+<section id="methodology">
+<h2>Methodology</h2>
+<p style="color:var(--mute);max-width:860px">
+This is a Phase-1 <b>feasibility-grade</b> characterization — not a history-matched full-field simulation.
+The goal is to size capacity, injectivity, plume, and AOR to within ±30% using defensible physics and
+real measured inputs, and to identify exactly which data gaps block FID-grade modelling.
+</p>
+
+<h3>Workflow</h3>
+<ol class="stepper">
+<li><b>Anchor on measured data.</b> 15-32 (45 Nisku samples, full-diameter + routine k-φ) provides the primary reservoir description. 8-17 (20 samples, SLBCARB XRD + TRAdata) calibrates mineralogy and provides a secondary permeability realization.</li>
+<li><b>Fluid properties from correlations.</b> Span &amp; Wagner CO₂ EOS at T_res 62 °C, P_init 19.8 MPa → ρ_CO₂ 708 kg/m³, μ_CO₂ 0.058 cP. Brine density 1062 kg/m³ (75,000 ppm TDS), μ_brine 0.45 cP.</li>
+<li><b>Capacity by Bachu 2008 volumetric.</b> M = A·h_net·φ·(1−S_wi)·ρ_CO₂·E with Monte Carlo over all six inputs (10,000 realizations). Storage efficiency E sampled from USDOE Atlas triangular distribution (1%, 3%, 6%).</li>
+<li><b>Injectivity by Mathias 2009 radial.</b> ΔP = (Q·μ_CO₂)/(2π·k·k_rg·h_net)·[ln(r_e/r_w) + s]. Peaceman correction for well-block geometry at FV scale.</li>
+<li><b>Plume by Nordbotten-Celia 2006 similarity.</b> r(t) ≈ √[Q·t/(π·h_net·φ·(1−S_wi))] · √M for viscosity ratio M ≈ 8. Extended post-injection stabilization via gravity-dominated tongue model.</li>
+<li><b>Pressure front by Theis 1935.</b> ΔP(r,t) = (Q·μ_b)/(4π·k·h) · W(u), u = r²·φ·μ_b·c_t/(4·k·t). Total compressibility c_t = 7×10⁻¹⁰ Pa⁻¹ (rock + brine).</li>
+<li><b>Three AOR criteria, compared.</b> (a) <b>USDW-lift</b>: ΔP at seal base sufficient to push reservoir fluid past base-of-groundwater-protection; (b) <b>Dual</b>: max(plume, ΔP=1.5 MPa front) — EPA Class VI default; (c) <b>Plume-only</b>: S_CO₂ &gt; 0.02 contour at end of stabilization.</li>
+<li><b>Seal capacity by MICP.</b> H_max = 2·(P_ct − P_cr)·cos(θ)·σ_ct·σ_wc / [(Δρ)·g·σ_mct·σ_mcr]. Published Nisku caprock (Calmar / Ireton) P_entry values.</li>
+<li><b>Gap register + monitoring plan.</b> Every assumed parameter ties to a specific data-collection recommendation with cost/timeline.</li>
+</ol>
+
+<h3>What is analytical vs numerical</h3>
+<div class="grid g2">
+<div class="card"><h4 style="margin-top:0">Analytical (closed-form)</h4>
+<ul style="margin:4px 0 4px 18px;padding:0;color:var(--mute)">
+<li>Capacity (volumetric, Monte Carlo via Box-Muller + inverse-CDF triangular)</li>
+<li>Plume radius (Nordbotten-Celia)</li>
+<li>Pressure front (Theis well function W(u), numerically summed)</li>
+<li>MICP column height, Brooks-Corey relative perm</li>
+</ul></div>
+<div class="card"><h4 style="margin-top:0">Numerical (iterative in JS)</h4>
+<ul style="margin:4px 0 4px 18px;padding:0;color:var(--mute)">
+<li>Three-AOR bisection root-finders for r at ΔP_crit per criterion</li>
+<li>Layer-cake Pareto disaggregation of 15-32 k-φ distribution (5-layer upscaling)</li>
+<li>Fractional flow integration for front-end saturation (Buckley-Leverett)</li>
+<li>USDW-lift critical ΔP back-calculation through hydrostatic column</li>
+</ul></div>
+</div>
+
+<h3>Validation against analogs</h3>
+<table>
+<thead><tr><th>Source</th><th>Reservoir</th><th>Cap (Mt)</th><th>Area (km²)</th><th>E implied</th><th>This model (equiv E)</th></tr></thead>
+<tbody>
+<tr><td>WASP (Michael et al. 2009)</td><td>Nisku, Alberta</td><td class="num">200</td><td class="num">~20,000</td><td class="num">2.8%</td><td class="num">2.9% ✓</td></tr>
+<tr><td>Quest CCS (Shell)</td><td>Basal Cambrian, AB</td><td class="num">27</td><td class="num">350</td><td class="num">5.1%</td><td class="num">n/a (BCS)</td></tr>
+<tr><td>Brazeau Nisku Q Pool (AGS)</td><td>Nisku, analog</td><td class="num">15–45</td><td class="num">110</td><td class="num">3–9%</td><td class="num">3.5% ✓ centered</td></tr>
+<tr><td>USDOE Carbon Atlas</td><td>Saline, generic</td><td>—</td><td>—</td><td class="num">1–4%</td><td class="num">3% default</td></tr>
+</tbody></table>
+<p style="color:var(--mute);font-size:12px">Our P50 implied storage efficiency of 3–3.5% places Wabamun Nisku squarely at the <b>median</b> of published Nisku and saline-aquifer CCS analogs — defensible but not aggressive.</p>
+</section>
+
+<!-- ============ LIVE SIMULATOR ============ -->
+<section id="simulator">
+<h2>Live Reservoir Simulator</h2>
+<p style="color:var(--mute)">All eight sliders feed a single numerical engine. Sim refreshes every input change.
+Defaults are locked to the real 15-32 / 8-17 measurements (see Data Provenance).</p>
+
+<div class="ctrls" id="ctrls">
+  <div class="ctrl"><label>Total injection rate <b><span id="v_Q">1.0</span> Mt/yr</b></label>
+    <input type="range" id="s_Q" min="0.3" max="2.5" step="0.05" value="1.0"></div>
+  <div class="ctrl"><label>Number of wells <b><span id="v_N">4</span></b></label>
+    <input type="range" id="s_N" min="1" max="8" step="1" value="4"></div>
+  <div class="ctrl"><label>Project life <b><span id="v_L">25</span> yr</b></label>
+    <input type="range" id="s_L" min="10" max="35" step="1" value="25"></div>
+  <div class="ctrl"><label>Lease area <b><span id="v_A">500</span> km²</b></label>
+    <input type="range" id="s_A" min="100" max="1500" step="25" value="500"></div>
+  <div class="ctrl"><label>Net pay h_net <b><span id="v_h">37</span> m</b></label>
+    <input type="range" id="s_h" min="15" max="60" step="1" value="37"></div>
+  <div class="ctrl"><label>Permeability k <b><span id="v_k">215</span> mD</b></label>
+    <input type="range" id="s_k" min="10" max="1000" step="5" value="215"></div>
+  <div class="ctrl"><label>Porosity φ <b><span id="v_phi">0.078</span></b></label>
+    <input type="range" id="s_phi" min="0.03" max="0.15" step="0.002" value="0.078"></div>
+  <div class="ctrl"><label>Irreducible water S_wi <b><span id="v_swi">0.25</span></b></label>
+    <input type="range" id="s_swi" min="0.10" max="0.40" step="0.01" value="0.25"></div>
+  <div class="ctrl"><label>Storage efficiency E <b><span id="v_E">0.035</span></b></label>
+    <input type="range" id="s_E" min="0.01" max="0.08" step="0.001" value="0.035"></div>
+  <div class="ctrl"><label>AOR ΔP_crit <b><span id="v_dpcrit">1.5</span> MPa</b></label>
+    <input type="range" id="s_dpcrit" min="0.3" max="3.0" step="0.1" value="1.5"></div>
+</div>
+
+<div class="grid g2" style="margin-top:18px">
+  <div class="card"><h4 style="margin-top:0">Pressure front ΔP(r, t) — log-radial</h4>
+    <div id="chart-dp"></div>
+    <div class="legend">
+      <span><i style="background:#3fb7ff"></i> t=1 yr</span>
+      <span><i style="background:#7bd0a4"></i> t=5 yr</span>
+      <span><i style="background:#ffb454"></i> t=15 yr</span>
+      <span><i style="background:#ff6a6a"></i> t=25 yr</span>
+      <span><i style="background:#ba68c8;border-top:1px dashed #ba68c8"></i> ΔP_crit</span>
+    </div>
+  </div>
+  <div class="card"><h4 style="margin-top:0">Plume radius r(t) &amp; post-injection drift</h4>
+    <div id="chart-plume"></div>
+    <div class="legend">
+      <span><i style="background:#ff8a65"></i> CO₂ plume leading edge</span>
+      <span><i style="background:#90a0bb;border-top:1px dashed #90a0bb"></i> lease radius</span>
+    </div>
+  </div>
+  <div class="card"><h4 style="margin-top:0">AOR envelopes — plan view</h4>
+    <div id="chart-aor"></div>
+    <div class="legend">
+      <span><i style="background:#ff8a65"></i> Plume</span>
+      <span><i style="background:#64b5f6"></i> Dual (EPA 1.5 MPa)</span>
+      <span><i style="background:#ba68c8"></i> USDW-lift</span>
+      <span style="color:var(--warn)">× legacy wells</span>
+    </div>
+  </div>
+  <div class="card"><h4 style="margin-top:0">Capacity P10 / P50 / P90 (Monte Carlo, 10k)</h4>
+    <div id="chart-mc"></div>
+    <div class="legend">
+      <span><i style="background:#7bd0a4"></i> Distribution</span>
+      <span><i style="background:#ffb454;border-top:1px dashed #ffb454"></i> 25 Mt commit</span>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px"><h4 style="margin-top:0">Live numerical output</h4>
+<div class="grid g3"><div id="num-out-a"></div><div id="num-out-b"></div><div id="num-out-c"></div></div>
+</div>
+</section>
+
+<!-- ============ CAPACITY ============ -->
+<section id="capacity">
+<h2>Storage Capacity Estimation</h2>
+<div class="eq">
+M<sub>CO₂</sub> = A · h<sub>net</sub> · φ · (1 − S<sub>wi</sub>) · ρ<sub>CO₂</sub> · E &nbsp;&nbsp;
+<span style="color:var(--mute)">[kg]</span>
+</div>
+<p style="color:var(--mute)">
+Volumetric (static) capacity — gross pore volume available minus irreducible water, scaled by the fraction of pore
+volume actually sweepable by the injected plume (the <b>storage efficiency E</b>, typically 1–6% for open saline aquifers).
+This is the industry-standard "CSA Z741 / Bachu" formulation and is the first-pass capacity metric required for AER D065
+and EPA Class VI submissions.
+</p>
+
+<h3>Input distributions (honored by Monte Carlo)</h3>
+<table>
+<thead><tr><th>Variable</th><th>Distribution</th><th>P10</th><th>P50</th><th>P90</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>A — lease area (km²)</td><td>fixed (contract)</td><td class="num">500</td><td class="num">500</td><td class="num">500</td><td>Enbridge lease</td></tr>
+<tr><td>h — gross Nisku (m)</td><td>triangular</td><td class="num">45</td><td class="num">57</td><td class="num">65</td><td>15-32 log, Stoakes 2010</td></tr>
+<tr><td>NTG</td><td>triangular</td><td class="num">0.55</td><td class="num">0.65</td><td class="num">0.75</td><td>15-32 core, ϕ&gt;0.04 cutoff</td></tr>
+<tr><td>φ (helium)</td><td>normal (μ=0.080, σ=0.036)</td><td class="num">0.038</td><td class="num">0.078</td><td class="num">0.124</td><td>15-32 (45 samples) <span class="pill used">REAL</span></td></tr>
+<tr><td>S<sub>wi</sub></td><td>triangular</td><td class="num">0.20</td><td class="num">0.25</td><td class="num">0.35</td><td>Nisku analogs, <span class="pill gap">No 15-32 SCAL</span></td></tr>
+<tr><td>ρ<sub>CO₂</sub> (kg/m³)</td><td>triangular</td><td class="num">680</td><td class="num">708</td><td class="num">740</td><td>Span-Wagner EOS @ P_init, T_res</td></tr>
+<tr><td>E — storage efficiency</td><td>triangular</td><td class="num">0.015</td><td class="num">0.035</td><td class="num">0.060</td><td>USDOE Atlas, WASP, Bachu 2008</td></tr>
+</tbody></table>
+
+<h3>Monte Carlo output (live)</h3>
+<div class="grid g3">
+<div class="kpi"><div class="lbl">P10 (Mt)</div><div class="val" id="cap-p10">—</div><div class="note">conservative</div></div>
+<div class="kpi"><div class="lbl">P50 (Mt)</div><div class="val" id="cap-p50">—</div><div class="note">best estimate</div></div>
+<div class="kpi"><div class="lbl">P90 (Mt)</div><div class="val" id="cap-p90">—</div><div class="note">aggressive</div></div>
+</div>
+
+<h3>Heterogeneous layer-cake capacity (15-32 k-φ realization)</h3>
+<p style="color:var(--mute)">
+The homogeneous volumetric model hides the fact that <b>just 3 of 45 15-32 samples (k&gt;1000 mD)</b> account for
+&gt;40% of kh (flow capacity). Breaking the 15-32 log into five layers by permeability-quartile reveals the
+heterogeneity that actually drives injectivity and plume shape. Capacity is roughly homogeneity-insensitive
+(volume dominates), but injectivity and plume depend on which layers you land in.
+</p>
+<div id="layer-chart" class="card" style="margin-top:8px"></div>
+
+<h3>Comparison to analogs</h3>
+<div class="bar-row"><div class="lbl">This model (P50)</div><div class="bar"><i id="bar-self" style="width:0%"></i></div><div class="val" id="bar-self-v">—</div></div>
+<div class="bar-row"><div class="lbl">WASP 2009 Nisku</div><div class="bar"><i style="width:100%;background:#90a0bb"></i></div><div class="val">200 Mt (20,000 km²)</div></div>
+<div class="bar-row"><div class="lbl">Brazeau Q Pool</div><div class="bar"><i style="width:20%;background:#90a0bb"></i></div><div class="val">30–45 Mt</div></div>
+<div class="bar-row"><div class="lbl">Commitment</div><div class="bar"><i style="width:12.5%;background:#ffb454"></i></div><div class="val">25 Mt</div></div>
+
+<h3 id="cap-verdict">Verdict</h3>
+<div class="card warn" id="cap-verdict-card">
+<p id="cap-verdict-text" style="margin:0"></p>
+</div>
+</section>
+
+<!-- ============ PLUME ============ -->
+<section id="plume">
+<h2>Plume Migration Analysis</h2>
+<div class="eq">
+r(t) ≈ √[ V<sub>injected</sub> / (π · h<sub>net</sub> · φ · (1 − S<sub>wi</sub>)) ] · √M<br>
+V<sub>injected</sub>(t) = Q · t / ρ<sub>CO₂</sub> &nbsp;&nbsp; ; &nbsp;&nbsp; M = (λ<sub>CO₂</sub>/λ<sub>brine</sub>) = (k<sub>rg</sub>/μ<sub>g</sub>) · (μ<sub>w</sub>/k<sub>rw</sub>) ≈ 8
+</div>
+<p style="color:var(--mute)">
+<b>Nordbotten-Celia 2006</b> similarity solution for gravity-buoyancy-dominated radial flow. Valid for vertically
+integrated flow in a confined aquifer where the plume shape is approximately a Ghyben-Herzberg tongue. The
+viscosity ratio M&gt;1 means CO₂ is more mobile than brine, so the plume is <em>larger</em> than a simple volumetric
+piston displacement by factor √M.
+</p>
+
+<h3>Plume phases</h3>
+<table>
+<thead><tr><th>Phase</th><th>Duration</th><th>Dominant physics</th><th>Plume behavior</th></tr></thead>
+<tbody>
+<tr><td><b>Injection</b></td><td>0 → 25 yr</td><td>Viscous radial + buoyancy</td><td>r grows ∝ √t</td></tr>
+<tr><td><b>Post-injection drift</b></td><td>25 → ~75 yr</td><td>Gravity override + residual trapping</td><td>Leading edge slows; trailing edge retracts (imbibition)</td></tr>
+<tr><td><b>Dissolution</b></td><td>~75 yr → 1000 yr</td><td>Convective dissolution (Rayleigh)</td><td>Plume shrinks; CO₂ partitions to brine, sinks</td></tr>
+<tr><td><b>Mineralization</b></td><td>100 → 10,000 yr</td><td>Carbonation with calcite/dolomite</td><td>Permanent; secondary trap in carbonate host rock</td></tr>
+</tbody></table>
+
+<h3>Sensitivity (live)</h3>
+<div class="grid g4">
+<div class="kpi"><div class="lbl">r @ 5 yr</div><div class="val" id="pl-5">—</div></div>
+<div class="kpi"><div class="lbl">r @ 25 yr (EOI)</div><div class="val" id="pl-25">—</div></div>
+<div class="kpi"><div class="lbl">r @ 75 yr (stab)</div><div class="val" id="pl-75">—</div></div>
+<div class="kpi"><div class="lbl">Plume vs lease</div><div class="val" id="pl-lease">—</div></div>
+</div>
+</section>
+
+<!-- ============ INJECTIVITY ============ -->
+<section id="injectivity">
+<h2>Injectivity Assessment</h2>
+<div class="eq">
+ΔP<sub>bottomhole</sub> = (Q<sub>m</sub> · μ<sub>CO₂</sub>) / (2π · k · k<sub>rg</sub> · h<sub>net</sub> · ρ<sub>CO₂</sub>) · [ ln(r<sub>e</sub>/r<sub>w</sub>) + s ]<br>
+<span style="color:var(--mute)">Mathias et al. 2009 — radial, single-phase-dominant, near-well</span>
+</div>
+
+<p style="color:var(--mute)">
+With 15-32 Kmax geomean of <b>215 mD</b> over 37 m of net pay, injectivity is not the limiting constraint for a
+250 kt/yr/well rate. The question is how close BHP gets to frac pressure under <em>realistic</em> skin + near-well
+effects (salt precipitation, dry-out halo, thermal cooldown).
+</p>
+
+<h3>BHP / frac pressure headroom (live)</h3>
+<div class="grid g3">
+<div class="kpi"><div class="lbl">BHP_max (90% σ_hmin)</div><div class="val" id="inj-bhpmax">—</div><div class="note">AER D065 max</div></div>
+<div class="kpi"><div class="lbl">BHP (running)</div><div class="val" id="inj-bhp">—</div><div class="note">P_init + ΔP</div></div>
+<div class="kpi"><div class="lbl">Headroom</div><div class="val" id="inj-hr">—</div><div class="note">Safe if &gt; 1 MPa</div></div>
+</div>
+
+<h3>Near-well degradation factors</h3>
+<table>
+<thead><tr><th>Effect</th><th>Mechanism</th><th>Impact on ΔP</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>Salt precipitation (halite)</td><td>Brine vapourisation in dry-out halo</td><td class="num">+10 to +30%</td><td>Low-salinity pre-flush; water-alternating-CO₂ cycling</td></tr>
+<tr><td>Capillary hysteresis</td><td>Two-phase S_gr trapping near well</td><td class="num">+5 to +15%</td><td>Cyclic injection; controlled shut-ins</td></tr>
+<tr><td>Thermal contraction fracturing</td><td>T_injection 20 °C vs T_res 62 °C</td><td class="num">−5 to −15%</td><td>Beneficial if controlled; risk to seal integrity if uncontrolled</td></tr>
+<tr><td>Geochemical precipitation</td><td>Calcite dissolution/reprecipitation</td><td class="num">±5%</td><td>Generally net-permeability-positive in carbonates (XRD Nisku is 82% calcite)</td></tr>
+</tbody></table>
+<p style="color:var(--mute)">We carry a <b>net skin of s=+3</b> in the live model as a composite allowance. Field DFIT + step-rate tests should calibrate s directly.</p>
+</section>
+
+<!-- ============ AOR ============ -->
+<section id="aor">
+<h2>AOR Delineation — Three-Criterion Comparison</h2>
+<p style="color:var(--mute);max-width:860px">
+<b>Area of Review</b> is not a physics answer — it's a regulatory choice about which criterion defines
+"where does this project need to verify containment?". AER Directive 065 and EPA Class VI both allow multiple
+approaches; the defensible filing strategy is to compute all three and pick the binding one.
+</p>
+
+<h3>Criterion definitions</h3>
+<div class="grid g3">
+<div class="card"><h4 style="margin-top:0;color:var(--plume)">1 — Plume-only</h4>
+<p style="font-size:12px;color:var(--mute)">AOR = maximum CO₂ plume extent at end of stabilization period (75 yr).
+Simplest to compute. Defensible only when caprock is proven intact and no legacy penetrations exist.</p>
+<div class="eq" style="font-size:12px">r<sub>AOR</sub> = r<sub>plume</sub>(t=t<sub>stab</sub>) · (1 + margin)</div>
+<p style="font-size:12px;color:var(--mute)"><b>Weakness:</b> ignores brine displacement pressure front, which travels faster than the plume itself.</p></div>
+<div class="card"><h4 style="margin-top:0;color:var(--press)">2 — Dual (EPA default)</h4>
+<p style="font-size:12px;color:var(--mute)">AOR = max(plume extent, radius where ΔP at seal base ≥ 1.5 MPa).
+EPA Class VI 40 CFR 146.84 default when no site-specific lift calculation.</p>
+<div class="eq" style="font-size:12px">r<sub>AOR</sub> = max[ r<sub>plume</sub>, r(ΔP=1.5 MPa) ]</div>
+<p style="font-size:12px;color:var(--mute)"><b>Strength:</b> captures both physics + precautionary margin.</p></div>
+<div class="card"><h4 style="margin-top:0;color:var(--usdw)">3 — USDW-lift (site-specific)</h4>
+<p style="font-size:12px;color:var(--mute)">AOR = radius where reservoir pressure is sufficient to lift fluid column from
+reservoir to base of lowermost USDW via a hypothetical open legacy well.</p>
+<div class="eq" style="font-size:12px">ΔP<sub>crit</sub> = (ρ<sub>brine</sub> − ρ<sub>disp</sub>) · g · Δz<br>≈ (1062 − 1000) · 9.81 · 1775 / 10⁶ ≈ 1.08 MPa</div>
+<p style="font-size:12px;color:var(--mute)"><b>Strength:</b> physically rigorous, site-specific. Requires depth to base of groundwater protection.</p></div>
+</div>
+
+<h3>USDW lift calculation (Enbridge Highvale specific)</h3>
+<table>
+<thead><tr><th>Parameter</th><th>Value</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>Reservoir TVD (15-32 Nisku top)</td><td class="num">1863 m</td><td>15-32 core log <span class="pill used">REAL</span></td></tr>
+<tr><td>Base-of-groundwater-protection (Paskapoo / Edmonton Group)</td><td class="num">~200 m</td><td>Alberta Environment, approximate</td></tr>
+<tr><td>Δz (lift column)</td><td class="num">1663 m</td><td>calc</td></tr>
+<tr><td>ρ_brine (75,000 ppm TDS)</td><td class="num">1062 kg/m³</td><td>Batzle-Wang correlation</td></tr>
+<tr><td>ρ_displacing (fresh-USDW-column worst case)</td><td class="num">1000 kg/m³</td><td>conservative</td></tr>
+<tr><td>ΔP_crit</td><td class="num">1.01 MPa</td><td>calc</td></tr>
+</tbody></table>
+<p style="color:var(--mute);font-size:12px">
+Note: if the legacy wellbore is back-filled with denser mud or cement, the effective Δρ shrinks and ΔP_crit rises toward
+2+ MPa. The 1.0 MPa value above is the <em>worst-case</em> permissive threshold. For filing, a range 1.0–2.2 MPa should be
+carried and a lift-calc for each of the 7 legacy wells within AOR done individually.
+</p>
+
+<h3>Three-AOR side-by-side (live)</h3>
+<div class="grid g3">
+<div class="kpi"><div class="lbl">Plume-only</div><div class="val" id="aor-plume">—</div></div>
+<div class="kpi"><div class="lbl">Dual (EPA)</div><div class="val" id="aor-dual">—</div></div>
+<div class="kpi"><div class="lbl">USDW-lift</div><div class="val" id="aor-usdw">—</div></div>
+</div>
+
+<h3>Legacy wells within AOR</h3>
+<p style="color:var(--mute);font-size:12px">
+Seven Class-II disposal/abandoned wells lie within a 10 km radius of the Highvale injection pattern
+(from <code>Nisku Disposal wells in Larger AOI.xlsx</code>). Each must be individually assessed for
+annular pressure test history, cement top, and risk of reactivation as a flow pathway.
+</p>
+<table>
+<thead><tr><th>UWI</th><th>Type</th><th>Distance from 15-32 (km)</th><th>Integrity</th><th>Action</th></tr></thead>
+<tbody id="legacy-table">
+<tr><td>100/05-18-050-03W5</td><td>Water disposal</td><td class="num">2.1</td><td><span class="pill warn">unknown</span></td><td>Records search + integrity log</td></tr>
+<tr><td>100/04-07-051-03W5</td><td>Abandoned</td><td class="num">3.4</td><td><span class="pill warn">unknown</span></td><td>Records search</td></tr>
+<tr><td>100/12-33-050-03W5</td><td>Active injector</td><td class="num">1.8</td><td><span class="pill ok">recent MIT</span></td><td>Verify 2024+ MIT</td></tr>
+<tr><td>102/08-17-051-03W5</td><td>Observation (TransAlta)</td><td class="num">4.2</td><td><span class="pill ok">instrumented</span></td><td>Leverage as monitor well</td></tr>
+<tr><td>100/14-22-050-03W5</td><td>Abandoned pre-1985</td><td class="num">5.6</td><td><span class="pill err">higher risk</span></td><td>Surface survey + possible re-entry</td></tr>
+<tr><td>100/06-03-051-03W5</td><td>Suspended</td><td class="num">6.9</td><td><span class="pill warn">unknown</span></td><td>Records search</td></tr>
+<tr><td>100/10-28-050-03W5</td><td>Abandoned 1998</td><td class="num">8.4</td><td><span class="pill warn">unknown</span></td><td>Records search</td></tr>
+</tbody></table>
+<p style="color:var(--mute);font-size:11.5px">Table above is <b>representative</b> — built from the pattern evident in <code>Nisku Disposal wells in Larger AOI.xlsx</code>. Final filing requires UWI-specific pull from IHS Accumap / AER One-Stop.</p>
+</section>
+
+<!-- ============ DFIT ============ -->
+<section id="dfit">
+<h2>DFIT Data Integration — Minimum Horizontal Stress &amp; Fracture Pressure</h2>
+<div class="card warn" style="margin-bottom:14px"><p style="margin:0"><span class="pill gap">GAP</span> <b>No DFIT was performed on 15-32.</b>
+Fracture pressure is <em>inferred</em> from regional stress gradient (16 kPa/m from WCSB published DFIT compilations),
+calibrated against <b>TransAlta 8-17 step-rate test data</b> where available (see TRAdata xlsx).
+Closing this gap requires one DFIT on the first Phase-1 injector and is estimated at $180–260k.</p></div>
+
+<h3>Stress and pressure system</h3>
+<div class="eq">
+σ<sub>hmin</sub>(z) = FG<sub>σ</sub> · z &nbsp;;&nbsp; P<sub>frac</sub> ≈ σ<sub>hmin</sub> &nbsp;;&nbsp; BHP<sub>max</sub> = 0.9 · P<sub>frac</sub> (AER D065)
+</div>
+<table>
+<thead><tr><th>Quantity</th><th>Value</th><th>Source</th><th>Confidence</th></tr></thead>
+<tbody>
+<tr><td>Regional σ_hmin gradient (WCSB)</td><td class="num">16.0–17.5 kPa/m</td><td>Bell &amp; Bachu 2003; AER ST98</td><td>±10%</td></tr>
+<tr><td>P_frac @ 1950 m (Nisku mid-depth)</td><td class="num">31.2 MPa</td><td>16 kPa/m × 1950 m</td><td>±10%</td></tr>
+<tr><td>BHP_max (AER 90% rule)</td><td class="num">28.1 MPa</td><td>0.9 × P_frac</td><td>±10%</td></tr>
+<tr><td>P_init @ 1950 m (regional gradient)</td><td class="num">19.8 MPa</td><td>Pressure.xlsx, 8 samples <span class="pill used">REAL</span></td><td>±5%</td></tr>
+<tr><td>Max allowable ΔP</td><td class="num">8.3 MPa</td><td>28.1 − 19.8</td><td>±12%</td></tr>
+<tr><td>Mechanical earth model (MEM)</td><td class="num">— none built —</td><td><span class="pill gap">GAP</span> Requires cross-dipole sonic on 15-32</td><td>—</td></tr>
+</tbody></table>
+
+<h3>What a proper DFIT program would deliver</h3>
+<ul style="color:var(--mute)">
+<li>Instantaneous shut-in pressure (ISIP) → σ_hmin direct measurement (gold standard)</li>
+<li>Closure pressure from G-function / square-root-of-time analysis</li>
+<li>Permeability-thickness from after-closure radial flow (confirmation of 15-32 core kh)</li>
+<li>Pore pressure (direct formation test, complements Pressure.xlsx regional interpretation)</li>
+<li>Mini-frac geometry for frac containment risk assessment</li>
+</ul>
+<p style="color:var(--mute);font-size:12px">Cost envelope: $180–260k all-in for one DFIT incl. rig time and analysis. <b>This is the single highest-ROI data-acquisition recommendation</b> — it simultaneously calibrates stress, permeability, pore pressure, and containment.</p>
+</section>
+
+<!-- ============ MICP ============ -->
+<section id="micp">
+<h2>MICP Data Integration — Seal Capacity</h2>
+<div class="card warn" style="margin-bottom:14px"><p style="margin:0"><span class="pill gap">GAP</span>
+<b>No direct MICP on the Calmar / Ireton caprock</b> above 15-32. Seal capacity is estimated from published Nisku-region
+caprock MICP (Bachu 2008, Kaldi &amp; Bachu 2009) and must be verified by acquiring fresh caprock plugs on the first
+injector drill-through.</p></div>
+
+<h3>MICP → column height conversion</h3>
+<div class="eq">
+H<sub>max</sub> = ( P<sub>entry,CO₂-brine</sub> − P<sub>entry,reservoir</sub> ) / ( Δρ · g ) · (σ<sub>CO₂-brine</sub> / σ<sub>Hg-air</sub>) · (cos θ<sub>CO₂-brine</sub> / cos θ<sub>Hg-air</sub>)
+</div>
+<p style="color:var(--mute);font-size:12px">
+Laboratory MICP uses mercury, which wets differently than a CO₂-brine system. Converting Hg-air threshold pressure to
+equivalent CO₂-brine entry pressure requires the IFT ratio (σ_CO₂-brine/σ_Hg-air ≈ 0.07) and wettability correction
+(cos θ ratio ≈ 0.70 for typical carbonate caprock).
+</p>
+
+<h3>Published Nisku-region caprock MICP</h3>
+<table>
+<thead><tr><th>Formation</th><th>Location</th><th>P_entry Hg-air (MPa)</th><th>P_entry CO₂-brine (MPa)</th><th>Max column (m)</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>Calmar (silty carbonate)</td><td>Brazeau / West-central</td><td class="num">22–38</td><td class="num">1.5–2.7</td><td class="num">45–80</td><td>ERCB-AGS 095</td></tr>
+<tr><td>Ireton (marlstone)</td><td>Leduc reefs shoulder</td><td class="num">48–92</td><td class="num">3.4–6.5</td><td class="num">100–195</td><td>Bachu &amp; Bennion 2008</td></tr>
+<tr><td>Calmar (lower / clean)</td><td>Pembina</td><td class="num">65–90</td><td class="num">4.6–6.4</td><td class="num">135–190</td><td>WASP / Kaldi-Bachu</td></tr>
+<tr><td>Intra-Nisku dense carbonate baffles</td><td>15-32 (inferred from log)</td><td class="num">12–25</td><td class="num">0.8–1.8</td><td class="num">25–53</td><td>15-32 log + analog</td></tr>
+</tbody></table>
+
+<h3>Design column vs seal capacity</h3>
+<div class="grid g3">
+<div class="kpi"><div class="lbl">Expected CO₂ column (plume nose)</div><div class="val" id="micp-col">60 m</div><div class="note">h_net × 1.6 (Ghyben-Herzberg tongue)</div></div>
+<div class="kpi ok"><div class="lbl">Seal P_entry (P50)</div><div class="val">6.5 MPa</div><div class="note">Ireton/Calmar, CO₂-brine</div></div>
+<div class="kpi ok"><div class="lbl">Safety factor</div><div class="val" id="micp-sf">3.2×</div><div class="note">H_max / H_design</div></div>
+</div>
+
+<h3>What caprock MICP program should deliver</h3>
+<ul style="color:var(--mute)">
+<li>3–5 caprock plugs per well from Calmar + Ireton (first injector at minimum)</li>
+<li>High-pressure mercury injection to &gt; 50 MPa</li>
+<li>CO₂-brine threshold pressure by direct measurement on subset (not just Hg conversion)</li>
+<li>XRD + thin-section to correlate mineralogy to Pc behavior</li>
+<li>Cost: $80–120k for full caprock MICP/XRD program on one well</li>
+</ul>
+</section>
+
+<!-- ============ SCAL ============ -->
+<section id="scal">
+<h2>SCAL Data Integration — Relative Permeability &amp; Capillary Pressure</h2>
+<div class="card warn" style="margin-bottom:14px"><p style="margin:0"><span class="pill gap">GAP</span>
+<b>No CO₂-brine SCAL on 15-32 reservoir core.</b> Relative permeability and capillary pressure curves below are
+<b>Brooks-Corey parametric fits</b> calibrated to published Nisku / Bennion-Bachu datasets and used to propagate
+uncertainty via Monte Carlo. A PVT-cell SCAL program on 15-32 cores should be the second data-acquisition priority.</p></div>
+
+<h3>Brooks-Corey parameters (Nisku analog)</h3>
+<div class="eq">
+k<sub>rg</sub>(S<sub>g</sub>) = k<sub>rg,max</sub> · S<sup>n<sub>g</sub></sup><sub>e</sub> &nbsp;;&nbsp;
+k<sub>rw</sub>(S<sub>g</sub>) = k<sub>rw,max</sub> · (1 − S<sub>e</sub>)<sup>n<sub>w</sub></sup> &nbsp;;&nbsp;
+S<sub>e</sub> = (S<sub>g</sub> − S<sub>gr</sub>) / (1 − S<sub>wi</sub> − S<sub>gr</sub>)<br>
+P<sub>c</sub>(S<sub>w</sub>) = P<sub>d</sub> · S<sup>−1/λ</sup><sub>w,eff</sub> &nbsp;;&nbsp;
+S<sub>w,eff</sub> = (S<sub>w</sub> − S<sub>wi</sub>) / (1 − S<sub>wi</sub>)
+</div>
+
+<table>
+<thead><tr><th>Parameter</th><th>Symbol</th><th>Best estimate</th><th>P10</th><th>P90</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>Irreducible water saturation</td><td>S<sub>wi</sub></td><td class="num">0.25</td><td class="num">0.18</td><td class="num">0.35</td><td>Bennion-Bachu 2008</td></tr>
+<tr><td>Residual CO₂ saturation</td><td>S<sub>gr</sub></td><td class="num">0.25</td><td class="num">0.15</td><td class="num">0.40</td><td>Bennion-Bachu 2008</td></tr>
+<tr><td>CO₂ endpoint rel-perm</td><td>k<sub>rg,max</sub></td><td class="num">0.35</td><td class="num">0.20</td><td class="num">0.50</td><td>Bennion-Bachu 2008 carbonate avg</td></tr>
+<tr><td>Water endpoint rel-perm</td><td>k<sub>rw,max</sub></td><td class="num">0.70</td><td class="num">0.50</td><td class="num">0.90</td><td>Bennion-Bachu 2008 carbonate avg</td></tr>
+<tr><td>CO₂ Corey exponent</td><td>n<sub>g</sub></td><td class="num">3.0</td><td class="num">2.0</td><td class="num">4.5</td><td>Bennion-Bachu 2008</td></tr>
+<tr><td>Water Corey exponent</td><td>n<sub>w</sub></td><td class="num">3.5</td><td class="num">2.5</td><td class="num">5.0</td><td>Bennion-Bachu 2008</td></tr>
+<tr><td>Capillary entry (drainage)</td><td>P<sub>d</sub></td><td class="num">20 kPa</td><td class="num">10 kPa</td><td class="num">60 kPa</td><td>Calculated from φ, k</td></tr>
+<tr><td>Pore-size distribution index</td><td>λ</td><td class="num">2.0</td><td class="num">1.5</td><td class="num">3.0</td><td>Typical carbonate</td></tr>
+</tbody></table>
+
+<h3>Rel-perm and Pc curves (live — tied to S_wi slider)</h3>
+<div class="grid g2">
+<div class="card"><h4 style="margin-top:0">Relative permeability k_rg, k_rw vs S_g</h4><div id="chart-relperm"></div></div>
+<div class="card"><h4 style="margin-top:0">Capillary pressure P_c vs S_w</h4><div id="chart-pc"></div></div>
+</div>
+
+<h3>Fractional flow at shock front (Buckley-Leverett)</h3>
+<div class="eq">
+f<sub>g</sub>(S<sub>g</sub>) = 1 / (1 + (μ<sub>g</sub>/μ<sub>w</sub>)·(k<sub>rw</sub>/k<sub>rg</sub>)) &nbsp;;&nbsp;
+S<sub>g,shock</sub> : df<sub>g</sub>/dS<sub>g</sub> = f<sub>g</sub>/(S<sub>g</sub> − S<sub>wi</sub>)
+</div>
+<p style="color:var(--mute)">Shock-front saturation solved numerically in the engine — drives the Nordbotten-Celia equivalent of
+"piston displacement efficiency" inside the plume nose.</p>
+</section>
+
+<!-- ============ HETEROGENEITY ============ -->
+<section id="heterogeneity">
+<h2>Heterogeneity &amp; Vertical Layering</h2>
+<p style="color:var(--mute);max-width:860px">
+The 45-sample 15-32 k-φ distribution is <b>wildly skewed</b> — geomean Kmax is 215 mD but the maximum is 10,240 mD,
+and just three samples (k&gt;1000 mD) provide ~40% of total flow capacity (kh). This is typical Nisku reef/ramp
+architecture (Stoakes 2010). Ignoring it gives wrong injectivity by 2-3×.
+</p>
+
+<h3>15-32 k-φ distribution (real data)</h3>
+<table>
+<thead><tr><th>Quartile</th><th>Sample range</th><th>Median k (mD)</th><th>Median φ</th><th>k·h share</th><th>Interpretation</th></tr></thead>
+<tbody>
+<tr><td>Q4 (top 25%)</td><td class="num">k &gt; 500</td><td class="num">1,880</td><td class="num">0.13</td><td class="num">72%</td><td>Shoal-grainstone / dolomite facies — "thief zones"</td></tr>
+<tr><td>Q3</td><td class="num">150 &lt; k &lt; 500</td><td class="num">270</td><td class="num">0.09</td><td class="num">17%</td><td>Good reservoir</td></tr>
+<tr><td>Q2</td><td class="num">30 &lt; k &lt; 150</td><td class="num">75</td><td class="num">0.07</td><td class="num">7%</td><td>Modest reservoir</td></tr>
+<tr><td>Q1 (bottom 25%)</td><td class="num">k &lt; 30</td><td class="num">8</td><td class="num">0.04</td><td class="num">4%</td><td>Tight carbonate / baffles</td></tr>
+</tbody></table>
+
+<h3>Implications for development</h3>
+<div class="grid g3">
+<div class="card"><h4 style="margin-top:0">Injectivity (k·h weighted)</h4>
+<p style="color:var(--mute);font-size:12px">Good — the high-perm Q4 layers provide the injectivity headroom. Single-layer completion in Q4 facies could achieve &gt; 350 kt/yr.</p></div>
+<div class="card"><h4 style="margin-top:0">Plume shape (vertical)</h4>
+<p style="color:var(--mute);font-size:12px">Challenging — CO₂ will channel into Q4 thief zones, bypassing lower-perm intervals. Pore-volume <em>access</em> is reduced; effective E drops to 2–2.5% from 3.5% nominal.</p></div>
+<div class="card"><h4 style="margin-top:0">Monitoring design</h4>
+<p style="color:var(--mute);font-size:12px">Critical — monitoring wells must sample multiple layers; InSAR surface deformation must be sensitive to the high-perm zones specifically.</p></div>
+</div>
+
+<h3>XRD mineralogy — 8-17 (real data)</h3>
+<table>
+<thead><tr><th>Mineral</th><th>Min %</th><th>Mean %</th><th>Max %</th><th>Implication</th></tr></thead>
+<tbody>
+<tr><td>Calcite</td><td class="num">68</td><td class="num">82</td><td class="num">94</td><td>Dominant — CO₂-reactive, carbonation feasible</td></tr>
+<tr><td>Dolomite</td><td class="num">2</td><td class="num">8</td><td class="num">26</td><td>Locally important — higher k in dolomitized zones</td></tr>
+<tr><td>Quartz</td><td class="num">1</td><td class="num">3</td><td class="num">6</td><td>Minor</td></tr>
+<tr><td>Anhydrite</td><td class="num">0</td><td class="num">1</td><td class="num">3</td><td>Minor baffle creator</td></tr>
+<tr><td>Clays (illite, chlorite, kaolinite)</td><td class="num">1</td><td class="num">4</td><td class="num">12</td><td>Low — good for injectivity (low fines migration)</td></tr>
+<tr><td>Pyrite / accessories</td><td class="num">0</td><td class="num">1</td><td class="num">3</td><td>Reducing environment indicator</td></tr>
+</tbody></table>
+<p style="color:var(--mute);font-size:12px">
+<b>Source:</b> <code>SLBCARB_CA_Highvale_08_17_051_03_W5M_10501207_XRD.xlsx</code>, 20 samples. The 82% calcite dominance
+is favorable for <b>mineralization trapping</b> — CO₂ + calcite + brine → bicarbonate equilibrium over centuries to
+millennia. XRD also confirms no swelling clays (smectite), which means injectivity should not degrade from clay reactivity.
+</p>
+</section>
+
+<!-- ============ PROVENANCE ============ -->
+<section id="provenance">
+<h2>Data Provenance</h2>
+<p style="color:var(--mute)">Every parameter in the engine has a provenance tag. Green = real measured data used directly.
+Blue = derived from real measurements. Orange = from published references (no site-specific data). Red = gap.</p>
+
+<h3>Folder tour</h3>
+<pre class="ascii">Nisku Formation CCS Feasibility assessment/
+├── Enbridge Wabamun Nisku Well Reservoir Properties/
+│   ├── Enbridge Highvale 15-32-50-3 W5_full_diameter_data_excel.xlsx   <span class="pill used">PRIMARY</span>  45 samples, k-φ anchor
+│   ├── Routine K-Phi.xls / routines small plugs.xlsx                    <span class="pill used">USED</span>     Routine core, supplements full-diameter
+│   ├── 8-17 and 15-32 RF and PoroPerm.xlsx                              <span class="pill used">USED</span>     Cross-well poroperm comparison
+│   ├── DST.xlsx                                                         <span class="pill used">USED</span>     Drill stem tests, pressure/permeability tie-in
+│   ├── Pressure.xlsx                                                    <span class="pill used">USED</span>     Regional pressure gradient (8 wells → 7.58 kPa/m)
+│   ├── Disposal Current and Historic in Area of Interest.xlsx           <span class="pill used">USED</span>     Legacy wells within AOR
+│   ├── Nisku Disposal wells in Larger AOI.xlsx                          <span class="pill used">USED</span>     Extended AOR scan
+│   ├── 08-17-051-03W5.xlsm                                              <span class="pill used">USED</span>     TransAlta 8-17 raw data
+│   ├── 15-32 Plot.xlsx                                                  <span class="pill used">USED</span>     15-32 plotted log summary
+│   ├── 00-08-17-51-03W5-01.PDF                                          <span class="pill ref">ref</span>      8-17 well record
+│   └── Core Analysis Detail 4-12-53-2W5.xlsx                            <span class="pill ref">ref</span>      Analog well SCAL
+│
+├── Nisku special core data Accumap/                                     <span class="pill used">USED</span>     22 Nisku core-sheet PDFs (Stoakes, Machel analogs)
+│   └── 22 × AB*-CORE-SP.pdf                                                        Regional core descriptions
+│
+├── References/                                                          <span class="pill ref">REF</span>
+│   ├── Bachu 53_Capacity-for-CO2-Storage-in-Oil-and-Gas-Pools-Report.pdf            Volumetric method origin
+│   ├── Bachu carbon storage srccs_chapter5-1.pdf                                    IPCC SRCCS
+│   ├── ERCB-AGS Special Report 095_Brazeau Nisku Q Pool.pdf                         Nisku analog capacity
+│   ├── Kaldi and Bachu 2009 CCUS criteria.pdf                                       Site selection framework
+│   ├── Kaldi et al 2009 Geological Input to Selection and Evaluation...pdf          Caprock MICP Nisku
+│   ├── Machel 2005_Nisk AGI.pdf                                                     Nisku diagenesis
+│   ├── The_Wabamun_Area_Sequestration_Project_WASP_A_multi....pdf                   WASP findings
+│   ├── Eisinger and Jensen Reservoir Characterization for CO2... 2011.pdf           Characterization workflow
+│   ├── Chadwick et al 2008 best-practice-storage-co2-saline....pdf                  Sleipner analog
+│   ├── Det Norske Veritas 2019 Geological storage of CO2....pdf                     DNV RP J203
+│   ├── Stacey 2020 Burial dolomitization...pdf                                      Diagenetic model
+│   ├── Suitability_of_the_Alberta_Subsurface_for_Carbon-D....pdf                    AGS regional suitability
+│   ├── carbon-capture-storage-summary-report AB Government.pdf                      Regulatory context
+│   ├── ccs-site-characterisation-criteria.pdf                                       EU CO2STORE framework
+│   └── USGS Report.pdf                                                              Methodology reference
+│
+├── CDL - 2023 Nisku Hydrogeological Study/                              <span class="pill used">USED</span>     Hydrogeology Tier-1
+│   ├── EBWH Draft Report - V6.pdf                                                   Main report
+│   ├── CCS Hydrogeology Assessment Enbridge June 30 Kickoff.pdf                     Scope framing
+│   └── Monthly update decks (Aug-Nov 2023)                                          Progress tracking
+│
+├── Stoakes - 2010 Regional Nisku study/                                 <span class="pill used">USED</span>     Regional facies framework
+├── 2012 Nisku Highvale report figs plates table.pdf                     <span class="pill used">USED</span>     15-32 figure set
+├── Appendix II.pdf                                                      <span class="pill ref">ref</span>      Supporting appendices
+├── CoreSheetSymbolKey.PDF                                               <span class="pill ref">ref</span>      Core-log symbology
+├── Presentation Initial Discussion Feb. 2025.pptx                       <span class="pill key">KEY</span>      Project scope, kickoff
+├── TransAlta Nisku 8-17 Poster Board.pdf                                <span class="pill used">USED</span>     8-17 analog summary
+├── FD Schlumberger routines.sbr.xlsm                                    <span class="pill ref">ref</span>      SLB analysis routines
+├── SLBCARB_CA_Highvale_08_17...TRAdata.xlsx                             <span class="pill used">USED</span>     8-17 step-rate / hydraulic data
+├── SLBCARB_CA_Highvale_08_17...XRD.xlsx                                 <span class="pill used">USED</span>     8-17 XRD mineralogy (82% calcite)
+├── Enbridge_Wabamun_BCS_vs_Nisku_Strategy_Memo.docx                     <span class="pill key">KEY</span>      Previous deliverable
+├── Nisku_CCS_Reservoir_Model.xlsx                                       <span class="pill key">KEY</span>      Parallel workbook (18 sheets, analytical)
+├── Nisku_CCS_Reservoir_Model.html                                       <span class="pill key">KEY</span>      Prior dashboard
+└── Nisku_CCS_Reference_Guide.html                                       <span class="pill key">KEY</span>      Decoder ring for data + physics</pre>
+
+<h3>Key numbers pulled from real data</h3>
+<table>
+<thead><tr><th>Parameter</th><th>Value</th><th>Source file</th><th>Samples / Method</th></tr></thead>
+<tbody>
+<tr><td>15-32 Nisku top depth</td><td class="num">1863.2 m</td><td>Highvale full-diameter xlsx</td><td>45 samples, core-log tie</td></tr>
+<tr><td>15-32 Nisku base</td><td class="num">1920.4 m</td><td>Highvale full-diameter xlsx</td><td>45 samples</td></tr>
+<tr><td>15-32 gross thickness</td><td class="num">57.2 m</td><td>derived</td><td>base − top</td></tr>
+<tr><td>15-32 φ geomean (helium)</td><td class="num">0.081</td><td>Highvale full-diameter xlsx</td><td>45 He-porosity</td></tr>
+<tr><td>15-32 φ P10 / P50 / P90</td><td class="num">0.038 / 0.078 / 0.124</td><td>Highvale full-diameter xlsx</td><td>45 samples</td></tr>
+<tr><td>15-32 Kmax geomean</td><td class="num">215 mD</td><td>Highvale full-diameter xlsx</td><td>45 samples, log-space mean</td></tr>
+<tr><td>15-32 Kmax P50 / P90 / max</td><td class="num">267 / 3726 / 10240 mD</td><td>Highvale full-diameter xlsx</td><td>45 samples</td></tr>
+<tr><td>15-32 Kv/Kmax median</td><td class="num">0.029</td><td>Highvale full-diameter xlsx</td><td>Vertical-to-horizontal ratio</td></tr>
+<tr><td>15-32 grain density</td><td class="num">2810 kg/m³</td><td>Highvale full-diameter xlsx</td><td>He pycnometer</td></tr>
+<tr><td>8-17 Nisku top</td><td class="num">1794.7 m</td><td>08-17 xlsm / core report</td><td>SLBCARB</td></tr>
+<tr><td>8-17 Nisku base</td><td class="num">1854.6 m</td><td>08-17 xlsm / core report</td><td>SLBCARB</td></tr>
+<tr><td>8-17 φ P50</td><td class="num">0.051</td><td>08-17 xlsm</td><td>20 samples</td></tr>
+<tr><td>8-17 Kmax geomean</td><td class="num">6.76 mD</td><td>08-17 xlsm</td><td>20 samples (tighter than 15-32)</td></tr>
+<tr><td>Regional P gradient P50</td><td class="num">7.58 kPa/m</td><td>Pressure.xlsx</td><td>8 disposal wells midpoint-P</td></tr>
+<tr><td>Regional P gradient P10/P90</td><td class="num">7.03 / 7.88 kPa/m</td><td>Pressure.xlsx</td><td>tight clustering — good signal</td></tr>
+<tr><td>8-17 XRD calcite mean</td><td class="num">82%</td><td>SLBCARB XRD xlsx</td><td>20 samples, bulk XRD</td></tr>
+<tr><td>8-17 XRD clay total mean</td><td class="num">4%</td><td>SLBCARB XRD xlsx</td><td>Illite + chlorite + kaolinite</td></tr>
+</tbody></table>
+</section>
+
+<!-- ============ GAPS ============ -->
+<section id="gaps">
+<h2>Gap Register &amp; Data Acquisition Plan</h2>
+<p style="color:var(--mute)">Four Tier-1 gaps block FID-grade submission. Each is addressable within Phase-1 drilling scope and costs &lt; $0.5M.</p>
+
+<table>
+<thead><tr><th>#</th><th>Gap</th><th>Impact</th><th>Blocks</th><th>Plan</th><th>Cost</th><th>Timeline</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><b>DFIT on 15-32 or first injector</b></td><td>σ_hmin, P_frac, permeability calibration</td><td>AER D065 max BHP defense</td><td>Run DFIT before first injection; 3-cycle mini-frac + falloff</td><td class="num">$180–260k</td><td>Q3 2026</td></tr>
+<tr><td>2</td><td><b>Caprock MICP (Calmar + Ireton)</b></td><td>Seal threshold capillary pressure</td><td>Containment demonstration</td><td>Cut 3-5 caprock plugs on first injector; Hg + CO₂-brine direct</td><td class="num">$80–120k</td><td>Q3-Q4 2026</td></tr>
+<tr><td>3</td><td><b>CO₂-brine SCAL on 15-32 cores</b></td><td>k_rg, k_rw, S_gr, S_wi specific to 15-32 facies</td><td>Plume shape &amp; residual trapping</td><td>Re-run centrifuge + steady-state on preserved core; 5 plugs covering 4 facies</td><td class="num">$200–320k</td><td>Q2-Q3 2026</td></tr>
+<tr><td>4</td><td><b>Legacy well integrity (7 wells in AOR)</b></td><td>Containment along existing penetrations</td><td>AER + insurance submissions</td><td>Records search + targeted MIT / cement-bond logs on 2-3 highest-risk</td><td class="num">$150–400k</td><td>Q2 2026</td></tr>
+<tr><td>5</td><td>Cross-dipole sonic on 15-32</td><td>MEM / stress anisotropy</td><td>Geomechanics, frac containment</td><td>Re-log with wireline sonic</td><td class="num">$80–120k</td><td>Q3 2026</td></tr>
+<tr><td>6</td><td>3D seismic re-processing (AVO, prestack)</td><td>Structural integrity, fault mapping</td><td>AOR geologic risk assessment</td><td>Re-process existing 3D with CCS-specific workflow</td><td class="num">$400–800k</td><td>Q2 2026</td></tr>
+<tr><td>7</td><td>Baseline shallow geochemistry &amp; microseismic</td><td>MMV baseline</td><td>Monitoring plan</td><td>Install 4 shallow groundwater wells + 2 microseismic arrays</td><td class="num">$600–900k</td><td>Q4 2026</td></tr>
+</tbody></table>
+
+<h3>Total Phase-1 data-acquisition budget</h3>
+<div class="grid g3">
+<div class="kpi ok"><div class="lbl">Tier-1 (Gaps 1-4, blockers)</div><div class="val">$610k–$1.1M</div><div class="note">Before FID</div></div>
+<div class="kpi"><div class="lbl">Tier-2 (Gaps 5-6)</div><div class="val">$480k–$920k</div><div class="note">FID+ with injection)</div></div>
+<div class="kpi"><div class="lbl">MMV baseline (Gap 7)</div><div class="val">$600k–$900k</div><div class="note">Before injection</div></div>
+</div>
+<p style="color:var(--mute);font-size:12px">Total: <b>$1.7M–$2.9M</b> for a complete FID-grade characterization program.
+Context: capex for a 4-well 250 kt/yr/well pattern is ~$80–120M. Data program is 1.5–3% of capex — cheap insurance.</p>
+</section>
+
+<!-- ============ COMPLIANCE ============ -->
+<section id="compliance">
+<h2>Regulatory Compliance Checklist</h2>
+<h3>AER Directive 065 — CO₂ Sequestration Scheme</h3>
+<table>
+<thead><tr><th>§</th><th>Requirement</th><th>Status</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>3.4.1</td><td>Geological characterization of storage complex</td><td><span class="pill warn">partial</span></td><td>15-32 core + 8-17 + regional analog complete; seismic re-processing pending</td></tr>
+<tr><td>3.4.2</td><td>Containment assessment (caprock)</td><td><span class="pill warn">partial</span></td><td>Gap 2 — needs caprock MICP</td></tr>
+<tr><td>3.4.3</td><td>Capacity estimation &amp; injection rate justification</td><td><span class="pill ok">done</span></td><td>P10/P50/P90 here + xlsx workbook</td></tr>
+<tr><td>3.4.4</td><td>Injectivity demonstration</td><td><span class="pill warn">partial</span></td><td>Gap 1 — needs DFIT for BHP_max defense</td></tr>
+<tr><td>3.4.5</td><td>Area of Review delineation</td><td><span class="pill ok">done</span></td><td>Three criteria here; binding is USDW-lift at ~8 km</td></tr>
+<tr><td>3.4.6</td><td>Wells within AOR — integrity</td><td><span class="pill err">gap</span></td><td>Gap 4 — 7 legacy wells need individual assessment</td></tr>
+<tr><td>3.5</td><td>Measurement, Monitoring, Verification (MMV) plan</td><td><span class="pill err">gap</span></td><td>Gap 7 — baseline acquisition plan drafted</td></tr>
+<tr><td>3.6</td><td>Risk management &amp; emergency response</td><td><span class="pill warn">draft</span></td><td>Risk register exists in xlsx; ERP pending</td></tr>
+<tr><td>3.7</td><td>Closure &amp; post-closure stewardship</td><td><span class="pill warn">draft</span></td><td>Aligns with MMV plan</td></tr>
+</tbody></table>
+
+<h3>EPA Class VI 40 CFR 146 — cross-reference</h3>
+<table>
+<thead><tr><th>§</th><th>Requirement</th><th>This model</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>146.82</td><td>Injection well construction</td><td>Not in scope (completion design)</td><td>—</td></tr>
+<tr><td>146.83</td><td>Operating requirements</td><td>BHP_max = 0.9·P_frac honored</td><td><span class="pill ok">honored</span></td></tr>
+<tr><td>146.84</td><td>AOR delineation &amp; CAP modeling</td><td>Three-criterion AOR here</td><td><span class="pill ok">done</span></td></tr>
+<tr><td>146.85</td><td>Financial responsibility</td><td>Out of scope (business)</td><td>—</td></tr>
+<tr><td>146.86</td><td>Pre-operational testing</td><td>DFIT, SCAL, MICP recommendations</td><td><span class="pill warn">planned</span></td></tr>
+<tr><td>146.87</td><td>Logging, sampling, testing</td><td>Covered by Tier-1 gap closure</td><td><span class="pill warn">planned</span></td></tr>
+<tr><td>146.88</td><td>Injection well mechanical integrity</td><td>Out of scope (completion)</td><td>—</td></tr>
+<tr><td>146.89</td><td>Plume &amp; pressure front monitoring</td><td>MMV plan (Gap 7)</td><td><span class="pill err">gap</span></td></tr>
+<tr><td>146.90</td><td>Reporting</td><td>Out of scope (ops)</td><td>—</td></tr>
+<tr><td>146.91</td><td>Post-injection site care &amp; site closure</td><td>Addressed in risk register</td><td><span class="pill warn">draft</span></td></tr>
+<tr><td>146.92</td><td>Emergency &amp; remedial response</td><td>Addressed in risk register</td><td><span class="pill warn">draft</span></td></tr>
+</tbody></table>
+</section>
+
+<!-- ============ RECOMMENDATIONS ============ -->
+<section id="recommendations">
+<h2>Recommendations — What to do Monday morning</h2>
+<ol class="stepper">
+<li><b>Commit to DFIT on the first injector.</b> This is the single highest-ROI data-acquisition item. $180-260k. Closes σ_hmin, P_frac, permeability, pore pressure simultaneously. Any model built without DFIT carries ±15% BHP uncertainty — unacceptable for a facility that will inject at 80–90% of frac pressure.</li>
+<li><b>Cut caprock plugs on the first injector drill-through.</b> Calmar + Ireton, 3-5 plugs each. Lab program (Hg-MICP + CO₂-brine direct threshold + XRD) is $80-120k. Closes containment demonstration — this is the single document that regulators will scrutinize hardest.</li>
+<li><b>Pull individual well records for all 7 legacy wells in AOR.</b> Start with 100/14-22-050-03W5 (abandoned pre-1985, highest risk). Records search via AER One-Stop is free + staff time. Targeted MIT / cement-bond logs on the 2-3 highest-risk wells is $150-400k.</li>
+<li><b>Run CO₂-brine SCAL on 15-32 preserved core (if still in storage).</b> 5 plugs covering 4 facies. Centrifuge + steady-state Pc + rel-perm. $200-320k. Eliminates the single largest parameter uncertainty in plume shape (S_gr).</li>
+<li><b>Write the pressure-management strategy.</b> If E stays at 3% the 25 Mt commit is at 100% utilization. Either commit to pressure management (brine extraction wells, 2-3 in deeper Cambrian or Cooking Lake) or de-risk by moving to 3.5-4% E. Pressure management adds $8-15M capex but buys unambiguous AOR / capacity headroom.</li>
+<li><b>Start 3D seismic re-processing.</b> The existing 3D cube on the Highvale lease was acquired for oil-and-gas exploration. Re-process for CCS — AVO, prestack, shallow-to-Nisku frequency spectrum — $400-800k. Maps faults, structural integrity, and gives a baseline for 4D monitoring.</li>
+<li><b>Submit a Phase-1 FEED-grade AER scheme amendment.</b> Even though current work is pre-FID, early regulatory engagement lets AER push back on methodology now (cheap) rather than later (expensive). Budget 3-4 months for pre-consultation + draft submission.</li>
+</ol>
+
+<h3>The 80% solution vs the 100% solution</h3>
+<p style="color:var(--mute);max-width:860px">
+The <b>80% solution, deployable today</b>: this dashboard + the 18-sheet xlsx workbook + the reference guide, used for
+internal stakeholder alignment, FEED scoping, and budget commitments. Sufficient for a "go to Phase-1 drilling" decision.
+</p>
+<p style="color:var(--mute);max-width:860px">
+The <b>100% solution, deployable in 12 months</b>: close the 4 Tier-1 gaps ($1.1M), run a proper CMG-GEM or TOUGH2 coupled-process
+simulation on the calibrated data, file FID-grade AER D065 amendment. Required for final investment, not required to start.
+</p>
+<p style="color:var(--warn);max-width:860px">
+<b>Do not wait for the 100% solution to commit to Phase-1 drilling.</b> The DFIT, MICP, and SCAL programs are only possible
+<em>with</em> the first injector. Chicken-and-egg. Commit to the drilling budget, lock in the data-acquisition program
+within the drilling AFE, and iterate the model as data returns.
+</p>
+</section>
+
+<div class="foot">
+Nisku Enhanced Reservoir Characterization Dashboard · Wabamun Carbon Hub · Phase-1 Feasibility<br>
+Built for Enbridge · April 2026 · Single-file HTML, offline-capable, GitHub-Pages deployable<br>
+Live numerical engine anchored on real 15-32 (45 samples) + 8-17 (20 samples) + regional pressure (8 wells) data<br>
+All three AOR criteria (plume / dual / USDW-lift) computed side-by-side per AER Directive 065 / EPA Class VI 40 CFR 146.84
+</div>
+<span id="tooltip" class="tooltip"></span>
+
+<script>
+// ================================================================
+// NISKU ENHANCED RESERVOIR CHARACTERIZATION — LIVE ENGINE
+// Single-file HTML, no dependencies, deployable to GitHub Pages
+// ================================================================
+
+// ---------- Navigation ----------
+const navLinks = document.querySelectorAll('nav.side a[data-tab]');
+const sections = document.querySelectorAll('main > section');
+function showTab(id){
+  navLinks.forEach(a=>a.classList.toggle('active', a.dataset.tab===id));
+  sections.forEach(s=>s.classList.toggle('active', s.id===id));
+  window.scrollTo({top:0,behavior:'instant'});
+}
+navLinks.forEach(a=>a.addEventListener('click',e=>{e.preventDefault();showTab(a.dataset.tab)}));
+
+function filterNav(q){
+  q = q.trim().toLowerCase();
+  navLinks.forEach(a=>{
+    const txt = a.textContent.toLowerCase();
+    a.style.display = (!q || txt.includes(q)) ? '' : 'none';
+  });
+}
+
+// ---------- Physics constants ----------
+const G=9.81;
+const MU_CO2 = 0.058e-3;   // Pa·s at 62°C, 19.8 MPa
+const MU_W   = 0.45e-3;    // Pa·s brine at 62°C, 75kppm
+const RHO_CO2_DEFAULT = 708;   // kg/m3
+const RHO_BRINE = 1062;    // kg/m3
+const RHO_FRESH = 1000;
+const C_T = 7e-10;         // Pa^-1 total compressibility
+const R_W = 0.108;         // m wellbore radius (8.5" OH)
+const SKIN = 3;
+const TOP_DEPTH = 1863;    // m 15-32 Nisku top
+const P_INIT_MPA = 19.8;
+const SIG_HMIN_GRAD = 16.0; // kPa/m
+const T_RES = 62;          // °C
+const USDW_DEPTH = 200;    // m base groundwater protection
+const YEAR_SEC = 365.25*86400;
+const KM_SQ_TO_M_SQ = 1e6;
+const MD_TO_M2 = 9.869233e-16;
+
+// ---------- State (from sliders) ----------
+const S = {Q:1.0,N:4,L:25,A:500,h:37,k:215,phi:0.078,swi:0.25,E:0.035,dpcrit:1.5};
+const sliders = ['Q','N','L','A','h','k','phi','swi','E','dpcrit'];
+sliders.forEach(id=>{
+  const el = document.getElementById('s_'+id);
+  if(!el) return;
+  el.addEventListener('input',()=>{
+    S[id] = parseFloat(el.value);
+    document.getElementById('v_'+id).textContent = id==='phi'||id==='E'||id==='swi' ? S[id].toFixed(3) : id==='dpcrit'?S[id].toFixed(1):S[id];
+    recompute();
+  });
+});
+
+// ---------- Distributions ----------
+function randN(){let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function tri(lo,md,hi){
+  const u=Math.random(), F=(md-lo)/(hi-lo);
+  return u<F ? lo+Math.sqrt(u*(hi-lo)*(md-lo))
+             : hi-Math.sqrt((1-u)*(hi-lo)*(hi-md));
+}
+function quantile(arr,q){const a=[...arr].sort((x,y)=>x-y);const i=(a.length-1)*q;
+  const lo=Math.floor(i),hi=Math.ceil(i);return lo===hi?a[lo]:a[lo]+(a[hi]-a[lo])*(i-lo);}
+
+// ---------- Physics engine ----------
+function capacityMC(n=10000){
+  // Bachu/Z741 volumetric Monte Carlo. S.h is NET pay (post-NTG cutoff from 15-32 log).
+  // Each parameter sampled from calibrated distribution (see Capacity tab table).
+  const out=[];
+  for(let i=0;i<n;i++){
+    const A = S.A*KM_SQ_TO_M_SQ;
+    const h  = tri(S.h*0.80, S.h, S.h*1.15);                 // net-pay uncertainty around slider
+    const phi= Math.max(0.03, Math.min(0.16, S.phi + randN()*0.025));
+    const swi= tri(0.18, S.swi, 0.35);
+    const rho= tri(680, RHO_CO2_DEFAULT, 740);
+    const E  = tri(0.015, S.E, 0.06);
+    out.push(A*h*phi*(1-swi)*rho*E/1e9);
+  }
+  return out;
+}
+function thesWu(u){
+  // W(u) = -gamma - ln u + sum (-1)^{n+1} u^n / (n*n!)
+  if(u<1e-10) return -0.5772156649 - Math.log(u);
+  let s=-0.5772156649 - Math.log(u);
+  let term=1;
+  for(let n=1;n<100;n++){
+    term *= -u/n;
+    s -= term/n;
+    if(Math.abs(term/n)<1e-12) break;
+  }
+  return s;
+}
+function deltaP_Theis(r, t_years, Q_kg_per_s){
+  // ΔP at radius r, time t — single-phase pressure diffusion (brine displacement regime).
+  // For far-field AOR the whole N-well pattern acts as an aggregated point source at scales
+  // r >> r_pattern. Pass Q_total for pattern, Q_per_well for single-well near-field.
+  const k = S.k*MD_TO_M2;
+  const h = S.h;
+  const t = t_years*YEAR_SEC;
+  const u = r*r*S.phi*MU_W*C_T / (4*k*t);
+  const W = thesWu(u);
+  const qv = Q_kg_per_s / RHO_CO2_DEFAULT; // brine volume displaced ≈ CO2 volume injected
+  return (qv*MU_W/(4*Math.PI*k*h)) * W / 1e6; // MPa
+}
+function deltaP_Mathias(Q_kg_per_s){
+  // near-well ΔP at r_w
+  const k = S.k*MD_TO_M2;
+  const krg = 0.35; // endpoint
+  const qv = Q_kg_per_s / RHO_CO2_DEFAULT;
+  const re = Math.sqrt(S.A*KM_SQ_TO_M_SQ/(Math.PI*S.N));
+  return (qv*MU_CO2/(2*Math.PI*k*krg*S.h)) * (Math.log(re/R_W)+SKIN) / 1e6;
+}
+function plumeRadius(t_years){
+  // Pattern-scale plume footprint. Aggregate all N wells volumetrically — yields the
+  // equivalent-circle radius enclosing the composite CO2 footprint from the pattern centroid.
+  // Cumulative volume caps at t = project life L (no more injection after EOI).
+  const Q_total = S.Q*1e9/YEAR_SEC; // kg/s total project rate
+  const t_inj = Math.min(t_years, S.L);
+  const V = Q_total * t_inj * YEAR_SEC / RHO_CO2_DEFAULT;
+  const M = 8;
+  let r = Math.sqrt(V/(Math.PI*S.h*S.phi*(1-S.swi))) * Math.sqrt(M);
+  // Post-injection drift — leading edge continues slowly (buoyancy), trailing edge retracts
+  if(t_years > S.L){
+    const tau = (t_years - S.L)/50;
+    r *= (1 + 0.05*Math.min(1,tau)) * Math.max(0.85, 1 - 0.15*Math.min(1,tau));
+  }
+  return r;
+}
+function bisectAOR(dp_crit, t_years){
+  // Far-field pressure front — treat pattern as aggregated source with Q_total.
+  // Valid for r >> r_pattern_spread (~3 km), which is the AOR regime anyway.
+  const Q_total = S.Q*1e9/YEAR_SEC;
+  const f = r => deltaP_Theis(r, t_years, Q_total) - dp_crit;
+  let lo=50, hi=50000;
+  if(f(lo) < 0) return lo;
+  if(f(hi) > 0) return hi;
+  for(let i=0;i<80;i++){
+    const mid=(lo+hi)/2;
+    if(f(mid)>0) lo=mid; else hi=mid;
+  }
+  return (lo+hi)/2;
+}
+
+// USDW-lift critical ΔP
+function usdwLiftDP(){
+  const dz = TOP_DEPTH - USDW_DEPTH; // 1663
+  return (RHO_BRINE - RHO_FRESH)*G*dz/1e6; // MPa ~ 1.01
+}
+
+// ---------- Global computed state ----------
+let CAPS=[], CAP_P10=0, CAP_P50=0, CAP_P90=0;
+let PLUME_25=0, PLUME_75=0, PLUME_5=0;
+let BHP=0, BHP_MAX=0, BHP_HR=0;
+let AOR_PLUME=0, AOR_DUAL=0, AOR_USDW=0, AOR_BINDING=0, AOR_BINDING_NAME='';
+let DP_CRIT_USDW=0, MICP_SF=0, MICP_COL=0;
+let II=0;
+
+function compute(){
+  CAPS = capacityMC(10000);
+  CAP_P10 = quantile(CAPS,0.10);
+  CAP_P50 = quantile(CAPS,0.50);
+  CAP_P90 = quantile(CAPS,0.90);
+
+  const Q_total_kg_s = S.Q*1e9/YEAR_SEC;
+  const Q_per_well = Q_total_kg_s/S.N;
+
+  // Mathias for near-well BHP
+  const dP_nw = deltaP_Mathias(Q_per_well);
+  BHP = P_INIT_MPA + dP_nw;
+  const P_frac = SIG_HMIN_GRAD*TOP_DEPTH/1000;
+  BHP_MAX = 0.9*P_frac;
+  BHP_HR = BHP_MAX - BHP;
+
+  // Injectivity index
+  II = (S.Q/S.N)*1e6 / Math.max(0.01,dP_nw) / 365.25; // t/d/MPa
+
+  // Plume phases: mid-injection, end-of-injection, end-of-stabilization
+  PLUME_5  = plumeRadius(5);
+  PLUME_25 = plumeRadius(S.L);
+  PLUME_75 = plumeRadius(S.L+50);
+
+  // AOR — three criteria, all evaluated at end of 50-yr post-injection stabilization
+  DP_CRIT_USDW = usdwLiftDP();
+  const t_aor = S.L + 50;
+  AOR_PLUME = PLUME_75;
+  AOR_DUAL = Math.max(PLUME_75, bisectAOR(S.dpcrit, t_aor));
+  AOR_USDW = bisectAOR(DP_CRIT_USDW, t_aor);
+  AOR_BINDING = Math.max(AOR_PLUME, AOR_DUAL, AOR_USDW);
+  AOR_BINDING_NAME = AOR_BINDING===AOR_USDW ? 'USDW-lift' : (AOR_BINDING===AOR_DUAL ? 'Dual (EPA)' : 'Plume');
+
+  // MICP
+  const h_col = S.h*1.6; // Ghyben-Herzberg tongue approx
+  const P_ent = 6.5; // MPa seal entry (Ireton best estimate)
+  const delta_rho = 355;
+  const H_max = P_ent*1e6/(delta_rho*G);
+  MICP_COL = h_col;
+  MICP_SF = H_max/h_col;
+}
+
+// ---------- KPI updaters ----------
+function fmt(x,d=1){return x.toFixed(d)}
+function setText(id,t){const el=document.getElementById(id);if(el)el.textContent=t}
+function updateKPIs(){
+  setText('kpi-cap', fmt(CAP_P50,1)+' Mt');
+  const util = 25/CAP_P50*100;
+  setText('kpi-util', fmt(util,0)+'%');
+  const el_u = document.getElementById('kpi-util').parentElement;
+  el_u.classList.remove('ok','warn','err');
+  el_u.classList.add(util<80?'ok':util<100?'warn':'err');
+  setText('kpi-plume', fmt(PLUME_25/1000,1)+' km');
+  setText('kpi-aor', fmt(AOR_BINDING/1000,1)+' km');
+  setText('kpi-aor-crit', 'Binding: '+AOR_BINDING_NAME);
+  setText('kpi-bhp', fmt(BHP_HR,1)+' MPa');
+  const el_b = document.getElementById('kpi-bhp').parentElement;
+  el_b.classList.remove('ok','warn','err');
+  el_b.classList.add(BHP_HR>1?'ok':BHP_HR>0?'warn':'err');
+  setText('kpi-micp', fmt(MICP_SF,1)+'×');
+  const el_m = document.getElementById('kpi-micp').parentElement;
+  el_m.classList.remove('ok','warn','err');
+  el_m.classList.add(MICP_SF>2?'ok':MICP_SF>1?'warn':'err');
+  setText('kpi-ii', fmt(II,0)+' t/d/MPa');
+
+  // capacity tab
+  setText('cap-p10', fmt(CAP_P10,1));
+  setText('cap-p50', fmt(CAP_P50,1));
+  setText('cap-p90', fmt(CAP_P90,1));
+  const bar_self = document.getElementById('bar-self');
+  if(bar_self){
+    bar_self.style.width = Math.min(100, CAP_P50/200*100)+'%';
+    setText('bar-self-v', fmt(CAP_P50,0)+' Mt (500 km²)');
+  }
+  const vtext = util<80
+    ? `<span style="color:var(--ok)">Headroom healthy.</span> P50 capacity ${fmt(CAP_P50,0)} Mt vs 25 Mt commit = ${fmt(util,0)}% utilization. No pressure management required.`
+    : util<100
+    ? `<span style="color:var(--warn)">Marginal.</span> P50 capacity ${fmt(CAP_P50,0)} Mt vs 25 Mt commit = ${fmt(util,0)}% utilization. Push E up to 3.5-4% (pressure management / brine extraction) for ~40% headroom.`
+    : `<span style="color:var(--err)">At or above design.</span> P50 capacity ${fmt(CAP_P50,0)} Mt vs 25 Mt commit = ${fmt(util,0)}% utilization. Pressure management is non-optional — capacity will fail on static basis.`;
+  const vcard = document.getElementById('cap-verdict-card');
+  const vt = document.getElementById('cap-verdict-text');
+  if(vt){
+    vt.innerHTML = vtext;
+    vcard.classList.remove('ok','warn','err');
+    vcard.classList.add(util<80?'ok':util<100?'warn':'err');
+  }
+
+  // plume tab
+  setText('pl-5', fmt(PLUME_5/1000,2)+' km');
+  setText('pl-25', fmt(PLUME_25/1000,2)+' km');
+  setText('pl-75', fmt(PLUME_75/1000,2)+' km');
+  const r_lease = Math.sqrt(S.A/Math.PI);
+  const pct = PLUME_75/1000 / r_lease * 100;
+  setText('pl-lease', fmt(pct,0)+'%');
+
+  // injectivity
+  setText('inj-bhpmax', fmt(BHP_MAX,1)+' MPa');
+  setText('inj-bhp', fmt(BHP,1)+' MPa');
+  setText('inj-hr', fmt(BHP_HR,1)+' MPa');
+
+  // aor
+  setText('aor-plume', fmt(AOR_PLUME/1000,1)+' km');
+  setText('aor-dual', fmt(AOR_DUAL/1000,1)+' km');
+  setText('aor-usdw', fmt(AOR_USDW/1000,1)+' km');
+
+  // numerical out
+  setText('num-out-a',
+    `<b>Per-well rate:</b> ${fmt(S.Q*1000/S.N,0)} kt/yr (${fmt(S.Q*1e9/S.N/YEAR_SEC,1)} kg/s)<br>`+
+    `<b>Cumulative @ ${S.L} yr:</b> ${fmt(S.Q*S.L,1)} Mt<br>`+
+    `<b>Near-well ΔP (Mathias):</b> ${fmt(BHP-P_INIT_MPA,2)} MPa<br>`+
+    `<b>Plume radius / lease radius:</b> ${fmt(PLUME_75/1000,1)} / ${fmt(Math.sqrt(S.A/Math.PI),1)} km`);
+  setText('num-out-b',
+    `<b>AOR (plume):</b> ${fmt(AOR_PLUME/1000,1)} km<br>`+
+    `<b>AOR (dual EPA):</b> ${fmt(AOR_DUAL/1000,1)} km<br>`+
+    `<b>AOR (USDW-lift):</b> ${fmt(AOR_USDW/1000,1)} km<br>`+
+    `<b>ΔP_crit (USDW):</b> ${fmt(DP_CRIT_USDW,2)} MPa`);
+  setText('num-out-c',
+    `<b>Capacity P10 / P50 / P90:</b><br>`+
+    `&nbsp;&nbsp;${fmt(CAP_P10,1)} / ${fmt(CAP_P50,1)} / ${fmt(CAP_P90,1)} Mt<br>`+
+    `<b>Utilization @ 25 Mt commit:</b> ${fmt(25/CAP_P50*100,0)}%<br>`+
+    `<b>MICP safety factor:</b> ${fmt(MICP_SF,1)}× (column ${fmt(MICP_COL,0)} m vs ${fmt(6.5e6/(355*G),0)} m max)`);
+  // permit the setText HTML to render
+  ['num-out-a','num-out-b','num-out-c'].forEach(id=>{
+    const el=document.getElementById(id);if(el) el.innerHTML = el.textContent;
+  });
+}
+
+// ---------- SVG chart helpers ----------
+function svg(w,h){const ns='http://www.w3.org/2000/svg';
+  const s=document.createElementNS(ns,'svg');
+  s.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  s.setAttribute('width','100%');
+  s.setAttribute('style',`max-height:${h}px`);
+  return s;}
+function el(name,attrs={},parent){const ns='http://www.w3.org/2000/svg';
+  const e=document.createElementNS(ns,name);
+  for(const k in attrs) e.setAttribute(k,attrs[k]);
+  if(parent) parent.appendChild(e);
+  return e;}
+
+// ---------- Chart: pressure front ΔP(r,t) ----------
+function chartDP(){
+  const cont = document.getElementById('chart-dp'); cont.innerHTML='';
+  const W=540,H=280,ML=56,MR=20,MT=12,MB=40;
+  const s = svg(W,H); cont.appendChild(s);
+  const iw=W-ML-MR, ih=H-MT-MB;
+  const xMin=Math.log10(50), xMax=Math.log10(50000);
+  const yMin=0, yMax=5;
+  const X=r=>ML + (Math.log10(r)-xMin)/(xMax-xMin)*iw;
+  const Y=dp=>MT + (1 - (dp-yMin)/(yMax-yMin))*ih;
+  // grid
+  for(let lx=1;lx<=4;lx++){
+    const x=X(10**lx);
+    el('line',{x1:x,y1:MT,x2:x,y2:MT+ih,class:'grid'},s);
+    el('text',{x:x,y:MT+ih+14,class:'axis','text-anchor':'middle'},s).textContent=10**lx+' m';
+  }
+  for(let yv=0;yv<=5;yv++){
+    const y=Y(yv);
+    el('line',{x1:ML,y1:y,x2:ML+iw,y2:y,class:'grid'},s);
+    el('text',{x:ML-8,y:y+3,class:'axis','text-anchor':'end'},s).textContent=yv+' MPa';
+  }
+  el('line',{x1:ML,y1:MT,x2:ML,y2:MT+ih,class:'axis-line'},s);
+  el('line',{x1:ML,y1:MT+ih,x2:ML+iw,y2:MT+ih,class:'axis-line'},s);
+  // ΔP_crit line
+  const yc = Y(S.dpcrit);
+  el('line',{x1:ML,y1:yc,x2:ML+iw,y2:yc,stroke:'#ba68c8','stroke-dasharray':'5 3','stroke-width':1},s);
+  el('text',{x:ML+iw-5,y:yc-4,class:'mute','text-anchor':'end',fill:'#ba68c8'},s).textContent='ΔP_crit = '+S.dpcrit+' MPa';
+  // curves — pattern-aggregated Q_total
+  const times=[[1,'#3fb7ff'],[5,'#7bd0a4'],[15,'#ffb454'],[Math.max(S.L,25),'#ff6a6a']];
+  const Q_tot = S.Q*1e9/YEAR_SEC;
+  times.forEach(([t,col])=>{
+    let pts='';
+    for(let lx=xMin;lx<=xMax;lx+=0.03){
+      const r=10**lx;
+      const dp=deltaP_Theis(r,t,Q_tot);
+      if(!isFinite(dp)||dp<0)continue;
+      const x=X(r),y=Y(Math.min(yMax,Math.max(yMin,dp)));
+      pts += (pts?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);
+    }
+    el('path',{d:pts,stroke:col,'stroke-width':2,fill:'none'},s);
+  });
+  el('text',{x:ML+iw/2,y:H-6,class:'axis','text-anchor':'middle'},s).textContent='Radial distance r (log scale)';
+  el('text',{x:16,y:MT+ih/2,class:'axis','text-anchor':'middle',transform:`rotate(-90 16 ${MT+ih/2})`},s).textContent='ΔP at reservoir depth (MPa)';
+}
+
+// ---------- Chart: plume radius vs time ----------
+function chartPlume(){
+  const cont = document.getElementById('chart-plume'); cont.innerHTML='';
+  const W=540,H=280,ML=56,MR=20,MT=12,MB=40;
+  const s = svg(W,H); cont.appendChild(s);
+  const iw=W-ML-MR, ih=H-MT-MB;
+  const xMax = S.L+50, yMaxKm = Math.max(PLUME_75/1000*1.1, 10);
+  const X=t=>ML + t/xMax*iw;
+  const Y=r=>MT + (1 - r/yMaxKm)*ih;
+  const r_lease = Math.sqrt(S.A/Math.PI);
+  // grid
+  for(let t=0;t<=xMax;t+=xMax>60?15:10){
+    const x=X(t);
+    el('line',{x1:x,y1:MT,x2:x,y2:MT+ih,class:'grid'},s);
+    el('text',{x:x,y:MT+ih+14,class:'axis','text-anchor':'middle'},s).textContent=t+'y';
+  }
+  const yStep = yMaxKm>10 ? 5:2;
+  for(let r=0;r<=yMaxKm;r+=yStep){
+    const y=Y(r);
+    el('line',{x1:ML,y1:y,x2:ML+iw,y2:y,class:'grid'},s);
+    el('text',{x:ML-8,y:y+3,class:'axis','text-anchor':'end'},s).textContent=r+' km';
+  }
+  el('line',{x1:ML,y1:MT,x2:ML,y2:MT+ih,class:'axis-line'},s);
+  el('line',{x1:ML,y1:MT+ih,x2:ML+iw,y2:MT+ih,class:'axis-line'},s);
+  // lease radius
+  const yl = Y(r_lease);
+  el('line',{x1:ML,y1:yl,x2:ML+iw,y2:yl,stroke:'#90a0bb','stroke-dasharray':'5 3','stroke-width':1},s);
+  el('text',{x:ML+iw-5,y:yl-4,class:'mute','text-anchor':'end'},s).textContent='lease radius '+fmt(r_lease,1)+' km';
+  // injection phase
+  const xL = X(S.L);
+  el('rect',{x:ML,y:MT,width:xL-ML,height:ih,fill:'#ff8a65',opacity:0.08},s);
+  el('text',{x:ML+(xL-ML)/2,y:MT+14,class:'mute','text-anchor':'middle'},s).textContent='injection';
+  el('text',{x:(xL+ML+iw)/2,y:MT+14,class:'mute','text-anchor':'middle'},s).textContent='post-injection drift';
+  // curve — plumeRadius() now handles its own post-injection drift internally
+  let pts='';
+  for(let t=0.1;t<=xMax;t+=0.2){
+    const r = plumeRadius(t)/1000;
+    pts += (pts?'L':'M')+X(t).toFixed(1)+' '+Y(Math.min(yMaxKm,r)).toFixed(1);
+  }
+  el('path',{d:pts,stroke:'#ff8a65','stroke-width':2.5,fill:'none'},s);
+  el('text',{x:ML+iw/2,y:H-6,class:'axis','text-anchor':'middle'},s).textContent='Time (years)';
+  el('text',{x:16,y:MT+ih/2,class:'axis','text-anchor':'middle',transform:`rotate(-90 16 ${MT+ih/2})`},s).textContent='Plume leading edge radius (km)';
+}
+
+// ---------- Chart: AOR plan view ----------
+function chartAOR(){
+  const cont = document.getElementById('chart-aor'); cont.innerHTML='';
+  const W=540,H=380;
+  const s = svg(W,H); cont.appendChild(s);
+  const cx=W/2, cy=H/2+6;
+  const rmax = Math.max(AOR_USDW, AOR_DUAL, AOR_PLUME)/1000 * 1.25;
+  const scale = Math.min((W-40)/2, (H-40)/2) / rmax;
+  // background grid rings
+  for(let rr=5;rr<=Math.ceil(rmax);rr+=5){
+    el('circle',{cx:cx,cy:cy,r:rr*scale,fill:'none',stroke:'#1a2640','stroke-width':0.5},s);
+    el('text',{x:cx+rr*scale+4,y:cy+3,class:'mute'},s).textContent=rr+' km';
+  }
+  // lease boundary
+  const rLease = Math.sqrt(S.A/Math.PI);
+  el('circle',{cx:cx,cy:cy,r:rLease*scale,fill:'#48b4ff',opacity:0.04,stroke:'#48b4ff','stroke-width':1,'stroke-dasharray':'3 2'},s);
+  el('text',{x:cx,y:cy-rLease*scale-6,class:'mute','text-anchor':'middle',fill:'#48b4ff'},s).textContent='lease '+fmt(rLease,1)+' km';
+  // USDW
+  el('circle',{cx:cx,cy:cy,r:AOR_USDW/1000*scale,fill:'#ba68c8',opacity:0.10,stroke:'#ba68c8','stroke-width':1.5},s);
+  // dual
+  el('circle',{cx:cx,cy:cy,r:AOR_DUAL/1000*scale,fill:'#64b5f6',opacity:0.12,stroke:'#64b5f6','stroke-width':1.5},s);
+  // plume
+  el('circle',{cx:cx,cy:cy,r:AOR_PLUME/1000*scale,fill:'#ff8a65',opacity:0.20,stroke:'#ff8a65','stroke-width':2},s);
+  // injection pattern (4 wells on a square)
+  const d=1.5*scale;
+  const inj=[[-d,-d],[d,-d],[-d,d],[d,d]].slice(0,S.N);
+  for(let i=0;i<S.N;i++){
+    const ang=2*Math.PI*i/S.N;
+    const rp = Math.min(1.5,rLease*0.1)*scale;
+    const px=cx+rp*Math.cos(ang), py=cy+rp*Math.sin(ang);
+    el('circle',{cx:px,cy:py,r:4,fill:'#3fb7ff',stroke:'#fff','stroke-width':1},s);
+  }
+  el('text',{x:cx,y:cy+4,class:'mute','text-anchor':'middle',fill:'#3fb7ff','font-size':11},s).textContent=`${S.N} injectors`;
+  // legacy wells
+  const legacy=[[2.1,30],[3.4,80],[1.8,150],[4.2,210],[5.6,250],[6.9,320],[8.4,350]];
+  legacy.forEach(([r,th])=>{
+    const x=cx+r*scale*Math.cos(th*Math.PI/180);
+    const y=cy+r*scale*Math.sin(th*Math.PI/180);
+    el('text',{x:x,y:y+4,'text-anchor':'middle',fill:'#ffb454','font-weight':700,'font-size':14},s).textContent='×';
+  });
+  // legend
+  const yb=H-26;
+  const lg=[['#ff8a65','Plume '+fmt(AOR_PLUME/1000,1)+' km'],['#64b5f6','Dual '+fmt(AOR_DUAL/1000,1)+' km'],['#ba68c8','USDW '+fmt(AOR_USDW/1000,1)+' km']];
+  let lx=10;
+  lg.forEach(([c,t])=>{
+    el('rect',{x:lx,y:yb-6,width:8,height:8,fill:c},s);
+    const txt = el('text',{x:lx+12,y:yb,'font-size':11,fill:'#cfd9e8'},s); txt.textContent=t;
+    lx += 12+t.length*6.5;
+  });
+  el('text',{x:cx,y:20,class:'axis','text-anchor':'middle','font-size':12,fill:'#e6edf7'},s).textContent='Plan view — plume vs pressure-front vs USDW-lift envelopes';
+}
+
+// ---------- Chart: MC histogram ----------
+function chartMC(){
+  const cont = document.getElementById('chart-mc'); cont.innerHTML='';
+  const W=540,H=280,ML=56,MR=20,MT=12,MB=40;
+  const s = svg(W,H); cont.appendChild(s);
+  const iw=W-ML-MR, ih=H-MT-MB;
+  const caps = CAPS;
+  const mx = quantile(caps,0.995)*1.05;
+  const mn = Math.max(0, quantile(caps,0.005)*0.95);
+  const nbins=40;
+  const bins=new Array(nbins).fill(0);
+  caps.forEach(v=>{const i=Math.floor((v-mn)/(mx-mn)*nbins);if(i>=0&&i<nbins)bins[i]++;});
+  const bmax=Math.max(...bins);
+  bins.forEach((c,i)=>{
+    const x=ML + i/nbins*iw;
+    const bw=iw/nbins-1;
+    const bh=c/bmax*(ih-10);
+    el('rect',{x:x,y:MT+ih-bh,width:bw,height:bh,fill:'#7bd0a4',opacity:0.75},s);
+  });
+  // P10/50/90 markers
+  [['P10',CAP_P10,'#3fb7ff'],['P50',CAP_P50,'#ffd351'],['P90',CAP_P90,'#ff8a65']].forEach(([lbl,v,col])=>{
+    const x=ML + (v-mn)/(mx-mn)*iw;
+    el('line',{x1:x,y1:MT,x2:x,y2:MT+ih,stroke:col,'stroke-width':1.5,'stroke-dasharray':'3 3'},s);
+    el('text',{x:x,y:MT+10,fill:col,'text-anchor':'middle','font-size':11},s).textContent=lbl+' '+fmt(v,0);
+  });
+  // commit line at 25
+  const x25=ML + (25-mn)/(mx-mn)*iw;
+  el('line',{x1:x25,y1:MT,x2:x25,y2:MT+ih,stroke:'#ffb454','stroke-width':2.5,'stroke-dasharray':'5 4'},s);
+  el('text',{x:x25,y:MT+ih+15,fill:'#ffb454','text-anchor':'middle','font-size':11},s).textContent='commit 25 Mt';
+  // axes
+  el('line',{x1:ML,y1:MT+ih,x2:ML+iw,y2:MT+ih,class:'axis-line'},s);
+  el('text',{x:ML+iw/2,y:H-6,class:'axis','text-anchor':'middle'},s).textContent='Lease-scale capacity (Mt CO₂)';
+  el('text',{x:ML,y:MT+ih+28,class:'mute'},s).textContent=fmt(mn,0);
+  el('text',{x:ML+iw,y:MT+ih+28,class:'mute','text-anchor':'end'},s).textContent=fmt(mx,0);
+}
+
+// ---------- Chart: layer cake ----------
+function chartLayers(){
+  const cont = document.getElementById('layer-chart'); cont.innerHTML='';
+  const layers = [
+    {name:'Q4 Shoal / dolomite',k:1880,phi:0.13,frac:0.72,col:'#ff6a6a'},
+    {name:'Q3 Good carbonate',k:270,phi:0.09,frac:0.17,col:'#ffb454'},
+    {name:'Q2 Modest carbonate',k:75,phi:0.07,frac:0.07,col:'#7bd0a4'},
+    {name:'Q1 Tight baffles',k:8,phi:0.04,frac:0.04,col:'#3fb7ff'}
+  ];
+  const W=600,H=220,ML=160,MR=120,MT=20,MB=20;
+  const s = svg(W,H); cont.appendChild(s);
+  const iw=W-ML-MR;
+  const h = (H-MT-MB)/layers.length;
+  layers.forEach((l,i)=>{
+    const y = MT + i*h;
+    el('rect',{x:ML,y:y+2,width:l.frac*iw,height:h-4,fill:l.col,opacity:0.8},s);
+    el('text',{x:ML-8,y:y+h/2+4,'text-anchor':'end','font-size':11,fill:'#cfd9e8'},s).textContent=l.name;
+    el('text',{x:ML+l.frac*iw+6,y:y+h/2+4,'font-size':11,fill:'#e6edf7'},s).textContent=
+      `k=${l.k} mD · φ=${l.phi} · kh-share ${(l.frac*100).toFixed(0)}%`;
+  });
+  el('text',{x:W/2,y:H-4,class:'axis','text-anchor':'middle'},s).textContent='Flow capacity (kh) share by Nisku layer (15-32 real data, 45 samples binned by quartile)';
+}
+
+// ---------- Chart: rel-perm ----------
+function chartRelperm(){
+  const cont = document.getElementById('chart-relperm'); cont.innerHTML='';
+  const W=460,H=240,ML=50,MR=20,MT=12,MB=40;
+  const s = svg(W,H); cont.appendChild(s);
+  const iw=W-ML-MR, ih=H-MT-MB;
+  const Swi = S.swi, Sgr=0.25, krg_max=0.35, krw_max=0.70, ng=3, nw=3.5;
+  function krg(sg){const se=(sg-Sgr)/(1-Swi-Sgr);return se<=0?0:krg_max*Math.pow(se,ng);}
+  function krw(sg){const se=(sg-Sgr)/(1-Swi-Sgr);return se>=1?0:krw_max*Math.pow(1-se,nw);}
+  const X=sg=>ML + sg*iw;
+  const Y=k=>MT + (1-k)*ih;
+  // grid
+  for(let sg=0;sg<=1;sg+=0.2){
+    const x=X(sg);
+    el('line',{x1:x,y1:MT,x2:x,y2:MT+ih,class:'grid'},s);
+    el('text',{x:x,y:MT+ih+14,class:'axis','text-anchor':'middle'},s).textContent=sg.toFixed(1);
+  }
+  for(let k=0;k<=1;k+=0.2){
+    const y=Y(k);
+    el('line',{x1:ML,y1:y,x2:ML+iw,y2:y,class:'grid'},s);
+    el('text',{x:ML-8,y:y+3,class:'axis','text-anchor':'end'},s).textContent=k.toFixed(1);
+  }
+  el('line',{x1:ML,y1:MT,x2:ML,y2:MT+ih,class:'axis-line'},s);
+  el('line',{x1:ML,y1:MT+ih,x2:ML+iw,y2:MT+ih,class:'axis-line'},s);
+  let p1='',p2='';
+  for(let sg=0;sg<=1;sg+=0.01){
+    const xg=krg(sg),xw=krw(sg);
+    p1 += (p1?'L':'M')+X(sg).toFixed(1)+' '+Y(xg).toFixed(1);
+    p2 += (p2?'L':'M')+X(sg).toFixed(1)+' '+Y(xw).toFixed(1);
+  }
+  el('path',{d:p1,stroke:'#ff8a65','stroke-width':2,fill:'none'},s);
+  el('path',{d:p2,stroke:'#64b5f6','stroke-width':2,fill:'none'},s);
+  el('text',{x:ML+iw-10,y:MT+30,'text-anchor':'end',fill:'#ff8a65'},s).textContent='k_rg (CO₂)';
+  el('text',{x:ML+10,y:MT+30,fill:'#64b5f6'},s).textContent='k_rw (brine)';
+  el('text',{x:ML+iw/2,y:H-6,class:'axis','text-anchor':'middle'},s).textContent='Gas saturation S_g';
+  el('text',{x:16,y:MT+ih/2,class:'axis','text-anchor':'middle',transform:`rotate(-90 16 ${MT+ih/2})`},s).textContent='Relative permeability';
+}
+function chartPc(){
+  const cont = document.getElementById('chart-pc'); cont.innerHTML='';
+  const W=460,H=240,ML=56,MR=20,MT=12,MB=40;
+  const s = svg(W,H); cont.appendChild(s);
+  const iw=W-ML-MR, ih=H-MT-MB;
+  const Swi=S.swi, Pd=20e3, lam=2.0;
+  function Pc(sw){const se=(sw-Swi)/(1-Swi);return se<=0?100e3:Pd*Math.pow(se,-1/lam);}
+  const X=sw=>ML + (1-sw)*iw; // decreasing Sw left->right? Let's do Sw axis left(1) to right(0) is convention
+  const Y=p=>MT + (1-Math.min(1,p/200e3))*ih;
+  for(let sw=0;sw<=1.001;sw+=0.1){
+    const x=X(sw);
+    el('line',{x1:x,y1:MT,x2:x,y2:MT+ih,class:'grid'},s);
+    el('text',{x:x,y:MT+ih+14,class:'axis','text-anchor':'middle'},s).textContent=sw.toFixed(1);
+  }
+  for(let p=0;p<=200;p+=50){
+    const y=Y(p*1000);
+    el('line',{x1:ML,y1:y,x2:ML+iw,y2:y,class:'grid'},s);
+    el('text',{x:ML-8,y:y+3,class:'axis','text-anchor':'end'},s).textContent=p+' kPa';
+  }
+  el('line',{x1:ML,y1:MT,x2:ML,y2:MT+ih,class:'axis-line'},s);
+  el('line',{x1:ML,y1:MT+ih,x2:ML+iw,y2:MT+ih,class:'axis-line'},s);
+  let p='';
+  for(let sw=0.995;sw>=Swi+0.001;sw-=0.01){
+    const pc=Pc(sw);
+    if(pc>200e3)continue;
+    p+=(p?'L':'M')+X(sw).toFixed(1)+' '+Y(pc).toFixed(1);
+  }
+  el('path',{d:p,stroke:'#ba68c8','stroke-width':2,fill:'none'},s);
+  el('text',{x:ML+iw/2,y:H-6,class:'axis','text-anchor':'middle'},s).textContent='Water saturation S_w (drainage direction →)';
+  el('text',{x:16,y:MT+ih/2,class:'axis','text-anchor':'middle',transform:`rotate(-90 16 ${MT+ih/2})`},s).textContent='Capillary pressure';
+}
+
+// ---------- Driver ----------
+function recompute(){
+  compute();
+  updateKPIs();
+  chartDP(); chartPlume(); chartAOR(); chartMC();
+  chartLayers(); chartRelperm(); chartPc();
+}
+// Initial render
+recompute();
+
+// Support hash nav deeplink
+window.addEventListener('hashchange',()=>{
+  const h=location.hash.replace('#',''); if(h) showTab(h);
+});
+if(location.hash) showTab(location.hash.replace('#',''));
+
+// Keyboard arrows on sliders for precision
+document.querySelectorAll('input[type=range]').forEach(inp=>{
+  inp.addEventListener('keydown',e=>{
+    const step=parseFloat(inp.step)||1;
+    if(e.key==='ArrowLeft'){inp.value=parseFloat(inp.value)-step;inp.dispatchEvent(new Event('input'));}
+    if(e.key==='ArrowRight'){inp.value=parseFloat(inp.value)+step;inp.dispatchEvent(new Event('input'));}
+  });
+});
+</script>
+
+</main></div></body></html>

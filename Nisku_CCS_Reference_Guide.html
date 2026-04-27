@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nisku CCS — Reference Guide & Data Dictionary</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#111a2e; --panel2:#172241; --border:#223055;
+    --text:#e6ecff; --muted:#8fa3c9; --accent:#48b4ff; --accent2:#7ef2a5;
+    --warn:#ffb454; --bad:#ff6b6b; --ok:#3ecf8e;
+    --tech:#ffd166; --plain:#a0d2fa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  header{background:linear-gradient(135deg,#0d1b3d 0%,#162851 55%,#1a3b5c 100%);
+    padding:22px 28px;border-bottom:1px solid var(--border)}
+  header h1{margin:0;font-size:22px;font-weight:700}
+  header .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 82px)}
+  nav{background:var(--panel);border-right:1px solid var(--border);padding:18px 14px;position:sticky;top:0;align-self:start;max-height:100vh;overflow-y:auto}
+  nav .search{width:100%;padding:8px 10px;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:13px;margin-bottom:14px}
+  nav .group{margin-bottom:14px}
+  nav .group-title{font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:1.2px;margin-bottom:6px}
+  nav a{display:block;padding:6px 10px;border-radius:5px;color:var(--text);font-size:13px;margin-bottom:2px;cursor:pointer}
+  nav a:hover{background:var(--panel2);text-decoration:none}
+  nav a.active{background:var(--accent);color:#031021;font-weight:600}
+  main{padding:26px 36px;max-width:1080px}
+  section{display:none;animation:fadeIn 0.2s ease}
+  section.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  h2{margin:0 0 8px 0;font-size:22px;color:var(--accent)}
+  h3{margin:22px 0 8px 0;font-size:16px;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:5px}
+  h4{margin:16px 0 6px 0;font-size:14px;color:var(--accent2)}
+  .lede{color:var(--muted);font-size:14px;margin-bottom:18px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin:10px 0}
+  .card.tech{border-left:3px solid var(--tech)}
+  .card.plain{border-left:3px solid var(--plain)}
+  .card .tag{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:10px;margin-bottom:8px;font-weight:700}
+  .tag.plain{background:rgba(160,210,250,0.15);color:var(--plain)}
+  .tag.tech{background:rgba(255,209,102,0.15);color:var(--tech)}
+  .tag.warn{background:rgba(255,180,84,0.15);color:var(--warn)}
+  .tag.ok{background:rgba(62,207,142,0.15);color:var(--ok)}
+  table{width:100%;border-collapse:collapse;margin:8px 0 12px 0}
+  table th,table td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top;font-size:13px}
+  table th{background:var(--panel2);color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:1px}
+  table tr:hover td{background:rgba(72,180,255,0.05)}
+  code{background:var(--panel2);padding:1px 6px;border-radius:3px;font-family:Menlo,Consolas,monospace;font-size:12px;color:var(--accent2)}
+  .tree{font-family:Menlo,Consolas,monospace;font-size:12px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px 18px;overflow-x:auto;line-height:1.7}
+  .tree .folder{color:var(--accent);font-weight:700}
+  .tree .file{color:var(--text)}
+  .tree .file.used{color:var(--accent2);font-weight:600}
+  .tree .note{color:var(--muted);font-style:italic}
+  .pill{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;margin-right:4px;font-weight:600}
+  .pill.used{background:rgba(62,207,142,0.15);color:var(--ok);border:1px solid rgba(62,207,142,0.3)}
+  .pill.ref{background:rgba(143,163,201,0.15);color:var(--muted);border:1px solid var(--border)}
+  .pill.key{background:rgba(255,209,102,0.15);color:var(--tech);border:1px solid rgba(255,209,102,0.3)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:900px){.grid2{grid-template-columns:1fr}.layout{grid-template-columns:1fr}nav{position:relative;max-height:none}}
+  .equation{background:#0a1024;border:1px solid var(--border);border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0;font-family:Menlo,Consolas,monospace;font-size:13px;color:var(--accent2);overflow-x:auto}
+  .glossary dt{color:var(--accent);font-weight:700;margin-top:14px;font-size:13px}
+  .glossary dd{margin:4px 0 0 0;color:var(--text);font-size:13px}
+  .glossary dd .tech-label{color:var(--tech);font-weight:600;margin-top:4px;display:block;font-size:12px}
+  .callout{background:rgba(255,209,102,0.08);border-left:3px solid var(--tech);padding:12px 16px;border-radius:4px;margin:12px 0;font-size:13px}
+  .callout.warn{background:rgba(255,107,107,0.08);border-left-color:var(--bad)}
+  .callout.ok{background:rgba(62,207,142,0.08);border-left-color:var(--ok)}
+  .stepnum{display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#031021;text-align:center;font-weight:700;margin-right:8px;font-size:12px;line-height:22px}
+  footer{padding:18px 28px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:40px}
+  .linklike{cursor:pointer;color:var(--accent);border-bottom:1px dotted var(--accent)}
+  .linklike:hover{color:var(--accent2)}
+  summary{cursor:pointer;color:var(--accent2);padding:6px 0;font-weight:600}
+  details{margin:8px 0}
+  .mini{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Nisku CCS — Reference Guide &amp; Data Dictionary</h1>
+  <div class="sub">Enbridge Wabamun Carbon Hub • Companion to the Reservoir Model (HTML) &amp; Audit Workbook (XLSX) • v1.0 / April 2026</div>
+</header>
+
+<div class="layout">
+  <nav>
+    <input class="search" placeholder="Search tabs, files, terms…" id="search" oninput="doSearch()">
+    <div class="group">
+      <div class="group-title">Start here</div>
+      <a data-sec="intro" class="active">How to use this guide</a>
+      <a data-sec="workflow">The 4-question CCS workflow</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Where the data came from</div>
+      <a data-sec="folders">File directory tour</a>
+      <a data-sec="sources">Key source files (ranked)</a>
+      <a data-sec="analogs">Regional &amp; analog studies</a>
+    </div>
+    <div class="group">
+      <div class="group-title">The Excel workbook tour</div>
+      <a data-sec="tab-readme">1 · README</a>
+      <a data-sec="tab-inputs">2 · Inputs</a>
+      <a data-sec="tab-core1532">3 · Core_15_32</a>
+      <a data-sec="tab-core0817">4 · Core_08_17</a>
+      <a data-sec="tab-corestats">5 · Core_Stats</a>
+      <a data-sec="tab-fluid">6 · Fluid_Properties</a>
+      <a data-sec="tab-capacity">7 · Capacity</a>
+      <a data-sec="tab-mc">8 · MC_Capacity</a>
+      <a data-sec="tab-inj">9 · Injectivity</a>
+      <a data-sec="tab-plume">10 · Plume</a>
+      <a data-sec="tab-aor">11 · AOR_Theis</a>
+      <a data-sec="tab-dfit">12 · DFIT</a>
+      <a data-sec="tab-micp">13 · MICP</a>
+      <a data-sec="tab-scal">14 · SCAL</a>
+      <a data-sec="tab-xrd">15 · XRD_Mineralogy</a>
+      <a data-sec="tab-legacy">16 · Legacy_Wells</a>
+      <a data-sec="tab-sens">17 · Sensitivity</a>
+      <a data-sec="tab-refs">18 · References</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Learn the physics</div>
+      <a data-sec="phys-capacity">Capacity equation (Bachu)</a>
+      <a data-sec="phys-inj">Injectivity (Mathias)</a>
+      <a data-sec="phys-plume">Plume radius (Nordbotten-Celia)</a>
+      <a data-sec="phys-theis">Pressure front (Theis)</a>
+      <a data-sec="phys-micp">Seal capacity (MICP)</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Glossary</div>
+      <a data-sec="glossary-a">A — F</a>
+      <a data-sec="glossary-g">G — P</a>
+      <a data-sec="glossary-q">Q — Z</a>
+    </div>
+  </nav>
+
+  <main>
+
+<!-- =================================================================== -->
+<section id="intro" class="active">
+  <h2>How to use this guide</h2>
+  <div class="lede">You are looking at a Nisku Formation CO₂ storage feasibility study. The data comes from dozens of files, three decades of regional studies, and a lot of jargon. This guide is the Rosetta Stone.</div>
+
+  <div class="card plain">
+    <span class="tag plain">Plain English</span>
+    <p>We are trying to answer one question: <b>Can the Nisku limestone under central Alberta safely store 25 million tonnes of CO₂ over 25 years, without blowing anything up, leaking anywhere, or stepping on a neighbour's well?</b></p>
+    <p>To answer that we need to know four things:</p>
+    <ol>
+      <li><b>Will the CO₂ fit?</b> → Capacity analysis</li>
+      <li><b>Can we push it in fast enough?</b> → Injectivity analysis</li>
+      <li><b>Where does it go once it's down there?</b> → Plume migration analysis</li>
+      <li><b>How far does the pressure kick travel?</b> → Area of Review (AOR) analysis</li>
+    </ol>
+    <p>Every tab in the Excel workbook and every section in the HTML model is one puzzle piece that helps answer those four questions.</p>
+  </div>
+
+  <div class="card tech">
+    <span class="tag tech">Technical</span>
+    <p>The Nisku Formation is an Upper Devonian carbonate ramp with ~57 m gross thickness at 1,890 m TVDSS in the Wabamun area. Two cored wells (15-32-050-03W5 Enbridge; 8-17-051-03W5 TransAlta) provide direct rock property control. Regional context comes from Stoakes (2010), Machel (2005), and the WASP multi-operator study. We apply CSA Z741 / Bachu (2008) volumetric capacity; Mathias (2009) radial injectivity; Nordbotten-Celia (2006) plume similarity; Theis (1935) pressure diffusion for AOR; Kaldi-Bachu (2009) site screening criteria.</p>
+  </div>
+
+  <h3>The two-layer explanation convention</h3>
+  <p>Throughout this guide you will see two styles of cards:</p>
+  <div class="grid2">
+    <div class="card plain"><span class="tag plain">Plain English</span><p>Simple analogies, what the number means, what to worry about. No equations.</p></div>
+    <div class="card tech"><span class="tag tech">Technical</span><p>The actual equations, assumptions, units, and regulatory framing. What you'd put in a peer-reviewed paper.</p></div>
+  </div>
+  <p>Read only the style that matches how much depth you need. They say the same thing.</p>
+
+  <h3>What the three deliverables are</h3>
+  <table>
+    <tr><th>File</th><th>Purpose</th><th>Who it's for</th></tr>
+    <tr><td><code>Nisku_CCS_Reservoir_Model.html</code></td><td>Live, interactive calculator — change any input, watch the numbers recompute</td><td>Engineer exploring trade-offs, stakeholder during a live meeting</td></tr>
+    <tr><td><code>Nisku_CCS_Reservoir_Model.xlsx</code></td><td>Audit trail — every number has a formula, every formula has a cell you can trace</td><td>Reviewer, regulator, third-party auditor</td></tr>
+    <tr><td><code>Nisku_CCS_Reference_Guide.html</code> <span class="pill key">you are here</span></td><td>Decoder ring — explains every tab, file, term, equation</td><td>Anyone new to the project or new to CCS</td></tr>
+  </table>
+</section>
+
+<!-- =================================================================== -->
+<section id="workflow">
+  <h2>The 4-question CCS workflow</h2>
+  <div class="lede">All of reservoir characterization for CCS ladders into four questions. Every tab serves one of them.</div>
+
+  <table>
+    <tr><th>Question</th><th>Plain English</th><th>Physics</th><th>Tabs that answer it</th></tr>
+    <tr>
+      <td><b>Capacity</b><br>Will it fit?</td>
+      <td>Is there enough empty rock pore space to hold 25 Mt of CO₂?</td>
+      <td>Static volumetrics. Multiply rock volume × porosity × density × efficiency.</td>
+      <td>Core_15_32, Core_08_17, Core_Stats, Fluid_Properties, Capacity, MC_Capacity</td>
+    </tr>
+    <tr>
+      <td><b>Injectivity</b><br>Will it flow in?</td>
+      <td>Can we push 1 Mt/yr through a single well without cracking the rock?</td>
+      <td>Radial flow equation with fracture-pressure safety limit.</td>
+      <td>Inputs, Injectivity, DFIT, SCAL</td>
+    </tr>
+    <tr>
+      <td><b>Plume</b><br>Where does it go?</td>
+      <td>After 25 years, how big a circle of CO₂ sits in the reservoir?</td>
+      <td>Volumetric balance plus buoyancy/mobility correction.</td>
+      <td>Plume, Fluid_Properties, SCAL</td>
+    </tr>
+    <tr>
+      <td><b>AOR</b><br>How far does the pressure reach?</td>
+      <td>Pressure travels further than CO₂. Which existing wells feel enough pressure to leak?</td>
+      <td>Transient pressure diffusion (Theis well function).</td>
+      <td>AOR_Theis, Legacy_Wells</td>
+    </tr>
+  </table>
+
+  <h3>Containment — the sanity-check overlay</h3>
+  <p>On top of those four, there is a containment question: "If we put CO₂ in, will the caprock hold it?" — that's what MICP, XRD, and the DFIT sheets answer. Those tabs don't drive the commercial case directly, but a failure on any of them kills the project instantly.</p>
+
+  <div class="callout">
+    <b>Key framing.</b> The four questions are not equally binding. For Wabamun Nisku, the <u>tightest constraint is AOR pressure-front radius</u>, not volume capacity or injectivity. Pressure reaches further than the plume, and that's what sets the legacy-well integrity workload.
+  </div>
+</section>
+
+<!-- =================================================================== -->
+<section id="folders">
+  <h2>File directory tour</h2>
+  <div class="lede">Everything in your "Nisku Formation CCS Feasibility assessment" folder, color-coded by whether we used it.</div>
+
+  <div style="margin-bottom:10px">
+    <span class="pill used">USED — data directly loaded into the model</span>
+    <span class="pill key">KEY — interpretation / figures referenced</span>
+    <span class="pill ref">REFERENCE — background, not pulled</span>
+  </div>
+
+<div class="tree">
+<div><span class="folder">📁 Nisku Formation CCS Feasibility assessment/</span></div>
+<div>├─ <span class="file used">📄 Nisku_CCS_Reservoir_Model.html</span>          <span class="note">← our deliverable: interactive model</span></div>
+<div>├─ <span class="file used">📄 Nisku_CCS_Reservoir_Model.xlsx</span>         <span class="note">← our deliverable: audit workbook</span></div>
+<div>├─ <span class="file used">📄 Nisku_CCS_Reference_Guide.html</span>         <span class="note">← this file</span></div>
+<div>├─ <span class="file used">📄 Enbridge_Wabamun_BCS_vs_Nisku_Strategy_Memo.docx</span>  <span class="note">← our earlier memo</span></div>
+<div>│</div>
+<div>├─ <span class="folder">📁 Enbridge Wabamun Nisku Well Reservoir Properties/</span>  <span class="note">← PRIMARY DATA FOLDER</span></div>
+<div>│   ├─ <span class="file used">📊 Enbridge Highvale 15-32-50-3 W5_full_diameter_data_excel.xlsx</span>  <span class="pill used">USED</span></div>
+<div>│   │     <span class="note">45 Nisku full-diameter core plugs — this is our anchor well. Gives us Kmax, Kv, porosity, bulk & grain density, rock fabric. Sheet "Porosity for Dunham Plots Nisku".</span></div>
+<div>│   ├─ <span class="file used">📊 08-17-051-03W5.xlsm</span>  <span class="pill used">USED</span></div>
+<div>│   │     <span class="note">20 Nisku full-diameter cores at TransAlta 8-17. Diagenetic analog — shallower, tighter, 30× less permeable. We compare 15-32 to 8-17 to show they are NOT interchangeable.</span></div>
+<div>│   ├─ <span class="file used">📊 Pressure.xlsx</span>  <span class="pill used">USED</span></div>
+<div>│   │     <span class="note">Water-disposal well pressure gradients across the basin. 8 wells, mean 7.5 kPa/m → tells us the regional Nisku is UNDERPRESSURED relative to virgin hydrostatic (~10.5 kPa/m). Means there is room to inject.</span></div>
+<div>│   ├─ <span class="file used">📊 DST.xlsx</span>  <span class="pill used">USED</span></div>
+<div>│   │     <span class="note">Drill-stem tests — short flow tests run decades ago. Multiple Nisku wells. SIP (shut-in pressure) gives independent pressure check.</span></div>
+<div>│   ├─ <span class="file key">📊 Disposal Current and Historic in Area of Interest.xlsx</span>  <span class="pill key">KEY</span></div>
+<div>│   │     <span class="note">Every well that has ever injected into the Nisku in this area. Needed for legacy-well integrity analysis.</span></div>
+<div>│   ├─ <span class="file key">📊 Nisku Disposal wells in Larger AOI.xlsx</span>  <span class="pill key">KEY</span></div>
+<div>│   │     <span class="note">Extended AOI — used when AOR pressure front is >10 km.</span></div>
+<div>│   ├─ <span class="file key">📊 8-17 and 15-32 RF and PoroPerm.xlsx</span>  <span class="pill key">KEY</span></div>
+<div>│   │     <span class="note">Rock fabric (RF) Dunham plots — side-by-side comparison.</span></div>
+<div>│   ├─ <span class="file ref">📊 15-32 Plot.xlsx</span>  <span class="pill ref">REF</span></div>
+<div>│   ├─ <span class="file ref">📊 Core Analysis Detail 4-12-53-2W5.xlsx</span>  <span class="pill ref">REF</span> <span class="note">(another regional well)</span></div>
+<div>│   ├─ <span class="file ref">📊 Routine K-Phi.xls, routines small plugs.xlsx</span>  <span class="pill ref">REF</span></div>
+<div>│   ├─ <span class="file ref">📄 CCUS_2024-03-12_NRW_V3.pdf</span>  <span class="pill ref">REF</span> <span class="note">(CCUS overview)</span></div>
+<div>│   └─ <span class="file ref">📄 00-08-17-51-03W5-01.PDF</span>  <span class="pill ref">REF</span> <span class="note">(8-17 well log)</span></div>
+<div>│</div>
+<div>├─ <span class="file used">📊 SLBCARB_CA_Highvale_08_17_051_03_W5M_10501207_XRD.xlsx</span>  <span class="pill used">USED</span></div>
+<div>│     <span class="note">X-Ray Diffraction mineralogy of 8-17 cores. Tells us the rock is 82–85% calcite → high CO₂ reactivity, relevant for mineral trapping.</span></div>
+<div>├─ <span class="file used">📊 SLBCARB_CA_Highvale_08_17_051_03_W5M_105101207_TRAdata.xlsx</span>  <span class="pill used">USED</span></div>
+<div>│     <span class="note">Total Rock Analysis — chemical composition / trace elements.</span></div>
+<div>│</div>
+<div>├─ <span class="folder">📁 Stoakes - 2010 Regional Nisku study/</span>  <span class="pill key">KEY</span></div>
+<div>│   ├─ <span class="file key">📄 2010 Regional Nisku text figs.pdf</span>  <span class="note">← The regional anchor. Defines reef/open-marine/shale-basin facies. 6 analog wells.</span></div>
+<div>│   ├─ <span class="folder">📁 Appendix I Core/</span>  <span class="note">Core descriptions + analyses from 6 regional wells</span></div>
+<div>│   │   └─ <span class="file key">📊 WASP_All_New_Core_Analyses.xls</span>  <span class="note">Basin-wide core database — sanity check on our 15-32 numbers</span></div>
+<div>│   ├─ <span class="folder">📁 Appendix II Cuttings/</span>  <span class="note">6 × TIFF thin-section images at 240×</span></div>
+<div>│   ├─ <span class="folder">📁 Appendix III Cross Sections/</span>  <span class="note">Stratigraphic sections A-A' through F-F'</span></div>
+<div>│   ├─ <span class="folder">📁 Appendix IV Maps/</span>  <span class="note">Isopach map of Nisku open marine</span></div>
+<div>│   └─ <span class="folder">📁 Appendix V Database/</span>  <span class="note">Formation-top picks (CSV)</span></div>
+<div>│</div>
+<div>├─ <span class="folder">📁 CDL - 2023 Nisku Hydrogeological Study/</span>  <span class="pill key">KEY</span></div>
+<div>│   ├─ <span class="file key">📄 EBWH FINAL Report.pdf</span>  <span class="note">Enbridge Wabamun hydrogeology — pressure regime, brine chemistry, compartmentalization</span></div>
+<div>│   └─ <span class="note">5 other interim briefings (Jun / Aug / Sep / Oct / Nov 2023)</span></div>
+<div>│</div>
+<div>├─ <span class="folder">📁 Nisku special core data Accumap/</span>  <span class="pill ref">REF</span></div>
+<div>│   └─ <span class="note">21 × SCAL/WAN PDFs from Accumap — regional SCAL library. We reference exponents / Swi.</span></div>
+<div>│</div>
+<div>├─ <span class="folder">📁 References/</span>  <span class="pill key">KEY</span></div>
+<div>│   ├─ <span class="file key">📄 Bachu carbon storage srccs_chapter5-1.pdf</span>        <span class="note">← IPCC Chapter 5 — foundation</span></div>
+<div>│   ├─ <span class="file key">📄 Bachu 53_Capacity-for-CO2-Storage…pdf</span>            <span class="note">← volumetric capacity methodology</span></div>
+<div>│   ├─ <span class="file key">📄 Kaldi and Bachu 2009 CCUS criteria.pdf</span>           <span class="note">← site screening framework</span></div>
+<div>│   ├>── <span class="file key">📄 The_Wabamun_Area_Sequestration_Project_WASP…pdf</span> <span class="note">← our region's foundational study</span></div>
+<div>│   ├─ <span class="file key">📄 ERCB-AGS Special Report 095_Brazeau Nisku Q Pool.pdf</span> <span class="note">← regulator-accepted reservoir analog</span></div>
+<div>│   ├─ <span class="file key">📄 Machel 2005_Nisk AGI.pdf</span>                          <span class="note">← acid gas injection in Nisku — real performance</span></div>
+<div>│   ├─ <span class="file key">📄 Chadwick et al 2008 best-practice…pdf</span>            <span class="note">← saline aquifer operational guidance</span></div>
+<div>│   ├─ <span class="file key">📄 Det Norske Veritas 2019 Geological storage of CO2.pdf</span> <span class="note">← DNV-RP-J203 standard</span></div>
+<div>│   ├─ <span class="file ref">📄 Stacey et al 2020 Basin Research.pdf</span>            <span class="note">← diagenesis of WCSB carbonates</span></div>
+<div>│   ├─ <span class="file ref">📄 Eisinger and Jensen 2011.pdf</span>                    <span class="note">← CO₂ reservoir characterization workflow</span></div>
+<div>│   ├─ <span class="file ref">📄 Kaldi et al 2009 Geological Input…pdf</span>           <span class="note">← site evaluation</span></div>
+<div>│   ├─ <span class="file ref">📄 Suitability_of_the_Alberta_Subsurface…pdf</span>       <span class="note">← basin-wide AB suitability</span></div>
+<div>│   └─ <span class="note">+ 8 other background PDFs (USGS, IEAGHG, SACS, AB Gov't, etc.)</span></div>
+<div>│</div>
+<div>├─ <span class="file used">📄 2012 Nisku Highvale report figs plates table.pdf</span>   <span class="pill used">USED</span> <span class="note">← 15-32 interpretation figures</span></div>
+<div>├─ <span class="file used">📄 TransAlta Nisku 8-17 Poster Board.pdf</span>              <span class="pill used">USED</span> <span class="note">← 8-17 summary poster</span></div>
+<div>├─ <span class="file ref">📄 Appendix II.pdf</span>                                     <span class="pill ref">REF</span></div>
+<div>├─ <span class="file ref">📄 CoreSheetSymbolKey.PDF</span>                              <span class="pill ref">REF</span> <span class="note">← how to read core descriptions</span></div>
+<div>├─ <span class="file ref">📊 FD Schlumberger routines.sbr.xlsm</span>                   <span class="pill ref">REF</span></div>
+<div>└─ <span class="file ref">📄 Presentation Initial Discussion Feb. 2025.pptx</span>       <span class="pill ref">REF</span></div>
+</div>
+
+  <div class="callout">
+    <b>What this tells you.</b> We have two direct wells (15-32 and 8-17), one regional study (Stoakes 2010 with 6 analog wells), one hydrogeology study (CDL 2023), and XRD mineralogy on 8-17. That's enough for a Phase-1 feasibility model but <u>not enough for FID</u>. We still need: (a) dedicated DFIT on 15-32, (b) fresh caprock MICP, (c) proper SCAL on 15-32 cores.
+  </div>
+</section>
+
+<!-- =================================================================== -->
+<section id="sources">
+  <h2>Key source files — ranked by how much they drive the model</h2>
+  <div class="lede">Not all data is equal. Here are the files that actually set the numbers you see in the model, in order of impact.</div>
+
+  <table>
+    <tr><th>#</th><th>File</th><th>What it gives us</th><th>Where it shows up</th></tr>
+    <tr><td>1</td><td><code>Enbridge Highvale 15-32-50-3 W5_full_diameter_data_excel.xlsx</code></td><td>45 Nisku core plugs → φ p50 = 7.8%, Kmax geomean = 215 mD, Kv/Kmax = 0.029</td><td>Core_15_32, Inputs rows 13-15, Capacity, Injectivity, Plume, AOR</td></tr>
+    <tr><td>2</td><td><code>08-17-051-03W5.xlsm</code></td><td>20 cores → comparison well, shows diagenetic risk. φ p50 = 5.1%, K geomean = 6.8 mD, Kv/Kmax = 0.23</td><td>Core_08_17, Core_Stats</td></tr>
+    <tr><td>3</td><td><code>Pressure.xlsx</code> (regional disposal wells)</td><td>Regional pressure gradient: 7.5 kPa/m (underpressured). Means ΔP headroom is generous.</td><td>Inputs p-gradient, DFIT, AOR</td></tr>
+    <tr><td>4</td><td><code>SLBCARB_CA_Highvale_…XRD.xlsx</code></td><td>Calcite 82–85%, dolomite 6–12%, clay minerals &lt;3%</td><td>XRD_Mineralogy, SCAL trapping breakdown</td></tr>
+    <tr><td>5</td><td>Bachu (2008) + Kaldi-Bachu (2009)</td><td>E = 1–4% efficiency range, site-screening framework</td><td>Capacity, MC_Capacity, Inputs row 31</td></tr>
+    <tr><td>6</td><td>Lund Snee &amp; Zoback (2020)</td><td>WCSB regional stress state → frac gradient 16.5 kPa/m</td><td>DFIT, Inputs fracture gradient</td></tr>
+    <tr><td>7</td><td>Mathias et al. (2009)</td><td>Closed-form radial injectivity ΔP</td><td>Injectivity tab</td></tr>
+    <tr><td>8</td><td>Nordbotten &amp; Celia (2006)</td><td>Plume radius similarity solution</td><td>Plume tab</td></tr>
+    <tr><td>9</td><td>Theis (1935)</td><td>Pressure diffusion → AOR radius</td><td>AOR_Theis tab</td></tr>
+    <tr><td>10</td><td>CDL 2023 Hydrogeology Study</td><td>Brine chemistry, compartmentalization, regional context</td><td>Inputs notes, Legacy_Wells narrative</td></tr>
+    <tr><td>11</td><td>Stoakes 2010 Regional Nisku</td><td>Facies model (reef / open marine / basin), isopach map, 6 analog wells</td><td>Gross thickness range in MC_Capacity, heterogeneity context</td></tr>
+  </table>
+
+  <h3>Where the assumed values came from</h3>
+  <p>Every input in the model ladders to one of three categories:</p>
+  <div class="grid2">
+    <div class="card plain">
+      <span class="tag plain">Plain English</span>
+      <p><b>Measured from our cores</b> — porosity, permeability, grain density. These come straight from the 45-sample 15-32 dataset. Most reliable.</p>
+      <p><b>From regional data</b> — pressure gradient, fracture gradient, fluid properties. These come from the basin — good enough for Phase 1, should be confirmed on-site.</p>
+      <p><b>Literature defaults</b> — efficiency factor, relative permeability exponents, seal entry pressure. Assumed from published analogs. Biggest source of uncertainty.</p>
+    </div>
+    <div class="card tech">
+      <span class="tag tech">Technical — provenance</span>
+      <p><b>Direct measurement:</b> φ, Kmax, Kv, ρ<sub>grain</sub>, h_gross → Schlumberger Carbon Services file 52131-2023-01375.</p>
+      <p><b>Regional inference:</b> p_gradient (7.5 kPa/m disposal, 10.5 kPa/m virgin hydrostatic), fg (16.5 kPa/m), T_gradient (30 °C/km), salinity (210,000 mg/L).</p>
+      <p><b>Literature defaults:</b> E (Bachu 2015), krg* (Corey/Brooks-Corey 0.45), Swi (SCAL 0.22), P<sub>entry</sub> (Calmar shale analog 12.5 MPa lab Hg/air → 0.68 MPa CO₂/brine in-situ).</p>
+    </div>
+  </div>
+</section>
+
+<!-- =================================================================== -->
+<section id="analogs">
+  <h2>Regional &amp; analog studies</h2>
+  <div class="lede">These five studies are why we believe the Nisku can do this job. Each one gives us a reference point to calibrate against.</div>
+
+  <h3>WASP — The Wabamun Area Sequestration Project</h3>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    A multi-operator study (~2010-2012) that assessed the Nisku across the Wabamun area for CCS. It's the regional grandfather: it set expectations that the Nisku can hold ~100 Mt per township (93 km²). Our P50 at 500 km² × 3% efficiency → ~24 Mt, which scales to ~150 Mt/township. On the optimistic side of WASP, but within range.</div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    Bachu et al. The_Wabamun_Area_Sequestration_Project_WASP. Multi-model integration, static + dynamic simulations. Used as P50 anchor for lease-level capacity. WASP regional P50 efficiency converged at 3–4% after pressure-management realization.</div>
+
+  <h3>ERCB-AGS Special Report 095 — Brazeau Nisku Q Pool</h3>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    An actual Nisku reservoir that has been producing gas for decades. We get 40 years of pressure-production history — it's a real-world calibration point that proves the Nisku holds pressure, and proves what permeability looks like at scale.</div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    AER Special Report. Pool-level Kh from history-match ~20-50 D·m. Decline analysis gives aquifer strength. Confirms regional compartmentalization scale.</div>
+
+  <h3>Machel 2005 — Nisku Acid Gas Injection</h3>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    People have been injecting sour gas (H₂S + CO₂) into the Nisku for 20+ years at existing disposal wells. It works. This is the closest real-world precedent to what we're proposing.</div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    Acid gas injection (AGI) — typically 1–3% of full CCS rates, at existing infrastructure. Performance data informs skin estimates, halite-plugging occurrence, near-well geochemistry.</div>
+
+  <h3>Stoakes 2010 — Regional Nisku Study</h3>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    A full geological picture of the Nisku in this area: where it is, how thick it gets, what facies exist (reef buildups vs open shelf vs basin), how the rock changes with diagenesis. Six analog cored wells. Isopach maps. This is our regional context.</div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    Defines three depositional settings: Reef (Kmax 500-5000 mD), Open Marine (50-500 mD, our 15-32 fit), Off-Reef Basin (tight). Isopach shows 30-70 m thickness across Wabamun. Cross-sections A-A' through F-F' orient our lease within the regional trend.</div>
+
+  <h3>CDL 2023 — Enbridge Wabamun Hydrogeological Study</h3>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    The freshest look at the regional Nisku water system, commissioned specifically for the Enbridge Wabamun project. Tells us how hydraulically connected the aquifer is, where the brine flows naturally, and what's in the water chemically.</div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    CDL EBWH FINAL Report. Regional pressure gradient 7.5 kPa/m (underpressured vs virgin 10.5). TDS ~210,000 mg/L Na-Ca-Cl brine. Mild to moderate compartmentalization on township-scale. Nisku connected to underlying Wabamun through fractured contacts locally.</div>
+</section>
+
+<!-- =================================================================== -->
+<!-- EXCEL WORKBOOK TABS -->
+<!-- =================================================================== -->
+<section id="tab-readme">
+  <h2>Tab 1 · README</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    The cover page. Tells you what's in the workbook, who built it, what colors mean, and how to read the rest.</div>
+  <h4>Colour code (used throughout the workbook)</h4>
+  <table>
+    <tr><th>Colour</th><th>Meaning</th></tr>
+    <tr><td style="color:#0000FF;font-weight:700">Blue text</td><td>User input — you can change this</td></tr>
+    <tr><td style="color:#000;font-weight:700">Black text</td><td>Formula — computed from blue inputs</td></tr>
+    <tr><td style="color:#008000;font-weight:700">Green text</td><td>Cross-sheet link — value pulled from another tab</td></tr>
+    <tr><td style="background:#FFF2CC">Yellow fill</td><td>Key assumption to watch</td></tr>
+    <tr><td style="background:#C6EFCE">Green fill</td><td>OK status or headline result</td></tr>
+    <tr><td style="background:#F8CBAD">Red fill</td><td>Warning / exceeded limit</td></tr>
+  </table>
+</section>
+
+<section id="tab-inputs">
+  <h2>Tab 2 · Inputs</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    The control panel. Every number the model uses comes from here. Change any blue cell and everything downstream recomputes.</div>
+  <h3>Sections</h3>
+  <table>
+    <tr><th>Section</th><th>What's in it</th></tr>
+    <tr><td><b>PROJECT SCOPE</b></td><td>Injection rate (1 Mt/yr), number of wells, project life (25 yr), lease area (500 km²)</td></tr>
+    <tr><td><b>RESERVOIR (15-32)</b></td><td>Depth (1,890 m), thickness (57 m), NTG (0.65), porosity (7.8%), permeability (215 mD), Kv/Kh (0.029), Swi (0.22)</td></tr>
+    <tr><td><b>FLUIDS &amp; PRESSURE</b></td><td>Pressure gradient (10.5 kPa/m virgin), temperature gradient (30 °C/km), surface T (5 °C), brine salinity/viscosity/density, total compressibility</td></tr>
+    <tr><td><b>DFIT / GEOMECHANICS</b></td><td>Frac gradient (16.5 kPa/m), safety factor (0.9), σ_hmin (31.2 MPa — placeholder), Biot α (0.75)</td></tr>
+    <tr><td><b>CAPACITY</b></td><td>Efficiency factor E (3%)</td></tr>
+    <tr><td><b>INJECTIVITY</b></td><td>Skin, wellbore radius, krg endpoint, perforation length, drainage radius</td></tr>
+    <tr><td><b>AOR</b></td><td>Critical ΔP (1.5 MPa), storativity (2.5e-4)</td></tr>
+    <tr><td><b>MICP / SEAL</b></td><td>Seal entry pressure (1.8 MPa), CO₂ density, CO₂ viscosity</td></tr>
+    <tr><td><b>DERIVED (read-only)</b></td><td>Auto-calculated: initial P, T_reservoir, frac pressure, BHP max, cumulative injection, net thickness</td></tr>
+  </table>
+</section>
+
+<section id="tab-core1532">
+  <h2>Tab 3 · Core_15_32</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    Raw data from 45 rock samples taken from the Enbridge Highvale 15-32 well. Each row is one plug — depth, permeability, porosity, rock fabric. This is the foundational measurement that the entire study depends on.</div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    Schlumberger Carbon Services file 52131-2023-01375. Full-diameter (FD) analysis + small-plug. Nisku interval 1863.2–1920.4 m (57.22 m gross). Parameters: Kmax (max horizontal), K90 (90° to Kmax), Kv, He porosity, bulk density, grain density, Dunham fabric. Rock-fabric tagging: RF1 (K&gt;500, φ&gt;8%), RF2 (K&gt;50, φ&gt;6%), RF3 (K&gt;5, φ&gt;4%), RF4 (tight).</div>
+  <h4>Key statistics (bottom of tab)</h4>
+  <ul>
+    <li>φ p50 = 7.8% | φ p10 = 3.8% | φ p90 = 12.4% | max 17.7%</li>
+    <li>Kmax geomean = 215 mD | p90 = 3,726 mD | max 10,240 mD</li>
+    <li>Kv/Kmax median = 0.029 → strongly layered, good vertical containment</li>
+  </ul>
+  <h4>Charts embedded</h4>
+  <ul>
+    <li>Porosity-permeability crossplot (φ vs log Kmax)</li>
+    <li>Depth vs porosity profile (shows thief zones at top of Nisku)</li>
+  </ul>
+</section>
+
+<section id="tab-core0817">
+  <h2>Tab 4 · Core_08_17</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    Same kind of data as 15-32, but from a different well (TransAlta 8-17, ~11 km away). The rocks look similar on a map, but the properties are dramatically worse. Why? Same formation, different diagenetic history — 8-17 got cemented and tightened over geologic time. This tab exists to prove that point.</div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    Schlumberger JIP CL-54283 (Jan 2012). 20 FD samples, Nisku 1794.7–1854.6 m. φ p50 = 5.1%, Kmax geomean = 6.8 mD, Kv/Kmax = 0.23. Different Kv/Kmax ratio tells us 8-17 is less layered — either more burrowed/homogenized, or the primary layering was obliterated by cementation.</div>
+  <div class="callout warn">
+    <b>Why this tab matters:</b> If someone proposes to use 8-17 properties for the 15-32 injection model, they will design for 30× less permeability than what's actually there. Injectivity numbers would collapse. This tab is the audit-trail proof that we correctly used 15-32 and not 8-17.
+  </div>
+</section>
+
+<section id="tab-corestats">
+  <h2>Tab 5 · Core_Stats</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    Side-by-side comparison of the two wells with ratios. All numbers here are Excel formulas pulling from the raw core tabs — if you edit a raw value, the stats update automatically.</div>
+  <h4>Headline comparisons</h4>
+  <ul>
+    <li>15-32 is ~30× more permeable than 8-17 (geo-mean ratio)</li>
+    <li>15-32 porosity is ~50% higher (median 7.8% vs 5.1%)</li>
+    <li>Kv/Kmax = 0.029 at 15-32 vs 0.23 at 8-17 → 15-32 has stronger layering</li>
+  </ul>
+</section>
+
+<section id="tab-fluid">
+  <h2>Tab 6 · Fluid_Properties</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    What the CO₂ and the brine look like down there. At 1,890 m deep and ~62 °C, CO₂ is a supercritical fluid — denser than gas, less viscous than liquid. The brine is heavy salty water. The ratio between the two matters for how fast CO₂ spreads.</div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    P_init = 19.8 MPa, T = 61.7 °C → supercritical CO₂. ρ_CO₂ ≈ 708 kg/m³ (Span-Wagner anchor). μ_CO₂ = 0.06 cP. Brine: ρ_w = 1,100 kg/m³, μ_w = 0.6 cP. Mobility ratio M = (μ_w · krw*)/(μ_CO₂ · krg*) ≈ 7.8. √M = 2.79 → Nordbotten finger-factor. Δρ = 392 kg/m³ → buoyancy driver.</div>
+  <div class="callout">
+    <b>Why mobility matters.</b> M&gt;1 means CO₂ fingers through the brine rather than pushing it out like a piston. Our M = 8 is an "unfavourable" displacement — typical for CCS. The plume doesn't move as a neat circle; the leading edge reaches ~2.8× further than volume-balance would predict.
+  </div>
+</section>
+
+<section id="tab-capacity">
+  <h2>Tab 7 · Capacity</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    How much CO₂ fits in the lease? Multiply: (area) × (thickness) × (porosity) × (available pore space after residual water) × (CO₂ density) × (how much of the pore network is actually reachable — the "efficiency factor"). Answer at defaults: ~24 Mt. Target: 25 Mt. We're on the edge — which is why pressure management (bumping efficiency from 3% to 4%) or larger area matters so much.</div>
+  <div class="equation">
+    M = A × h<sub>net</sub> × φ × (1 − S<sub>wi</sub>) × ρ<sub>CO₂</sub> × E
+  </div>
+  <h4>Scenario ladder (on the tab)</h4>
+  <table>
+    <tr><th>Scenario</th><th>E</th><th>Capacity (Mt)</th><th>Utilization</th><th>Meaning</th></tr>
+    <tr><td>P10 — pessimistic</td><td>1%</td><td>~8</td><td>313%</td><td>Won't fit — need bigger lease</td></tr>
+    <tr><td>P50 — base Bachu</td><td>3%</td><td>~24</td><td>104%</td><td>Marginal — 25 Mt barely fits</td></tr>
+    <tr><td>P50 + pressure mgmt</td><td>4%</td><td>~32</td><td>78%</td><td>Working case — 22% headroom</td></tr>
+    <tr><td>P75 aggressive</td><td>6%</td><td>~48</td><td>52%</td><td>With brine production</td></tr>
+    <tr><td>P90 optimistic</td><td>10%</td><td>~80</td><td>31%</td><td>Closed system w/ bulk removal</td></tr>
+  </table>
+</section>
+
+<section id="tab-mc">
+  <h2>Tab 8 · MC_Capacity (Monte-Carlo)</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    Instead of calculating capacity once with "best guesses", we run it 10,000 times, each time pulling slightly different values from the plausible range of inputs (area, porosity, efficiency, etc.). The result is a distribution — 10% chance it's at least X, 50% chance at least Y, 90% chance at least Z. This is how uncertainty gets quantified.</div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    10,000 independent samples. Distributions: Triangular for area / h / NTG / Swi / ρ_CO₂ / E; Normal for φ (p10-p50-p90 from 45 samples). No correlation applied in the sheet (simplification — the HTML model optionally applies φ↔K Pearson 0.7).</div>
+  <h4>Headline output</h4>
+  <ul>
+    <li>P10 ≈ 50 Mt | P50 ≈ 300 Mt | P90 ≈ 2,000 Mt</li>
+    <li>Area and E dominate the spread → variance-reduction priority is a well-designed pressure-management strategy</li>
+  </ul>
+</section>
+
+<section id="tab-inj">
+  <h2>Tab 9 · Injectivity</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    Can a single well take 1 Mt/yr without cracking the rock? Answer: yes — with ~7 MPa of headroom. We calculate the bottomhole pressure needed to push that rate through the formation, and check it against 90% of the minimum horizontal stress (the AER safety ceiling). ΔP required = 1.0 MPa; ceiling is 7 MPa above initial pressure. You could probably inject 3–5 Mt/yr per well before hitting the limit.</div>
+  <div class="equation">
+    ΔP<sub>bh</sub> = (Q<sub>res</sub> · μ<sub>CO₂</sub>) / (2π · k · k<sub>rg</sub> · h<sub>perf</sub>) × [ln(r<sub>e</sub>/r<sub>w</sub>) + s]
+  </div>
+  <h4>What the "Rate sensitivity" sub-table shows</h4>
+  <p>Scans Q from 0.5 to 3.0 Mt/yr, reports BHP and OK/EXCEEDED status at each. The break-point is around 3.5 Mt/yr under base inputs.</p>
+</section>
+
+<section id="tab-plume">
+  <h2>Tab 10 · Plume</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    Where does the CO₂ actually go? We calculate the radius of the plume circle at 1, 2, 5, 10, 15, 20, 25, 30, 50, 100 years. At 25 years, radius ≈ 6.2 km. That's the "mass" of CO₂ under the surface — not where the pressure reaches. Plume is smaller than pressure footprint (which is the AOR).</div>
+  <div class="equation">
+    r(t) = √[V(t) / (π · h · φ · (1−S<sub>wi</sub>))] × √M
+  </div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    V(t) = Q<sub>res</sub> · t (reservoir-volume throughput). Then divide by accessible pore volume per unit area (h · φ · (1-Swi)) to get footprint area, then radius. The √M factor corrects for the fact that CO₂ is more mobile than brine — it fingers forward rather than displacing as a piston.</div>
+</section>
+
+<section id="tab-aor">
+  <h2>Tab 11 · AOR_Theis</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    The most important regulatory tab. Pressure spreads through the aquifer much further and faster than the CO₂ plume. AOR = "Area of Review" = the radius where pressure increase is big enough that an old leaky well could leak brine to surface. EPA says use 1.5 MPa. Our answer: ~9.8 km. Every existing well within 9.8 km of our injector has to be reviewed for integrity.</div>
+  <div class="equation">
+    ΔP(r,t) = (Q · μ<sub>w</sub>) / (4π · k · h<sub>eff</sub>) × W(u)     where W(u) is the Theis well function, u = r² · φ · μ<sub>w</sub> · c<sub>t</sub> / (4 · k · t)
+  </div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    Classical Theis (1935) for confined aquifer transient pressure. Solution in terms of the exponential integral W(u) — approximated here with Cooper-Jacob (u&lt;0.01) and series expansion (0.01&lt;u&lt;1). Bisection solver for r at ΔP_crit. Table on tab sweeps r from 100 m to 100 km and shows how quickly ΔP drops off.</div>
+  <h4>AOR by criterion</h4>
+  <table>
+    <tr><th>ΔP_crit</th><th>r_AOR</th><th>Regulatory context</th></tr>
+    <tr><td>0.5 MPa</td><td>~25 km</td><td>Ultra-conservative (drinking-water protection)</td></tr>
+    <tr><td>1.0 MPa</td><td>~15 km</td><td>Conservative</td></tr>
+    <tr><td>1.5 MPa</td><td>~9.8 km</td><td>EPA Class VI default</td></tr>
+    <tr><td>2.0 MPa</td><td>~7 km</td><td>Typical Alberta disposal</td></tr>
+  </table>
+</section>
+
+<section id="tab-dfit">
+  <h2>Tab 12 · DFIT</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    DFIT = "Diagnostic Fracture Injection Test". A short test you run before real injection where you pump a tiny amount of water at high rate, then shut in and watch how pressure decays. The decay pattern tells you the horizontal stress in the rock and the fracture propagation pressure. From that you compute the maximum BHP you're allowed to run at. Required by AER before permitting.</div>
+  <div class="callout warn">
+    <b>Gap:</b> σ<sub>hmin</sub> = 31.2 MPa in our model is a regional placeholder from Lund Snee &amp; Zoback (2020). A dedicated DFIT on 15-32 is needed before FID. If real DFIT shows σ<sub>hmin</sub> is lower than 31 MPa, our injection-rate ceiling drops proportionally.
+  </div>
+  <h4>Required DFIT deliverables for the regulator</h4>
+  <ol>
+    <li>ISIP (Instantaneous Shut-In Pressure)</li>
+    <li>Fracture closure pressure (G-function analysis)</li>
+    <li>Pore pressure (radial flow signature)</li>
+    <li>Leakoff coefficient</li>
+    <li>Fracture gradient</li>
+    <li>σ_hmin estimate (closure is preferred; ISIP is acceptable)</li>
+    <li>Poisson's ratio back-calc vs log-based σ_hmin</li>
+    <li>Biot α (from pulse-decay or independent measurement)</li>
+  </ol>
+</section>
+
+<section id="tab-micp">
+  <h2>Tab 13 · MICP</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    MICP = "Mercury Injection Capillary Pressure". Test where you squeeze mercury (a non-wetting fluid — like CO₂) into a rock sample and measure the pressure needed to get it past the tiny seal rock pore throats. High pressure needed = tight seal = good caprock. We translate the lab mercury value into an equivalent CO₂/brine value, then calculate how tall a column of CO₂ the caprock can hold before it leaks.</div>
+  <div class="equation">
+    Max column height = P<sub>entry,CO₂/brine</sub> / [(ρ<sub>w</sub> − ρ<sub>CO₂</sub>) · g]
+  </div>
+  <p>Our Nisku caprock (Calmar Fm / Ireton shale) holds ~176 m of CO₂ column vs 57 m reservoir thickness → <b>3.1× safety factor</b>.</p>
+  <div class="callout warn">
+    <b>Gap:</b> P<sub>entry</sub> = 12.5 MPa is a regional shale analog (Calmar Fm). Need dedicated MICP on 15-32 caprock cuttings to confirm.
+  </div>
+</section>
+
+<section id="tab-scal">
+  <h2>Tab 14 · SCAL</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    SCAL = "Special Core Analysis". Lab tests that measure how CO₂ and brine flow past each other when both are in the rock at the same time. Result is "relative permeability curves" — the endpoints (krg* = 0.45, krw* = 0.35) and shape of how permeability drops as saturation changes. These curves feed the injectivity and plume calculations.</div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    Brooks-Corey / Corey rel-perm. Drainage (CO₂ displaces brine). Parameters: Swi = 0.22, Sgr = 0.28, krg* = 0.45, krw* = 0.35, ng = 2, nw = 2.5. Default values drawn from SCAL analogs in <code>Nisku special core data Accumap</code> folder — 21 regional SCAL PDFs.</div>
+  <h4>Also on this tab — Storage mechanism breakdown</h4>
+  <table>
+    <tr><th>Mechanism</th><th>% of E</th><th>Timescale</th><th>Mobile?</th></tr>
+    <tr><td>Structural (buoyant, free phase)</td><td>55%</td><td>Immediate</td><td>Yes</td></tr>
+    <tr><td>Residual (Sgr)</td><td>25%</td><td>10-100 yr</td><td>No — trapped</td></tr>
+    <tr><td>Solubility (into brine)</td><td>12%</td><td>100-1000 yr</td><td>No — dissolved</td></tr>
+    <tr><td>Mineral (carbonate precipitation)</td><td>8%</td><td>1000+ yr</td><td>No — permanent</td></tr>
+  </table>
+</section>
+
+<section id="tab-xrd">
+  <h2>Tab 15 · XRD_Mineralogy</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    XRD = "X-Ray Diffraction". A lab test that fires X-rays at powdered rock and reads back what minerals are in it by percentage. Our Nisku is 82–85% calcite (pure limestone) with a bit of dolomite. That's important for two reasons: (1) calcite is reactive with CO₂-water, so over decades we get some "mineral trapping" — the CO₂ literally turns into rock; (2) there's no clay to swell and choke the reservoir.</div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    Source: <code>SLBCARB_CA_Highvale_08_17_051_03_W5M_10501207_XRD.xlsx</code>. 3 samples on Nisku interval. Mean: Calcite 81.7%, Dolomite 8.7%, Quartz 4%, Plagioclase 1.3%, K-feldspar 0.7%, Illite/mica 1.7%, Pyrite 1%, Anhydrite 1%.</div>
+  <h4>Reactivity implications</h4>
+  <ul>
+    <li><b>Positive:</b> calcite + CO₂ + H₂O → Ca²⁺ + 2HCO₃⁻. Near-well dissolution → wormholing → skin improvement (injectivity goes up over time).</li>
+    <li><b>Neutral:</b> no clay swelling risk (low illite, no smectite)</li>
+    <li><b>Watch:</b> anhydrite (1%) + high salinity brine → possible halite plugging. Plan a waterflush protocol.</li>
+  </ul>
+</section>
+
+<section id="tab-legacy">
+  <h2>Tab 16 · Legacy_Wells</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    Every well ever drilled through the Nisku near our injection site. Each one is a potential leak path — if the cement is bad or the plug is degraded, pressure from our injection could push brine (or eventually CO₂) up that old well to surface. This tab lists them, whether they're within the 9.8 km AOR, and what we have to do about them.</div>
+  <h4>The action matrix</h4>
+  <table>
+    <tr><th>Well category</th><th>Required action</th><th>Timing</th><th>Typical cost</th></tr>
+    <tr><td>Penetrates Nisku, within AOR, active</td><td>MIT + CBL + pressure survey</td><td>Pre-injection</td><td>$250k–500k</td></tr>
+    <tr><td>Penetrates Nisku, within AOR, plugged</td><td>Records review + re-abandon if fails</td><td>Pre-injection</td><td>$150k–$1M</td></tr>
+    <tr><td>Penetrates Nisku, outside AOR</td><td>Records review only</td><td>Pre-FID</td><td>$10k–25k</td></tr>
+    <tr><td>Not into Nisku, within AOR</td><td>No action — sealing formations protect</td><td>Documentation</td><td>—</td></tr>
+  </table>
+  <p class="mini">MIT = Mechanical Integrity Test. CBL = Cement Bond Log.</p>
+</section>
+
+<section id="tab-sens">
+  <h2>Tab 17 · Sensitivity</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    "Tornado chart" — if you had to pick the one number most worth refining, which would it be? We vary each input between its low and high range, one at a time, and see how much capacity moves. The longest bar wins. For us: <b>Area and E (efficiency) dominate</b> → if you want a bigger, more defensible capacity number, buy more land or design a pressure-management well pattern.</div>
+</section>
+
+<section id="tab-refs">
+  <h2>Tab 18 · References</h2>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    17 citations — every methodology the model uses, in one place. Use this when writing the AER submission; copy-paste the reference list.</div>
+  <h4>Must-know citations</h4>
+  <ol>
+    <li><b>Bachu (2008)</b> — saline aquifer capacity methodology</li>
+    <li><b>CSA Z741</b> — the Canadian geological storage standard</li>
+    <li><b>Mathias et al. (2009)</b> — injectivity</li>
+    <li><b>Nordbotten &amp; Celia (2006)</b> — plume migration</li>
+    <li><b>Theis (1935)</b> — pressure diffusion / AOR</li>
+    <li><b>Kaldi &amp; Bachu (2009)</b> — site screening</li>
+    <li><b>AER Directive 065</b> — disposal/injection regulations</li>
+    <li><b>40 CFR 146.84</b> — EPA Class VI AOR rules</li>
+  </ol>
+</section>
+
+<!-- =================================================================== -->
+<!-- PHYSICS PRIMERS -->
+<!-- =================================================================== -->
+<section id="phys-capacity">
+  <h2>Physics primer · Capacity (Bachu volumetric)</h2>
+
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    Think of the rock as a big sponge. You're trying to figure out how much CO₂ soda you can squirt into it before it overflows. The sponge's total volume × how holey it is × how much of the holes are accessible × how dense the soda is = how many kilograms of soda fit.</div>
+
+  <div class="card tech"><span class="tag tech">Technical</span>
+    <div class="equation">M<sub>CO₂</sub> = A · h · NTG · φ · (1 − S<sub>wi</sub>) · ρ<sub>CO₂</sub> · E</div>
+    <table>
+      <tr><th>Symbol</th><th>Meaning</th><th>Typical range</th><th>Our value</th></tr>
+      <tr><td>A</td><td>Lease area</td><td>100–10,000 km²</td><td>500 km²</td></tr>
+      <tr><td>h</td><td>Gross reservoir thickness</td><td>10–100 m</td><td>57 m</td></tr>
+      <tr><td>NTG</td><td>Net-to-gross (fraction that's good reservoir)</td><td>0.4–0.9</td><td>0.65</td></tr>
+      <tr><td>φ</td><td>Porosity</td><td>0.05–0.25</td><td>0.078</td></tr>
+      <tr><td>S<sub>wi</sub></td><td>Irreducible water saturation</td><td>0.15–0.35</td><td>0.22</td></tr>
+      <tr><td>ρ<sub>CO₂</sub></td><td>CO₂ density at reservoir P,T</td><td>600–800 kg/m³</td><td>708</td></tr>
+      <tr><td>E</td><td>Efficiency (fraction of pore volume actually usable)</td><td>0.01–0.10</td><td>0.03</td></tr>
+    </table>
+    <p>E is the fudge factor that captures everything the simple volumetrics can't: heterogeneity, gravity override, mobility contrast, pressure compartmentalization. Bachu (2008/2015) gives 1–4% for open saline aquifers without pressure management.</p>
+  </div>
+</section>
+
+<section id="phys-inj">
+  <h2>Physics primer · Injectivity (Mathias radial)</h2>
+
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    Pushing CO₂ into rock is like pushing water through a coffee filter — you need some extra pressure above the ambient. How much extra pressure depends on: how fast you're pushing (Q), how sticky the CO₂ is (μ), how holey the rock is (k), how thick it is (h), and how far from the well you need to drive flow (ln of radius).</div>
+
+  <div class="card tech"><span class="tag tech">Technical</span>
+    <div class="equation">ΔP<sub>bh</sub> = (Q<sub>res</sub> · μ<sub>CO₂</sub>) / (2π · k · k<sub>rg</sub> · h<sub>perf</sub>) · [ln(r<sub>e</sub>/r<sub>w</sub>) + s]</div>
+    <p>Classical radial steady-state Darcy. Mathias (2009) adapts it for CO₂ with relative-permeability and buoyancy corrections; for a Phase-1 estimate the krg·h formulation above is sufficient.</p>
+    <p><b>Units check:</b> Q in m³/s, μ in Pa·s, k in m² (multiply mD × 9.869e-16), h in m → ΔP in Pa.</p>
+    <p><b>Our result:</b> Q_res = 0.044 m³/s, μ = 6e-5, k = 2.12e-13 m², krg = 0.45, h = 37 m, ln(500/0.11) = 8.4 → ΔP = 1.02 MPa. BHP = P_init + ΔP = 20.9 MPa vs ceiling 28.1 MPa. OK.</p>
+  </div>
+</section>
+
+<section id="phys-plume">
+  <h2>Physics primer · Plume (Nordbotten-Celia similarity)</h2>
+
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    After 25 years of injecting, how wide is the "footprint" of CO₂ in the reservoir? Take the total volume injected, divide by the accessible pore space per square meter, that gives you area → radius. But CO₂ is slipperier than brine, so it fingers ahead of the volume balance. Correct with √M.</div>
+
+  <div class="card tech"><span class="tag tech">Technical</span>
+    <div class="equation">r<sub>plume</sub>(t) = √[V<sub>res</sub>(t) / (π · h · φ · (1−S<sub>wi</sub>))] · √M</div>
+    <p>Nordbotten &amp; Celia (2006) derived this from the coupled momentum-mass balance under sharp-interface assumptions. The √M factor accounts for the mobility contrast — the leading edge of the plume advances faster than piston displacement.</p>
+    <p>M = (μ_w · krw*) / (μ_CO₂ · krg*) — the "endpoint mobility ratio". Our M ≈ 8, √M ≈ 2.8. That means the plume radius is 2.8× the volume-balance radius — a big correction.</p>
+  </div>
+</section>
+
+<section id="phys-theis">
+  <h2>Physics primer · Pressure front (Theis)</h2>
+
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    When you start injecting, pressure at the well goes up immediately. That pressure increase spreads outward like ripples in a pond — but the pond is underground, and the "ripple" dampens fast because the rock absorbs pressure (compressibility). Theis (1935) gives the exact shape of the ripple. At some radius the pressure increase drops below whatever value we've chosen as "enough to worry about" — that's our AOR radius.</div>
+
+  <div class="card tech"><span class="tag tech">Technical</span>
+    <div class="equation">ΔP(r,t) = (Q · μ<sub>w</sub>) / (4π · k · h<sub>eff</sub>) · W(u)     u = r² · φ · μ<sub>w</sub> · c<sub>t</sub> / (4 · k · t)</div>
+    <p>W(u) is the Theis well function, also known as the exponential integral −E<sub>i</sub>(−u). It's infinite at r=0, falls off logarithmically for small u, and exponentially for large u. Numerical approximations:</p>
+    <ul>
+      <li>u &lt; 0.01: Cooper-Jacob: W ≈ −0.5772 − ln(u)</li>
+      <li>0.01 &lt; u &lt; 1: series: W ≈ −0.5772 − ln(u) + u − u²/4 + u³/18 …</li>
+      <li>u &gt; 1: asymptotic: W ≈ e^(−u)/u · (1 − 1/u + 2/u² − …)</li>
+    </ul>
+    <p><b>Regulatory reality.</b> EPA Class VI uses ΔP_crit = the pressure increase that would allow brine to rise through the worst legacy well to a depth where it contaminates underground sources of drinking water. For most basins that works out to 1–2 MPa. Our 1.5 MPa is the middle default.</p>
+  </div>
+</section>
+
+<section id="phys-micp">
+  <h2>Physics primer · Seal capacity (MICP)</h2>
+
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    The caprock (Calmar shale) is a lid. The tighter the pores in that lid, the more pressure you need before CO₂ squeezes through. Also, the denser the CO₂ is compared to the brine it's displacing, the less buoyancy force there is pushing the CO₂ up through the lid. Both effects combine to give a "maximum column height" of CO₂ the lid can hold. Ours is about 176 m — way more than our 57 m reservoir needs.</div>
+
+  <div class="card tech"><span class="tag tech">Technical</span>
+    <div class="equation">h<sub>max</sub> = P<sub>entry,CO₂/brine</sub> / [(ρ<sub>w</sub> − ρ<sub>CO₂</sub>) · g]</div>
+    <p>Lab MICP uses Hg/air (high IFT, 480 mN/m). In-situ is CO₂/brine (lower IFT ~30 mN/m at supercritical, contact angle ~30°). Scale lab P<sub>entry</sub> by (IFT<sub>CO₂/brine</sub> · cos θ) / IFT<sub>Hg/air</sub> ≈ 0.054 factor. A 12.5 MPa lab entry → 0.68 MPa in-situ CO₂/brine entry pressure → 176 m holdback column against 392 kg/m³ density contrast.</p>
+  </div>
+</section>
+
+<!-- =================================================================== -->
+<!-- GLOSSARY -->
+<!-- =================================================================== -->
+<section id="glossary-a">
+  <h2>Glossary · A — F</h2>
+  <dl class="glossary">
+    <dt>AER Directive 065</dt>
+    <dd>Alberta Energy Regulator's rulebook for fluid injection and disposal wells. Specifies testing, monitoring, and BHP ceilings. <span class="tech-label">Technical: mandatory compliance framework for any Alberta subsurface injection permit.</span></dd>
+
+    <dt>AOI (Area of Interest)</dt>
+    <dd>The broader area you're studying — usually bigger than the lease. Includes neighbors' wells, regional geology, etc.</dd>
+
+    <dt>AOR (Area of Review)</dt>
+    <dd>The radius around your injector where existing wells have to be reviewed for integrity. Defined by pressure increase, not CO₂ plume. <span class="tech-label">Technical: in EPA Class VI, the AOR is the region within which ΔP exceeds a critical value that could force brine up a legacy well to contaminate USDWs.</span></dd>
+
+    <dt>Bachu (Stefan Bachu)</dt>
+    <dd>The godfather of CCS capacity assessment. Former Alberta Geological Survey; author of the 1–4% efficiency factor you'll see everywhere.</dd>
+
+    <dt>BHP (Bottomhole Pressure)</dt>
+    <dd>The pressure at the bottom of the injection well, right at the reservoir. This is what matters for fracturing — not surface pressure. <span class="tech-label">Technical: BHP = P_init + ΔP_bh at injection steady state. Compared against 0.9·σ_hmin ceiling.</span></dd>
+
+    <dt>Biot α</dt>
+    <dd>Poroelastic coupling coefficient. How much of the pore pressure translates into effective stress change. Dimensionless, 0–1. Our default: 0.75. <span class="tech-label">Technical: σ' = σ − α·Pp (Terzaghi-Biot).</span></dd>
+
+    <dt>Calmar Formation</dt>
+    <dd>The shale that sits on top of the Nisku. Our caprock. The reason CO₂ stays down there.</dd>
+
+    <dt>Caprock</dt>
+    <dd>The impermeable layer above the reservoir that seals the CO₂ in. Without it, no storage project is possible.</dd>
+
+    <dt>CBL (Cement Bond Log)</dt>
+    <dd>A logging tool run inside a well to evaluate how well the cement bonded to the casing and the formation. Bad bonding = potential leak path.</dd>
+
+    <dt>CCS</dt>
+    <dd>Carbon Capture and Storage. (Sometimes CCUS: Carbon Capture, Utilization and Storage.)</dd>
+
+    <dt>Class VI well</dt>
+    <dd>The US EPA designation for wells dedicated to CO₂ sequestration. Governed by 40 CFR 146.84. Stricter than Class II (disposal).</dd>
+
+    <dt>Corey / Brooks-Corey</dt>
+    <dd>Two-parameter curves that describe how permeability to each fluid changes with saturation. You give the endpoint and the exponent, you get a curve.</dd>
+
+    <dt>CSA Z741</dt>
+    <dd>Canadian Standards Association standard for geological storage of CO₂. Sets the Canadian rules for CCS site qualification.</dd>
+
+    <dt>DFIT (Diagnostic Fracture Injection Test)</dt>
+    <dd>A short, high-rate injection test used to measure σ_hmin, frac closure pressure, and pore pressure. Required before CCS injection permits in Alberta.</dd>
+
+    <dt>DST (Drill-Stem Test)</dt>
+    <dd>A well test run during drilling to measure reservoir pressure and flow capacity. Older tech, but gives you decades of historical data.</dd>
+
+    <dt>Dunham classification</dt>
+    <dd>The standard way to name carbonate rocks by texture: mudstone, wackestone, packstone, grainstone, boundstone, crystalline. Higher-energy = coarser = usually more permeable.</dd>
+
+    <dt>E (Efficiency factor)</dt>
+    <dd>The fraction of the theoretical pore volume that can actually store CO₂. Accounts for heterogeneity, buoyancy override, mobility contrast, pressure buildup. 1-4% default (Bachu).</dd>
+
+    <dt>EOS (Equation of State)</dt>
+    <dd>A thermodynamic model relating pressure, volume, temperature, and composition. For CO₂ the reference is Span &amp; Wagner (1996).</dd>
+
+    <dt>FD (Full-Diameter) core</dt>
+    <dd>Core plug cut at full well-bore diameter (~4 inch), rather than the standard 1-inch small plug. Better for heterogeneous carbonates where small plugs can miss pore features.</dd>
+
+    <dt>FID (Final Investment Decision)</dt>
+    <dd>The go/no-go moment on a project. After FID, capital is committed.</dd>
+
+    <dt>Fracture gradient (FG)</dt>
+    <dd>The pressure per unit depth required to propagate a hydraulic fracture. Typically 14–20 kPa/m in the WCSB. Our Nisku: 16.5 kPa/m.</dd>
+  </dl>
+</section>
+
+<section id="glossary-g">
+  <h2>Glossary · G — P</h2>
+  <dl class="glossary">
+    <dt>Geomean (geometric mean)</dt>
+    <dd>The preferred average for log-normally distributed variables like permeability. Take the log of everything, average, then exponentiate back. For our 45 samples, geomean Kmax = 215 mD vs arithmetic mean which would be inflated by the handful of &gt;1000 mD outliers.</dd>
+
+    <dt>He-porosity</dt>
+    <dd>Helium porosity — the standard measurement. Helium atoms are small enough to enter essentially all pores, giving you total connected porosity.</dd>
+
+    <dt>HPC (High Performance Computing)</dt>
+    <dd>Big compute clusters needed for full-physics reservoir simulation. Not used in this Phase-1 screening.</dd>
+
+    <dt>IFT (Interfacial Tension)</dt>
+    <dd>The surface tension between two immiscible fluids. CO₂/brine IFT ~30 mN/m at supercritical conditions. Determines capillary entry pressure.</dd>
+
+    <dt>Injectivity index</dt>
+    <dd>Rate per unit pressure drop (Q/ΔP). The simple one-number metric of "how well does this well take fluid?".</dd>
+
+    <dt>ISIP (Instantaneous Shut-In Pressure)</dt>
+    <dd>The pressure immediately after you stop pumping during a DFIT. Upper bound on σ_hmin. Key DFIT output.</dd>
+
+    <dt>JIP (Joint Industry Project)</dt>
+    <dd>Multi-operator collaborative R&amp;D. SLB-JIP and WASP are both JIPs. Pools cost and data across operators.</dd>
+
+    <dt>Kmax, K90, Kv</dt>
+    <dd>Permeability measured in three directions: maximum horizontal (Kmax), 90° to it (K90), and vertical (Kv). Ratio Kv/Kmax tells you layering. &lt;0.1 = strongly layered.</dd>
+
+    <dt>krg, krw (relative permeabilities)</dt>
+    <dd>How easily CO₂ flows through rock partially saturated with brine (krg), and vice versa (krw). Endpoint values krg* and krw* are what matters for most calculations.</dd>
+
+    <dt>m² vs mD (permeability units)</dt>
+    <dd>Rock permeability. 1 mD = 9.869e-16 m². Petroleum engineers use mD (values 0.01–10,000 legible); physics uses m².</dd>
+
+    <dt>Mathias (Simon Mathias)</dt>
+    <dd>UK researcher. Co-authored the closed-form CCS injectivity solution (2009) that we use — an extension of classical Darcy radial flow.</dd>
+
+    <dt>MICP (Mercury Injection Capillary Pressure)</dt>
+    <dd>A lab test that pushes mercury into a rock sample under increasing pressure, measuring the pressure needed to enter successively smaller pore throats. Gives us seal capacity.</dd>
+
+    <dt>MIT (Mechanical Integrity Test)</dt>
+    <dd>Annual pressure test required on injection wells to prove casing integrity. ≤10% pressure drop over 30 min = pass.</dd>
+
+    <dt>NTG (Net-to-Gross)</dt>
+    <dd>The fraction of total rock thickness that is actually flowable reservoir. A 57 m Nisku with NTG = 0.65 has 37 m of "net pay". Reduces the 57 m gross in all volumetric calculations.</dd>
+
+    <dt>Nisku Formation</dt>
+    <dd>Upper Devonian (Frasnian) carbonate ramp in western Canada. Our target reservoir. Complex facies: reef buildups, open marine shelf, basin-margin shales. At Wabamun: ~57 m thick at 1,890 m depth.</dd>
+
+    <dt>Nordbotten &amp; Celia</dt>
+    <dd>Princeton researchers who produced the similarity solution for CO₂ plume radius (2006 JFM paper). Our plume tab uses their equation.</dd>
+
+    <dt>P10 / P50 / P90</dt>
+    <dd>Probabilistic exceedance values. P10 = 10% probability value is at least this. P50 = median. P90 = 90% probability. Oilfield convention: P10 is PESSIMISTIC (10% chance of being even lower). This reverses from some statistics traditions.</dd>
+
+    <dt>Plume</dt>
+    <dd>The physical volume of injected CO₂ in the reservoir. NOT the same as the pressure footprint (AOR). Always smaller than AOR.</dd>
+
+    <dt>Pore throat</dt>
+    <dd>The narrowest constriction between two pores. Fluid has to squeeze through these. Pore throat distribution (from MICP) is what controls permeability and seal capacity.</dd>
+
+    <dt>Pressure gradient</dt>
+    <dd>Pressure per unit depth (kPa/m). Virgin hydrostatic ~10 kPa/m. Our regional Nisku: 7.5 kPa/m (underpressured — decades of production have depleted it).</dd>
+  </dl>
+</section>
+
+<section id="glossary-q">
+  <h2>Glossary · Q — Z</h2>
+  <dl class="glossary">
+    <dt>Q (flow rate)</dt>
+    <dd>In CCS, usually given as Mt/yr at surface (Q_surf) or m³/s at reservoir conditions (Q_res = Q_surf / ρ_CO₂).</dd>
+
+    <dt>Relative permeability (krg, krw)</dt>
+    <dd>See "kr" entry. Two-phase flow modifier on absolute permeability.</dd>
+
+    <dt>Reservoir</dt>
+    <dd>Any permeable rock that can store fluids. For CCS specifically: porous rock below a sealing caprock at sufficient depth (&gt;~800 m) that CO₂ is supercritical.</dd>
+
+    <dt>Residual trapping (Sgr)</dt>
+    <dd>After injection stops and brine moves back in, some CO₂ is permanently stranded in pore corners as disconnected bubbles. Sgr = 0.28 means 28% of pore volume traps CO₂ this way. Long-term storage security.</dd>
+
+    <dt>Rock fabric (RF)</dt>
+    <dd>A pore-network classification scheme. We used RF1 (excellent, K&gt;500 mD), RF2 (good), RF3 (moderate), RF4 (tight). Drives flow-unit layering in simulation.</dd>
+
+    <dt>SCAL (Special Core Analysis)</dt>
+    <dd>Lab tests beyond routine core analysis. Relative permeability, capillary pressure, electrical properties, NMR. Expensive ($50-200k per sample) but critical for CCS.</dd>
+
+    <dt>Skin (s)</dt>
+    <dd>Dimensionless number representing additional pressure drop at the wellbore due to formation damage (positive skin) or stimulation (negative skin). 0 = undamaged. +5 to +10 = damaged.</dd>
+
+    <dt>Span-Wagner (1996)</dt>
+    <dd>The reference equation of state for CO₂. Accurate to &lt;0.1% across supercritical conditions. NIST REFPROP implements it.</dd>
+
+    <dt>Storativity (S)</dt>
+    <dd>In groundwater hydrology, the volume of water released per unit area per unit pressure drop. Controls how pressure spreads. Dimensionless.</dd>
+
+    <dt>Supercritical CO₂</dt>
+    <dd>Above 31°C and 7.4 MPa. Behaves as a single phase — denser than gas, less viscous than liquid. This is the state CO₂ is in at reservoir conditions &gt; ~800 m deep.</dd>
+
+    <dt>Swi (irreducible water saturation)</dt>
+    <dd>The minimum water saturation after CO₂ drainage. Water that's so tightly held by capillary forces it can't be displaced. Our Nisku default: 0.22.</dd>
+
+    <dt>σ_hmin (sigma-h-min)</dt>
+    <dd>Minimum horizontal stress. The pressure threshold above which hydraulic fracturing occurs. THE key geomechanical number for CCS. Measured by DFIT.</dd>
+
+    <dt>Theis (1935)</dt>
+    <dd>Classical transient pressure diffusion solution in a confined aquifer. The foundation of AOR analysis.</dd>
+
+    <dt>TVDSS (True Vertical Depth Sub-Sea)</dt>
+    <dd>Elevation measured from sea level downward. Our Nisku top: 1,890 m TVDSS.</dd>
+
+    <dt>USDW (Underground Source of Drinking Water)</dt>
+    <dd>In EPA Class VI, aquifers with TDS &lt; 10,000 mg/L. AOR exists to protect these.</dd>
+
+    <dt>UWI (Unique Well Identifier)</dt>
+    <dd>Canadian well numbering scheme: 100/LSD-SEC-TWP-RGE-MER. Example: 100/15-32-050-03W5/00 = LSD 15, Section 32, Township 50, Range 3, West of 5th Meridian.</dd>
+
+    <dt>Viscosity (μ)</dt>
+    <dd>Resistance to flow. Water ~1 cP. Brine at reservoir T: 0.6 cP. Supercritical CO₂: ~0.06 cP (10× less than water). Drives mobility contrast.</dd>
+
+    <dt>WASP</dt>
+    <dd>Wabamun Area Sequestration Project. Multi-operator regional CCS study ~2010-2012. The grandfather of our analysis.</dd>
+
+    <dt>WCSB</dt>
+    <dd>Western Canada Sedimentary Basin. The ~1.4 million km² sedimentary basin covering most of Alberta, parts of BC and Saskatchewan.</dd>
+
+    <dt>XRD (X-Ray Diffraction)</dt>
+    <dd>Lab technique that identifies mineral phases by the crystal lattice diffraction pattern. Gives you % composition of each mineral in a rock sample.</dd>
+  </dl>
+</section>
+
+  </main>
+</div>
+
+<footer>
+  Built for Enbridge Wabamun Nisku CCS Phase-1 Feasibility • Subsurface engineering team (SubsurfaceAI) • April 2026 • Companion to <code>Nisku_CCS_Reservoir_Model.html</code> and <code>Nisku_CCS_Reservoir_Model.xlsx</code>
+</footer>
+
+<script>
+  const navLinks = document.querySelectorAll('nav a');
+  const sections = document.querySelectorAll('section');
+  navLinks.forEach(a=>a.addEventListener('click',()=>{
+    const id = a.dataset.sec;
+    sections.forEach(s=>s.classList.remove('active'));
+    navLinks.forEach(x=>x.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    a.classList.add('active');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }));
+
+  function doSearch(){
+    const q = document.getElementById('search').value.trim().toLowerCase();
+    if(!q){
+      navLinks.forEach(a=>a.style.display='');
+      return;
+    }
+    navLinks.forEach(a=>{
+      const t = a.textContent.toLowerCase();
+      const id = a.dataset.sec;
+      const sectEl = document.getElementById(id);
+      const sectText = sectEl ? sectEl.textContent.toLowerCase() : '';
+      a.style.display = (t.includes(q) || sectText.includes(q)) ? '' : 'none';
+    });
+  }
+</script>
+</body>
+</html>
