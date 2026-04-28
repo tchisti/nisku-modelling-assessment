@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nisku Quick Capacity Calculator — radial CO₂ storage spot-estimate</title>
+<style>
+:root{
+  --bg:#0a1220;--panel:#111b2e;--panel2:#0e1626;--line:#1f2c44;
+  --text:#e6edf7;--mute:#90a0bb;--accent:#3fb7ff;--accent2:#7bd0a4;
+  --warn:#ffb454;--err:#ff6a6a;--ok:#7bd0a4;--input:#ffd351;
+  --p10:#64b5f6;--p50:#ffd351;--p90:#ff8a65;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:24px 32px;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px;line-height:1.5}
+h1{color:var(--accent);font-size:22px;margin:0 0 4px}
+h2{color:var(--accent2);font-size:15px;margin:22px 0 8px;letter-spacing:.02em}
+h3{color:#cfd9e8;font-size:12px;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.06em}
+.sub{color:var(--mute);font-size:12.5px;margin:0 0 18px}
+.wrap{max-width:1240px;margin:0 auto}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:380px 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g5{grid-template-columns:repeat(5,1fr)}
+@media(max-width:900px){.g2,.g3,.g4,.g5{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+code,kbd{font-family:var(--mono);background:#0b1425;padding:1px 6px;border-radius:4px;border:1px solid var(--line);font-size:12px}
+.eq{font-family:var(--mono);background:#0b1425;border-left:3px solid var(--accent);
+  padding:9px 13px;margin:6px 0;font-size:12.5px;color:#e8f2ff;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+td.num{font-family:var(--mono);text-align:right}
+.row{display:grid;grid-template-columns:160px repeat(3,1fr) 60px;gap:6px;align-items:center;margin:4px 0;font-size:12.5px}
+.row label{color:var(--mute)}
+.row input{width:100%;padding:5px 7px;background:#0b1425;border:1px solid var(--line);
+  border-radius:4px;color:var(--input);font-family:var(--mono);font-size:12px}
+.row input:focus{outline:1px solid var(--accent);background:#0c1a2e}
+.row .unit{color:var(--mute);font-size:11px;text-align:left;padding-left:4px}
+.head{display:grid;grid-template-columns:160px repeat(3,1fr) 60px;gap:6px;margin:4px 0;font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
+.head>div{text-align:center}
+.head>div:first-child{text-align:left}
+.head .lp10{color:var(--p10)}.head .lp50{color:var(--p50)}.head .lp90{color:var(--p90)}
+.kpi{background:#0d182d;border:1px solid var(--line);border-radius:6px;padding:11px 13px}
+.kpi .lbl{color:var(--mute);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+.kpi .val{font-size:22px;font-weight:700;font-family:var(--mono);margin-top:3px}
+.kpi.p10 .val{color:var(--p10)}.kpi.p50 .val{color:var(--p50)}.kpi.p90 .val{color:var(--p90)}
+.kpi .note{color:var(--mute);font-size:11px;margin-top:3px}
+.tag{display:inline-block;padding:2px 7px;border-radius:9px;font-size:10.5px;font-family:var(--mono);margin:0 2px 0 0}
+.tag.ok{background:#1e4a2a;color:#a7e5bf}
+.tag.warn{background:#5a4218;color:#ffd08a}
+.tag.err{background:#4a1e1e;color:#ffa4a4}
+button{padding:6px 14px;background:var(--accent);color:#04121e;border:0;border-radius:5px;
+  font-weight:600;cursor:pointer;font-size:12px}
+button:hover{filter:brightness(1.1)}
+button.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.preset{display:inline-block;margin:2px 4px 2px 0;padding:3px 8px;border:1px solid var(--line);
+  border-radius:4px;cursor:pointer;font-size:11.5px;color:#cfd9e8;background:#0b1425}
+.preset:hover{border-color:var(--accent);color:var(--accent)}
+.preset.active{background:#16223b;border-color:var(--accent);color:var(--accent)}
+svg{display:block;max-width:100%}
+.foot{color:var(--mute);font-size:11px;margin-top:30px;border-top:1px solid var(--line);padding-top:14px}
+ul{margin:6px 0 6px 18px;padding:0}
+li{margin:3px 0;color:var(--mute);font-size:12px}
+li b{color:var(--text)}
+</style></head><body>
+<div class="wrap">
+<h1>Nisku Quick Capacity Calculator</h1>
+<p class="sub">Spot-estimate static capacity and annual injection rate for a circular footprint of radius <code>r</code>.
+Defaults loaded from the 15-32 Highvale anchor (45 core samples). Edit any cell — capacity recomputes instantly.
+P10 / P50 / P90 columns drive a 10,000-realization Monte Carlo with triangular distributions.</p>
+
+<div style="margin:6px 0 16px">
+<span style="color:var(--mute);font-size:12px;margin-right:8px">Quick presets:</span>
+<span class="preset active" data-preset="15_32">15-32 Highvale (k=215 mD)</span>
+<span class="preset" data-preset="08_17">8-17 TransAlta (k=6.8 mD)</span>
+<span class="preset" data-preset="brazeau">Brazeau analog (k=80 mD)</span>
+<span class="preset" data-preset="conservative">Conservative composite</span>
+</div>
+
+<div class="grid g2">
+<!-- INPUTS -->
+<div class="card">
+<h2>Inputs — edit any cell</h2>
+
+<h3>Geometry</h3>
+<div class="head"><div></div><div class="lp10">P10 (low)</div><div class="lp50">P50 (best)</div><div class="lp90">P90 (high)</div><div></div></div>
+<div class="row">
+  <label>r_max (radius)</label>
+  <input id="r_p10" value="2.5"><input id="r_p50" value="2.5"><input id="r_p90" value="2.5">
+  <div class="unit">km</div></div>
+<div class="row">
+  <label>h_net</label>
+  <input id="h_p10" value="30"><input id="h_p50" value="37"><input id="h_p90" value="44">
+  <div class="unit">m</div></div>
+
+<h3>Petrophysics</h3>
+<div class="row">
+  <label>φ (porosity)</label>
+  <input id="phi_p10" value="0.038"><input id="phi_p50" value="0.078"><input id="phi_p90" value="0.124">
+  <div class="unit">frac</div></div>
+<div class="row">
+  <label>S_wi (irreducible)</label>
+  <input id="swi_p10" value="0.20"><input id="swi_p50" value="0.25"><input id="swi_p90" value="0.35">
+  <div class="unit">frac</div></div>
+
+<h3>Fluid</h3>
+<div class="row">
+  <label>ρ_CO₂</label>
+  <input id="rho_p10" value="680"><input id="rho_p50" value="708"><input id="rho_p90" value="740">
+  <div class="unit">kg/m³</div></div>
+
+<h3>Storage efficiency</h3>
+<div class="row">
+  <label>E</label>
+  <input id="E_p10" value="0.015"><input id="E_p50" value="0.035"><input id="E_p90" value="0.060">
+  <div class="unit">frac</div></div>
+
+<h3>Project life &amp; injectivity</h3>
+<div class="row" style="grid-template-columns:160px 1fr 60px">
+  <label>Project life</label><input id="life" value="25" style="grid-column:span 1"><div class="unit">years</div></div>
+<div class="row" style="grid-template-columns:160px 1fr 60px">
+  <label>Permeability k</label><input id="k_perm" value="215"><div class="unit">mD</div></div>
+<div class="row" style="grid-template-columns:160px 1fr 60px">
+  <label>BHP headroom</label><input id="bhp_hr" value="7.0"><div class="unit">MPa</div></div>
+<div class="row" style="grid-template-columns:160px 1fr 60px">
+  <label>Wellbore radius</label><input id="rw" value="0.108"><div class="unit">m (8.5″ OH)</div></div>
+<div class="row" style="grid-template-columns:160px 1fr 60px">
+  <label>Skin (composite)</label><input id="skin" value="3"><div class="unit">—</div></div>
+
+<div style="margin-top:14px"><button onclick="calc()">Recompute</button>
+<button class="ghost" onclick="resetAll()">Reset to 15-32</button></div>
+</div>
+
+<!-- OUTPUTS -->
+<div class="card">
+<h2>Live output</h2>
+
+<h3>Volumetric — Bachu / Z741</h3>
+<div class="eq">M = π·r² · h<sub>net</sub> · φ · (1−S<sub>wi</sub>) · ρ<sub>CO₂</sub> · E</div>
+
+<div class="grid g3">
+  <div class="kpi p10"><div class="lbl">P10 capacity</div><div class="val" id="cap_p10">—</div><div class="note">conservative</div></div>
+  <div class="kpi p50"><div class="lbl">P50 capacity</div><div class="val" id="cap_p50">—</div><div class="note">best estimate</div></div>
+  <div class="kpi p90"><div class="lbl">P90 capacity</div><div class="val" id="cap_p90">—</div><div class="note">aggressive</div></div>
+</div>
+
+<h3 style="margin-top:18px">Annual injection rate (capacity ÷ life)</h3>
+<div class="grid g3">
+  <div class="kpi p10"><div class="lbl">P10 (Mt/yr)</div><div class="val" id="ann_p10">—</div><div class="note" id="ann_p10n">—</div></div>
+  <div class="kpi p50"><div class="lbl">P50 (Mt/yr)</div><div class="val" id="ann_p50">—</div><div class="note" id="ann_p50n">—</div></div>
+  <div class="kpi p90"><div class="lbl">P90 (Mt/yr)</div><div class="val" id="ann_p90">—</div><div class="note" id="ann_p90n">—</div></div>
+</div>
+
+<h3 style="margin-top:18px">Per-well injectivity (Mathias 2009)</h3>
+<div class="eq">q<sub>well</sub> = ΔP · 2π·k·k<sub>rg</sub>·h · ρ<sub>CO₂</sub> / [μ<sub>CO₂</sub> · (ln(r/r<sub>w</sub>) + s)]</div>
+<div class="grid g3">
+  <div class="kpi"><div class="lbl">Per-well rate</div><div class="val" id="qw_v">—</div><div class="note">kt/yr at given headroom &amp; k</div></div>
+  <div class="kpi"><div class="lbl">Wells needed (P50)</div><div class="val" id="nw_p50">—</div><div class="note">to deliver P50 annual</div></div>
+  <div class="kpi"><div class="lbl">II</div><div class="val" id="ii_v">—</div><div class="note">t/d/MPa per well</div></div>
+</div>
+
+<h3 style="margin-top:18px">Capacity histogram (10,000 realizations)</h3>
+<div id="hist"></div>
+
+<h3 style="margin-top:14px">Sensitivity (which input drives uncertainty?)</h3>
+<div id="sens"></div>
+</div>
+</div>
+
+<!-- footnotes -->
+<div class="card" style="margin-top:14px">
+<h2 style="margin-top:0">Quick reference — defaults &amp; assumptions</h2>
+<div class="grid g2">
+<div>
+<h3>Where defaults come from</h3>
+<ul>
+<li><b>r_max = 2.5 km</b> → π·r² = 19.6 km² footprint (your stated bound)</li>
+<li><b>h_net = 37 m, φ P50 = 0.078</b> → 15-32 Highvale full-diameter, 45 samples (NTG-cut at φ&gt;0.04)</li>
+<li><b>S_wi P50 = 0.25</b> → Bennion-Bachu 2008 carbonate analog (no 15-32 SCAL — gap)</li>
+<li><b>ρ_CO₂ = 708 kg/m³</b> → Span-Wagner EOS at T_res 62 °C, P_init 19.8 MPa</li>
+<li><b>E P10/P50/P90 = 1.5%/3.5%/6%</b> → USDOE Atlas + WASP saline-aquifer triangle</li>
+<li><b>BHP headroom 7 MPa</b> → BHP_max (0.9·σ_hmin) − P_init at 1950 m</li>
+<li><b>k = 215 mD</b> → 15-32 Kmax geomean (45 samples log-space)</li>
+<li><b>r_e</b> implicit in Mathias = r_max from above</li>
+</ul>
+</div>
+<div>
+<h3>Sanity benchmarks</h3>
+<ul>
+<li><b>Per-well injectivity</b> for 250 kt/yr/well → ΔP near-well typically 0.5–1.5 MPa at k=200 mD</li>
+<li><b>Plume radius</b> at 25 yr ≈ √(V/(π·h·φ·(1−S<sub>wi</sub>))) · √M, M≈8</li>
+<li><b>WASP P50</b> at Nisku regional scale: ≈10 Mt/(20 km radius) at E=2.8%</li>
+<li><b>EPA Class VI</b> default ΔP_crit (AOR) = 1.5 MPa at base of seal</li>
+</ul>
+<h3>How to read the output</h3>
+<ul>
+<li>Capacity is <b>static / volumetric</b> — does not check whether you can inject this fast</li>
+<li>Annual rate ÷ per-well rate = wells needed (Phase-1 sizing)</li>
+<li>If P50 utilization &gt; 80%, push E up via pressure management or expand footprint</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="foot">
+Wabamun Carbon Hub · Nisku quick capacity calculator · single-file HTML, GitHub-Pages-deployable<br>
+Engine = Bachu/Z741 volumetric (10k MC, triangular dists) + Mathias 2009 radial injectivity. Anchored on real 15-32 (45 samples) + 8-17 (20 samples).
+</div>
+</div>
+
+<script>
+const PI=Math.PI, MD=9.869233e-16, MU_CO2=0.058e-3;
+const F=id=>parseFloat(document.getElementById(id).value);
+const $=id=>document.getElementById(id);
+
+const presets = {
+  '15_32':{r:[2.5,2.5,2.5],h:[30,37,44],phi:[0.038,0.078,0.124],swi:[0.20,0.25,0.35],
+           rho:[680,708,740],E:[0.015,0.035,0.060],life:25,k:215,bhp_hr:7.0},
+  '08_17':{r:[2.5,2.5,2.5],h:[20,28,40],phi:[0.027,0.051,0.088],swi:[0.20,0.30,0.40],
+           rho:[680,708,740],E:[0.010,0.025,0.045],life:25,k:6.8,bhp_hr:6.0},
+  'brazeau':{r:[2.5,2.5,2.5],h:[25,35,50],phi:[0.05,0.085,0.13],swi:[0.20,0.27,0.35],
+           rho:[680,710,740],E:[0.020,0.045,0.080],life:25,k:80,bhp_hr:6.5},
+  'conservative':{r:[2.5,2.5,2.5],h:[25,32,40],phi:[0.04,0.06,0.10],swi:[0.25,0.32,0.40],
+           rho:[680,700,720],E:[0.010,0.020,0.040],life:25,k:50,bhp_hr:5.5}
+};
+function applyPreset(name){
+  const p = presets[name]; if(!p) return;
+  ['r','h','phi','swi','rho','E'].forEach(k=>{
+    $(k+'_p10').value = p[k][0];
+    $(k+'_p50').value = p[k][1];
+    $(k+'_p90').value = p[k][2];
+  });
+  $('life').value = p.life;
+  $('k_perm').value = p.k;
+  $('bhp_hr').value = p.bhp_hr;
+  document.querySelectorAll('.preset').forEach(el=>el.classList.toggle('active',el.dataset.preset===name));
+  calc();
+}
+document.querySelectorAll('.preset').forEach(el=>el.addEventListener('click',()=>applyPreset(el.dataset.preset)));
+function resetAll(){applyPreset('15_32');}
+
+// Triangular sampler
+function tri(lo,md,hi){
+  if(hi<=lo) return md;
+  const u=Math.random(), Fr=(md-lo)/(hi-lo);
+  return u<Fr ? lo+Math.sqrt(u*(hi-lo)*(md-lo)) : hi-Math.sqrt((1-u)*(hi-lo)*(hi-md));
+}
+function quantile(a,q){const s=[...a].sort((x,y)=>x-y);
+  const i=(s.length-1)*q, lo=Math.floor(i), hi=Math.ceil(i);
+  return lo===hi?s[lo]:s[lo]+(s[hi]-s[lo])*(i-lo);}
+
+let LAST_CAPS=[], LAST_PARAMS={};
+function calc(){
+  const r=[F('r_p10'),F('r_p50'),F('r_p90')];
+  const h=[F('h_p10'),F('h_p50'),F('h_p90')];
+  const phi=[F('phi_p10'),F('phi_p50'),F('phi_p90')];
+  const swi=[F('swi_p10'),F('swi_p50'),F('swi_p90')];
+  const rho=[F('rho_p10'),F('rho_p50'),F('rho_p90')];
+  const E=[F('E_p10'),F('E_p50'),F('E_p90')];
+  const life=F('life'), k_mD=F('k_perm'), bhp_hr=F('bhp_hr');
+  const rw=F('rw'), skin=F('skin');
+
+  const N=10000;
+  const caps=new Array(N), inputs={r:[],h:[],phi:[],swi:[],rho:[],E:[]};
+  for(let i=0;i<N;i++){
+    const Ri=tri(r[0],r[1],r[2]);
+    const hi=tri(h[0],h[1],h[2]);
+    const pi=tri(phi[0],phi[1],phi[2]);
+    const si=tri(swi[0],swi[1],swi[2]);
+    const ri=tri(rho[0],rho[1],rho[2]);
+    const ei=tri(E[0],E[1],E[2]);
+    const A_m2 = PI*(Ri*1000)**2;
+    caps[i] = A_m2*hi*pi*(1-si)*ri*ei/1e9;
+    inputs.r.push(Ri);inputs.h.push(hi);inputs.phi.push(pi);
+    inputs.swi.push(si);inputs.rho.push(ri);inputs.E.push(ei);
+  }
+  LAST_CAPS=caps; LAST_PARAMS=inputs;
+
+  const cP10=quantile(caps,0.10), cP50=quantile(caps,0.50), cP90=quantile(caps,0.90);
+  $('cap_p10').textContent = cP10.toFixed(2)+' Mt';
+  $('cap_p50').textContent = cP50.toFixed(2)+' Mt';
+  $('cap_p90').textContent = cP90.toFixed(2)+' Mt';
+
+  // Annual rate
+  const a10=cP10/life, a50=cP50/life, a90=cP90/life;
+  $('ann_p10').textContent = a10.toFixed(3);
+  $('ann_p50').textContent = a50.toFixed(3);
+  $('ann_p90').textContent = a90.toFixed(3);
+  $('ann_p10n').textContent = (a10*1000).toFixed(0)+' kt/yr';
+  $('ann_p50n').textContent = (a50*1000).toFixed(0)+' kt/yr';
+  $('ann_p90n').textContent = (a90*1000).toFixed(0)+' kt/yr';
+
+  // Per-well injectivity (Mathias)
+  // q_well [kg/s] = ΔP * 2π·k·krg·h·ρ / [μ·(ln(re/rw)+s)]
+  const k=k_mD*MD, krg=0.35, hP50=h[1], rP50=r[1]*1000, rhoP50=rho[1];
+  const qw_kg_s = (bhp_hr*1e6) * (2*PI*k*krg*hP50*rhoP50) / (MU_CO2*(Math.log(rP50/rw)+skin));
+  const qw_kt_yr = qw_kg_s * 365.25*86400 / 1e6;
+  $('qw_v').textContent = qw_kt_yr.toFixed(0)+' kt/yr';
+  const nw = a50*1000 / Math.max(0.001, qw_kt_yr);
+  $('nw_p50').textContent = nw < 0.5 ? '< 1' : Math.ceil(nw);
+  const II = qw_kg_s/bhp_hr * 86.4; // kg/s/MPa → t/d/MPa = kg/s × 86.4
+  $('ii_v').textContent = II.toFixed(0);
+
+  drawHist(caps, cP10, cP50, cP90);
+  drawSens(caps, inputs);
+}
+
+function drawHist(caps, p10, p50, p90){
+  const W=520,H=200,ML=44,MR=14,MT=8,MB=34;
+  const iw=W-ML-MR, ih=H-MT-MB;
+  const mn=Math.max(0,quantile(caps,0.005)*0.95);
+  const mx=quantile(caps,0.995)*1.05;
+  const nb=40, bins=new Array(nb).fill(0);
+  caps.forEach(v=>{const i=Math.floor((v-mn)/(mx-mn)*nb);if(i>=0&&i<nb)bins[i]++;});
+  const bmax=Math.max(...bins);
+  const ns='http://www.w3.org/2000/svg';
+  const s=document.createElementNS(ns,'svg');
+  s.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  s.setAttribute('width','100%'); s.setAttribute('style','max-height:200px');
+  function el(n,a){const e=document.createElementNS(ns,n);for(const k in a)e.setAttribute(k,a[k]);s.appendChild(e);return e;}
+  bins.forEach((c,i)=>{
+    const x=ML + i/nb*iw, bw=iw/nb-1, bh=c/bmax*(ih-6);
+    el('rect',{x:x,y:MT+ih-bh,width:bw,height:bh,fill:'#7bd0a4',opacity:0.7});
+  });
+  const X=v=>ML+(v-mn)/(mx-mn)*iw;
+  [['P10',p10,'#64b5f6'],['P50',p50,'#ffd351'],['P90',p90,'#ff8a65']].forEach(([lbl,v,c])=>{
+    const x=X(v);
+    el('line',{x1:x,y1:MT,x2:x,y2:MT+ih,stroke:c,'stroke-width':1.5,'stroke-dasharray':'3 3'});
+    const t=el('text',{x:x,y:MT+10,fill:c,'text-anchor':'middle','font-size':11,'font-family':'ui-monospace,monospace'});
+    t.textContent=lbl+' '+v.toFixed(1);
+  });
+  el('line',{x1:ML,y1:MT+ih,x2:ML+iw,y2:MT+ih,stroke:'#2c3b58'});
+  const t1=el('text',{x:ML,y:H-12,fill:'#90a0bb','font-size':11});t1.textContent=mn.toFixed(1);
+  const t2=el('text',{x:ML+iw,y:H-12,fill:'#90a0bb','font-size':11,'text-anchor':'end'});t2.textContent=mx.toFixed(1);
+  const t3=el('text',{x:ML+iw/2,y:H-2,fill:'#90a0bb','font-size':11,'text-anchor':'middle'});t3.textContent='Capacity (Mt CO₂)';
+  $('hist').innerHTML=''; $('hist').appendChild(s);
+}
+
+function drawSens(caps, inp){
+  // Spearman-rank-correlation surrogate via Pearson on rank-data
+  function rank(arr){
+    const s=arr.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);
+    const r=new Array(arr.length);
+    s.forEach(([v,i],k)=>{r[i]=k+1;});return r;
+  }
+  function corr(x,y){
+    const n=x.length;let sx=0,sy=0,sxx=0,syy=0,sxy=0;
+    for(let i=0;i<n;i++){sx+=x[i];sy+=y[i];sxx+=x[i]*x[i];syy+=y[i]*y[i];sxy+=x[i]*y[i];}
+    const den=Math.sqrt((n*sxx-sx*sx)*(n*syy-sy*sy));
+    return den===0?0:(n*sxy-sx*sy)/den;
+  }
+  const rC=rank(caps);
+  const params=['r','h','phi','swi','rho','E'];
+  const rho_v = params.map(p=>{
+    const rP=rank(inp[p]);
+    return [p, corr(rC,rP)];
+  });
+  const max=Math.max(...rho_v.map(([,v])=>Math.abs(v)));
+  const W=520,H=200,ML=70,MR=14,MT=8,MB=34;
+  const iw=W-ML-MR, bh=(H-MT-MB)/params.length;
+  const ns='http://www.w3.org/2000/svg';
+  const s=document.createElementNS(ns,'svg');
+  s.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  s.setAttribute('width','100%'); s.setAttribute('style','max-height:200px');
+  function el(n,a){const e=document.createElementNS(ns,n);for(const k in a)e.setAttribute(k,a[k]);s.appendChild(e);return e;}
+  const labels={r:'r_max',h:'h_net',phi:'φ',swi:'1−S_wi',rho:'ρ_CO₂',E:'E'};
+  rho_v.sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+  rho_v.forEach(([p,v],i)=>{
+    const y=MT+i*bh+4, w=Math.abs(v)/max*iw*0.92;
+    const c = v>0?'#7bd0a4':'#ff8a65';
+    el('rect',{x:ML,y:y,width:w,height:bh-8,fill:c,opacity:0.75});
+    const t1=el('text',{x:ML-6,y:y+(bh-4)/2,'text-anchor':'end',fill:'#cfd9e8','font-size':12});
+    t1.textContent=labels[p]||p;
+    const t2=el('text',{x:ML+w+6,y:y+(bh-4)/2,fill:'#e6edf7','font-size':11,'font-family':'ui-monospace,monospace'});
+    t2.textContent='ρ = '+v.toFixed(2);
+  });
+  const t3=el('text',{x:ML+iw/2,y:H-6,'text-anchor':'middle',fill:'#90a0bb','font-size':11});
+  t3.textContent='Rank correlation of input vs capacity (positive = increases capacity)';
+  $('sens').innerHTML=''; $('sens').appendChild(s);
+}
+
+// Auto-recompute on input change
+document.querySelectorAll('input').forEach(el=>{
+  el.addEventListener('input', calc);
+});
+calc();
+</script>
+</body></html>
