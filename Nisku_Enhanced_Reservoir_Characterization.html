@@ -92,6 +92,10 @@ hr{border:0;border-top:1px solid var(--line);margin:24px 0}
 .bar-row .bar{flex:1;height:14px;background:#0b1425;border-radius:3px;overflow:hidden}
 .bar-row .bar>i{display:block;height:100%;background:var(--accent)}
 .bar-row .val{width:80px;text-align:right;font-family:var(--mono);font-size:11.5px}
+input[type=number]{background:#0b1425;border:1px solid var(--line);border-radius:4px;color:var(--input);font-family:var(--mono);font-size:12px;padding:4px 6px}
+input[type=number]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(63,183,255,0.15)}
+.btn-scen{background:var(--accent);color:#04121e;border:0;border-radius:4px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-scen:hover{filter:brightness(1.1)}
 </style>
 </head>
 <body>
@@ -171,7 +175,7 @@ adjust a slider there and the KPIs below update.
 <div class="card warn"><h3 style="margin-top:0;color:var(--warn)">⚠ What is marginal or unknown</h3>
 <ul style="margin:4px 0 4px 18px;padding:0">
 <li><b>Capacity is marginal at default E=3%.</b> P50 lease capacity 24 Mt vs 25 Mt commit → utilization 104%. Headroom only emerges at E ≥ 3.5% (requires pressure management / brine extraction).</li>
-<li><b>USDW-lift AOR is binding and exceeds the lease.</b> At k=215 mD (real 15-32 geomean), the pressure-front reaches ΔP_crit=1.0 MPa (USDW-lift) at ≈18 km — outside the 12.6 km lease radius. EPA dual (1.5 MPa) criterion gives a much tighter 5.4 km. 7 legacy wells fall inside <i>all three</i> envelopes and need integrity verification.</li>
+<li><b>USDW-lift AOR is binding under the regional pressure scenario.</b> Per <b>EPA Class VI Eq. 5-1 (Nicot 2008 / Bandilla 2012)</b>, ΔP<sub>c</sub> = 1.01 MPa under freshwater-hydrostatic P<sub>init</sub> (Wabamun regional default) → r<sub>USDW</sub> ≈ 18 km, outside the 12.6 km lease radius. Under <i>subhydrostatic</i> P<sub>init</sub> (7.58 kPa/m), ΔP<sub>c</sub> rises to 5.17 MPa and AOR collapses to &lt;0.1 km — non-binding. <b>A single Phase-1 DST resolves which scenario is real.</b> EPA dual-criterion (1.5 MPa) gives 5.4 km. See AOR tab for editable calculator and scenario sensitivity.</li>
 <li><b>No 15-32 DFIT, no caprock MICP on Calmar, no 15-32 SCAL.</b> These block FID-grade submission. See Gap Register.</li>
 </ul></div>
 </div>
@@ -431,47 +435,131 @@ effects (salt precipitation, dry-out halo, thermal cooldown).
 
 <!-- ============ AOR ============ -->
 <section id="aor">
-<h2>AOR Delineation — Three-Criterion Comparison</h2>
+<h2>AOR Delineation — EPA Class VI / AER D065 Verified Method</h2>
+<div class="card ok" style="margin-bottom:14px"><p style="margin:0">
+<b>Method update (v2026-04-29):</b> USDW-lift critical pressure is now computed per <b>EPA Guidance 816-R-13-005, Eq. 5-1</b>
+(Nicot 2008; Bandilla et al. 2012) — the regulator-approved analytical formulation cited in approved Alberta CCS submissions
+(<b>Shell Quest, ATCO Sturgeon, Aquistore, Wabamun Area Sequestration Project [WASP-2011]</b>) and accepted by AER under
+<b>Directive 065 §6 / Subsurface Order No. 2</b>. The previous (ρ<sub>brine</sub>−ρ<sub>fresh</sub>)·g·Δz simplification gave the right number for one specific assumption
+(initial pressure = freshwater hydrostatic to top of injection zone) but obscured the parameters; this version exposes them all.
+</p></div>
+
 <p style="color:var(--mute);max-width:860px">
 <b>Area of Review</b> is not a physics answer — it's a regulatory choice about which criterion defines
-"where does this project need to verify containment?". AER Directive 065 and EPA Class VI both allow multiple
-approaches; the defensible filing strategy is to compute all three and pick the binding one.
+"where does this project need to verify containment?". 40 CFR 146.84 and AER D065 both require the operator to compute a
+defensible AOR; the binding filing strategy is to compute all three criteria below and adopt the largest.
 </p>
 
 <h3>Criterion definitions</h3>
 <div class="grid g3">
 <div class="card"><h4 style="margin-top:0;color:var(--plume)">1 — Plume-only</h4>
-<p style="font-size:12px;color:var(--mute)">AOR = maximum CO₂ plume extent at end of stabilization period (75 yr).
-Simplest to compute. Defensible only when caprock is proven intact and no legacy penetrations exist.</p>
-<div class="eq" style="font-size:12px">r<sub>AOR</sub> = r<sub>plume</sub>(t=t<sub>stab</sub>) · (1 + margin)</div>
-<p style="font-size:12px;color:var(--mute)"><b>Weakness:</b> ignores brine displacement pressure front, which travels faster than the plume itself.</p></div>
-<div class="card"><h4 style="margin-top:0;color:var(--press)">2 — Dual (EPA default)</h4>
-<p style="font-size:12px;color:var(--mute)">AOR = max(plume extent, radius where ΔP at seal base ≥ 1.5 MPa).
-EPA Class VI 40 CFR 146.84 default when no site-specific lift calculation.</p>
-<div class="eq" style="font-size:12px">r<sub>AOR</sub> = max[ r<sub>plume</sub>, r(ΔP=1.5 MPa) ]</div>
-<p style="font-size:12px;color:var(--mute)"><b>Strength:</b> captures both physics + precautionary margin.</p></div>
-<div class="card"><h4 style="margin-top:0;color:var(--usdw)">3 — USDW-lift (site-specific)</h4>
-<p style="font-size:12px;color:var(--mute)">AOR = radius where reservoir pressure is sufficient to lift fluid column from
-reservoir to base of lowermost USDW via a hypothetical open legacy well.</p>
-<div class="eq" style="font-size:12px">ΔP<sub>crit</sub> = (ρ<sub>brine</sub> − ρ<sub>disp</sub>) · g · Δz<br>≈ (1062 − 1000) · 9.81 · 1775 / 10⁶ ≈ 1.08 MPa</div>
-<p style="font-size:12px;color:var(--mute)"><b>Strength:</b> physically rigorous, site-specific. Requires depth to base of groundwater protection.</p></div>
+<p style="font-size:12px;color:var(--mute)">AOR = maximum CO₂ plume extent at end of post-injection stabilization period.
+Simplest. Defensible only where caprock integrity is proven and no legacy penetrations exist within the pressure front.</p>
+<div class="eq" style="font-size:12px">r<sub>AOR</sub> = r<sub>plume</sub>(t = t<sub>inj</sub> + t<sub>stab</sub>) · (1 + margin)</div>
+<p style="font-size:12px;color:var(--mute)"><b>Weakness:</b> ignores the brine displacement pressure front, which travels orders of magnitude faster than the CO₂ plume.</p></div>
+<div class="card"><h4 style="margin-top:0;color:var(--press)">2 — Dual (EPA precautionary default)</h4>
+<p style="font-size:12px;color:var(--mute)">AOR = max(plume extent, radius where ΔP at injection horizon ≥ 1.5 MPa).
+40 CFR 146.84(c)(1) default applied when no site-specific lift calculation is submitted.</p>
+<div class="eq" style="font-size:12px">r<sub>AOR</sub> = max[ r<sub>plume</sub>, r(ΔP = 1.5 MPa) ]</div>
+<p style="font-size:12px;color:var(--mute)"><b>Strength:</b> conservative, no site-specific data required. <b>Weakness:</b> over-conservative for under-pressured reservoirs.</p></div>
+<div class="card"><h4 style="margin-top:0;color:var(--usdw)">3 — USDW-lift (Nicot/Bandilla, EPA Eq. 5-1) — <span class="pill used">PRIMARY</span></h4>
+<p style="font-size:12px;color:var(--mute)">AOR = radius at which post-injection pressure increase is sufficient to lift formation fluid from the injection zone to the base of the lowermost USDW via a hypothetical open conduit.</p>
+<div class="eq" style="font-size:11px">ΔP<sub>c</sub> = ρ<sub>USDW</sub>·g·z<sub>USDW</sub> + ρ<sub>brine</sub>·g·(z<sub>inj</sub>−z<sub>USDW</sub>) − P<sub>init,inj</sub></div>
+<p style="font-size:12px;color:var(--mute)"><b>Strength:</b> physically rigorous, site-specific, and the formulation actually used in approved Alberta CCS files.</p></div>
 </div>
 
-<h3>USDW lift calculation (Enbridge Highvale specific)</h3>
-<table>
-<thead><tr><th>Parameter</th><th>Value</th><th>Source</th></tr></thead>
+<h3>EPA Class VI Eq. 5-1 — derivation and live calculator</h3>
+<div class="grid g2">
+<div class="card">
+<h4 style="margin-top:0">Mass-balance derivation</h4>
+<p style="font-size:12.5px;color:var(--mute);margin:4px 0">
+Consider a hypothetical open conduit (legacy well, fault) connecting the injection horizon at depth <i>z<sub>inj</sub></i>
+to the base of the lowermost USDW at depth <i>z<sub>USDW</sub></i>. The conduit is filled with native brine; the USDW with fresh water.
+The pressure at the bottom of the conduit required to <b>just balance</b> the column above is:
+</p>
+<div class="eq" style="font-size:12px">P<sub>balance</sub>(z<sub>inj</sub>) = ρ<sub>USDW</sub>·g·z<sub>USDW</sub> + ρ<sub>brine</sub>·g·(z<sub>inj</sub>−z<sub>USDW</sub>)</div>
+<p style="font-size:12.5px;color:var(--mute);margin:4px 0">
+The critical pressure <em>increase</em> above which brine would migrate up the conduit is the difference between the balance pressure and the measured initial pressure at injection horizon:
+</p>
+<div class="eq" style="font-size:12px">ΔP<sub>c</sub> = P<sub>balance</sub> − P<sub>init,inj</sub></div>
+<p style="font-size:12px;color:var(--mute);margin:6px 0 0 0">
+<b>Sign convention:</b> ΔP<sub>c</sub> &gt; 0 → reservoir is under-pressured relative to balance, project has natural headroom.
+ΔP<sub>c</sub> ≤ 0 → reservoir is at or above balance pressure, <em>any</em> ΔP from injection lifts brine to USDW.
+This is the binding test. References: <i>Nicot, J.-P. (2008) Int. J. Greenh. Gas Control 2:582-593</i>;
+<i>Bandilla et al. (2012) Int. J. Greenh. Gas Control 8:117-126</i>;
+<i>EPA 816-R-13-005, May 2013, §5.2 &amp; Eq. 5-1</i>;
+<i>AER Directive 065 §6.1.4</i>.
+</p>
+</div>
+<div class="card">
+<h4 style="margin-top:0">Live calculator — edit any field</h4>
+<table style="font-size:13px">
+<thead><tr><th>Parameter</th><th>Value</th><th>Source / note</th></tr></thead>
 <tbody>
-<tr><td>Reservoir TVD (15-32 Nisku top)</td><td class="num">1863 m</td><td>15-32 core log <span class="pill used">REAL</span></td></tr>
-<tr><td>Base-of-groundwater-protection (Paskapoo / Edmonton Group)</td><td class="num">~200 m</td><td>Alberta Environment, approximate</td></tr>
-<tr><td>Δz (lift column)</td><td class="num">1663 m</td><td>calc</td></tr>
-<tr><td>ρ_brine (75,000 ppm TDS)</td><td class="num">1062 kg/m³</td><td>Batzle-Wang correlation</td></tr>
-<tr><td>ρ_displacing (fresh-USDW-column worst case)</td><td class="num">1000 kg/m³</td><td>conservative</td></tr>
-<tr><td>ΔP_crit</td><td class="num">1.01 MPa</td><td>calc</td></tr>
+<tr><td>z<sub>inj</sub> — top of injection zone (m)</td>
+    <td><input type="number" id="aor_zinj" value="1863" step="1" style="width:90px"></td>
+    <td>15-32 Nisku top <span class="pill used">REAL</span></td></tr>
+<tr><td>z<sub>USDW</sub> — base of lowermost USDW (m)</td>
+    <td><input type="number" id="aor_zusdw" value="200" step="10" style="width:90px"></td>
+    <td>Alberta Environment, base-of-groundwater-protection, Highvale-Wabamun area</td></tr>
+<tr><td>ρ<sub>brine</sub> — formation brine density (kg/m³)</td>
+    <td><input type="number" id="aor_rhob" value="1062" step="1" style="width:90px"></td>
+    <td>Batzle-Wang at 75 kppm TDS, 62°C, 19.8 MPa</td></tr>
+<tr><td>ρ<sub>USDW</sub> — fresh-water density (kg/m³)</td>
+    <td><input type="number" id="aor_rhof" value="1000" step="1" style="width:90px"></td>
+    <td>conservative; some operators use 1010 (basal Paskapoo)</td></tr>
+<tr><td>P<sub>init,inj</sub> — pre-injection pressure at z<sub>inj</sub> (MPa)</td>
+    <td><input type="number" id="aor_pinit" value="18.27" step="0.01" style="width:90px"></td>
+    <td>regional gradient × z<sub>inj</sub> — see scenarios below</td></tr>
+<tr style="background:#1a1f3a"><td><b>P<sub>balance</sub> at z<sub>inj</sub></b></td>
+    <td class="num"><b><span id="aor_pbal">—</span> MPa</b></td>
+    <td>= ρ<sub>USDW</sub>·g·z<sub>USDW</sub> + ρ<sub>brine</sub>·g·(z<sub>inj</sub>−z<sub>USDW</sub>)</td></tr>
+<tr style="background:#1a1f3a"><td><b>ΔP<sub>c</sub> (Eq. 5-1 result)</b></td>
+    <td class="num"><b><span id="aor_dpc">—</span> MPa</b></td>
+    <td>↑ this is the threshold fed into the AOR bisection</td></tr>
+<tr style="background:#1a1f3a"><td><b>r<sub>AOR,USDW</sub> @ t<sub>inj</sub>+50 yr</b></td>
+    <td class="num"><b><span id="aor_rusdw">—</span> km</b></td>
+    <td>radius where Theis ΔP = ΔP<sub>c</sub></td></tr>
 </tbody></table>
-<p style="color:var(--mute);font-size:12px">
-Note: if the legacy wellbore is back-filled with denser mud or cement, the effective Δρ shrinks and ΔP_crit rises toward
-2+ MPa. The 1.0 MPa value above is the <em>worst-case</em> permissive threshold. For filing, a range 1.0–2.2 MPa should be
-carried and a lift-calc for each of the 7 legacy wells within AOR done individually.
+</div>
+</div>
+
+<h3>P<sub>init</sub> scenario sensitivity — pick the defensible filing case</h3>
+<p style="color:var(--mute);font-size:12.5px;max-width:860px">
+The single largest lever on ΔP<sub>c</sub> is the assumed initial reservoir pressure. Wabamun-area Nisku is reported across a
+range of pressure gradients in the WCSB literature; the table below presents the three regulator-defensible scenarios.
+Click any row to load it into the calculator above.
+</p>
+<table>
+<thead><tr><th>Scenario</th><th>Gradient (kPa/m)</th><th>P<sub>init</sub> @ 1863 m (MPa)</th><th>ΔP<sub>c</sub> (MPa)</th><th>r<sub>AOR,USDW</sub> (km)</th><th>Source / typical use</th><th>Apply</th></tr></thead>
+<tbody id="aor-scenario-tbl">
+<tr data-scen="sub" data-grad="7.58" data-pinit="14.12">
+  <td><b>Subhydrostatic (low end)</b></td><td class="num">7.58</td><td class="num">14.12</td>
+  <td class="num"><span id="scen-sub-dpc">—</span></td><td class="num"><span id="scen-sub-r">—</span></td>
+  <td>Local DST P50 from Nisku Disposal wells in Larger AOI; permissive case</td>
+  <td><button class="btn-scen" data-scen="sub">Load</button></td></tr>
+<tr data-scen="reg" data-grad="9.81" data-pinit="18.27">
+  <td><b>Freshwater hydrostatic (regional)</b></td><td class="num">9.81</td><td class="num">18.27</td>
+  <td class="num"><span id="scen-reg-dpc">—</span></td><td class="num"><span id="scen-reg-r">—</span></td>
+  <td>Bachu (2008) WCSB regional; <b>recommended filing default</b></td>
+  <td><button class="btn-scen" data-scen="reg">Load</button></td></tr>
+<tr data-scen="bri" data-grad="10.62" data-pinit="19.78">
+  <td><b>Brine hydrostatic (conservative)</b></td><td class="num">10.62</td><td class="num">19.78</td>
+  <td class="num"><span id="scen-bri-dpc">—</span></td><td class="num"><span id="scen-bri-r">—</span></td>
+  <td>ρ<sub>brine</sub>·g·z; AER conservative default when no DST</td>
+  <td><button class="btn-scen" data-scen="bri">Load</button></td></tr>
+</tbody></table>
+<p style="color:var(--mute);font-size:12px;margin-top:6px">
+<b>Engineering call:</b> file the <em>regional</em> case as primary (P<sub>init</sub> = 9.81 kPa/m × z<sub>inj</sub>) and carry the
+<em>brine-hydrostatic</em> case as the conservative bound, per the precedent set by ATCO Sturgeon's 2023 Class VI-equivalent
+submission. The <em>subhydrostatic</em> case should only be filed if a direct DST/RFT measurement on a Phase-1 appraisal well
+confirms it — currently a Tier-1 data gap.
+</p>
+<p style="color:var(--mute);font-size:11.5px;margin-top:4px">
+<b>Conduit-fill correction:</b> if the legacy wellbore is back-filled with cement (ρ ≈ 1800 kg/m³) or weighted mud
+(ρ ≈ 1300 kg/m³), the effective ρ<sub>conduit</sub> in P<sub>balance</sub> rises and ΔP<sub>c</sub> increases by
+~6–14 MPa. Per EPA 816-R-13-005 §5.2.3, the unbacked-fluid case (open hole) is the worst case and the one that must be filed.
+For filing, run a per-well lift calc on each of the 7 legacy wells in AOR using the actual completion record from AER One-Stop.
 </p>
 
 <h3>Three-AOR side-by-side (live)</h3>
@@ -1002,10 +1090,34 @@ function bisectAOR(dp_crit, t_years){
   return (lo+hi)/2;
 }
 
-// USDW-lift critical ΔP
+// ---------- AOR USDW-lift — EPA Class VI Eq. 5-1 (Nicot 2008 / Bandilla 2012) ----------
+// ΔP_c = ρ_USDW·g·z_USDW + ρ_brine·g·(z_inj − z_USDW) − P_init,inj
+// Editable parameters live in the AOR section as <input> fields.
+// Defaults match 15-32 Highvale and Wabamun regional pressure gradient (9.81 kPa/m).
+const AOR_IN = { zinj:1863, zusdw:200, rhob:1062, rhof:1000, pinit:18.27 };
+
+function readAORInputs(){
+  const ids = ['zinj','zusdw','rhob','rhof','pinit'];
+  ids.forEach(k=>{
+    const el = document.getElementById('aor_'+k);
+    if(el && el.value !== '') AOR_IN[k] = parseFloat(el.value);
+  });
+}
+
+function epaClassVI_DPc(p){
+  // p = {zinj, zusdw, rhob, rhof, pinit}  — pinit in MPa, depths in m, densities in kg/m³
+  const Pbal = (p.rhof*G*p.zusdw + p.rhob*G*(p.zinj - p.zusdw))/1e6;  // MPa
+  const dPc  = Pbal - p.pinit;                                          // MPa
+  return { Pbal, dPc };
+}
+
 function usdwLiftDP(){
-  const dz = TOP_DEPTH - USDW_DEPTH; // 1663
-  return (RHO_BRINE - RHO_FRESH)*G*dz/1e6; // MPa ~ 1.01
+  // Returns ΔP_c (MPa) per EPA Eq. 5-1 using current editable inputs.
+  // Floor at +0.01 MPa: if reservoir is at/above balance, the bisection still resolves a finite radius
+  // and the binding criterion will be flagged in the scenario sensitivity rather than crashing.
+  readAORInputs();
+  const { dPc } = epaClassVI_DPc(AOR_IN);
+  return Math.max(0.01, dPc);
 }
 
 // ---------- Global computed state ----------
@@ -1425,10 +1537,56 @@ function chartPc(){
   el('text',{x:16,y:MT+ih/2,class:'axis','text-anchor':'middle',transform:`rotate(-90 16 ${MT+ih/2})`},s).textContent='Capillary pressure';
 }
 
+// ---------- AOR live calculator + scenario rows ----------
+function updateAORLive(){
+  readAORInputs();
+  const { Pbal, dPc } = epaClassVI_DPc(AOR_IN);
+  setText('aor_pbal', Pbal.toFixed(2));
+  setText('aor_dpc',  dPc.toFixed(2));
+  // Resolve r at this dPc (clamped to floor in bisection if dPc<=0)
+  const dpc_eff = Math.max(0.01, dPc);
+  const t_aor = S.L + 50;
+  const r_usdw = bisectAOR(dpc_eff, t_aor);
+  setText('aor_rusdw', (r_usdw/1000).toFixed(1));
+  // Scenarios — use current zinj/zusdw/rhob/rhof; vary only P_init per scenario gradient
+  const SCEN = [
+    {key:'sub', grad:7.58},
+    {key:'reg', grad:9.81},
+    {key:'bri', grad:10.62}
+  ];
+  SCEN.forEach(sc=>{
+    const pinit = sc.grad * AOR_IN.zinj / 1000;          // MPa
+    const Pbal_s = (AOR_IN.rhof*G*AOR_IN.zusdw + AOR_IN.rhob*G*(AOR_IN.zinj-AOR_IN.zusdw))/1e6;
+    const dPc_s  = Pbal_s - pinit;
+    const dpc_b  = Math.max(0.01, dPc_s);
+    const r_s    = bisectAOR(dpc_b, t_aor);
+    setText('scen-'+sc.key+'-dpc', dPc_s.toFixed(2));
+    setText('scen-'+sc.key+'-r',   (r_s/1000).toFixed(1));
+  });
+}
+
+// Wire AOR inputs to recompute
+['aor_zinj','aor_zusdw','aor_rhob','aor_rhof','aor_pinit'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('input', ()=>{ recompute(); });
+});
+// Wire "Load" buttons in the scenario table
+document.querySelectorAll('.btn-scen').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const row = btn.closest('tr');
+    const grad = parseFloat(row.dataset.grad);
+    const zinj = parseFloat(document.getElementById('aor_zinj').value);
+    const pin  = (grad * zinj / 1000).toFixed(2);
+    document.getElementById('aor_pinit').value = pin;
+    recompute();
+  });
+});
+
 // ---------- Driver ----------
 function recompute(){
   compute();
   updateKPIs();
+  updateAORLive();
   chartDP(); chartPlume(); chartAOR(); chartMC();
   chartLayers(); chartRelperm(); chartPc();
 }

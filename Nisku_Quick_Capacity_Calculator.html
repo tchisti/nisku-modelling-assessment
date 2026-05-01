@@ -73,7 +73,8 @@ P10 / P50 / P90 columns drive a 10,000-realization Monte Carlo with triangular d
 
 <div style="margin:6px 0 16px">
 <span style="color:var(--mute);font-size:12px;margin-right:8px">Quick presets:</span>
-<span class="preset active" data-preset="15_32">15-32 Highvale (k=215 mD)</span>
+<span class="preset active" data-preset="pine_oak_cedar">Pine | Oak | Cedar (1010–1090 m)</span>
+<span class="preset" data-preset="15_32">15-32 Highvale analog (k=215 mD)</span>
 <span class="preset" data-preset="08_17">8-17 TransAlta (k=6.8 mD)</span>
 <span class="preset" data-preset="brazeau">Brazeau analog (k=80 mD)</span>
 <span class="preset" data-preset="conservative">Conservative composite</span>
@@ -177,12 +178,13 @@ P10 / P50 / P90 columns drive a 10,000-realization Monte Carlo with triangular d
 <h3>Where defaults come from</h3>
 <ul>
 <li><b>r_max = 2.5 km</b> → π·r² = 19.6 km² footprint (your stated bound)</li>
-<li><b>h_net = 37 m, φ P50 = 0.078</b> → 15-32 Highvale full-diameter, 45 samples (NTG-cut at φ&gt;0.04)</li>
-<li><b>S_wi P50 = 0.25</b> → Bennion-Bachu 2008 carbonate analog (no 15-32 SCAL — gap)</li>
-<li><b>ρ_CO₂ = 708 kg/m³</b> → Span-Wagner EOS at T_res 62 °C, P_init 19.8 MPa</li>
+<li><b>h_net P10/P50/P90 = 39/42/46 m</b> → Winterburn Nisku 60–70 m gross × NTG 0.65 (15-32 analog); Pine/Oak/Cedar zone 1010–1090 m</li>
+<li><b>φ P50 = 0.078</b> → 15-32 Highvale FD core, 45 samples (same formation analog)</li>
+<li><b>S_wi P50 = 0.25</b> → Bennion-Bachu 2008 carbonate analog (no Pine/Oak/Cedar SCAL yet — gap)</li>
+<li><b>ρ_CO₂ P10/P50/P90 = 600/670/720 kg/m³</b> → PR-EOS at P_init 11 MPa / T_res 36.5°C; range reflects EOS uncertainty near critical (T_r=1.02)</li>
 <li><b>E P10/P50/P90 = 1.5%/3.5%/6%</b> → USDOE Atlas + WASP saline-aquifer triangle</li>
-<li><b>BHP headroom 7 MPa</b> → BHP_max (0.9·σ_hmin) − P_init at 1950 m</li>
-<li><b>k = 215 mD</b> → 15-32 Kmax geomean (45 samples log-space)</li>
+<li><b>BHP headroom 4.5 MPa</b> → BHP_max (0.9 × 17.3 MPa) − P_init (11.0 MPa) at 1050 m; FG = 16.5 kPa/m</li>
+<li><b>k = 215 mD</b> → 15-32 Kmax geomean (45 samples, same Winterburn Nisku formation)</li>
 <li><b>r_e</b> implicit in Mathias = r_max from above</li>
 </ul>
 </div>
@@ -216,6 +218,10 @@ const F=id=>parseFloat(document.getElementById(id).value);
 const $=id=>document.getElementById(id);
 
 const presets = {
+  // Pine/Oak/Cedar — Winterburn Nisku 1010-1090 m, FG 16-17 kPa/m
+  // ρ_CO₂ from PR-EOS at P_init=11 MPa / T=36.5°C; BHP headroom = 0.9×17.3 − 11.0 = 4.6 MPa
+  'pine_oak_cedar':{r:[2.5,2.5,2.5],h:[39,42,46],phi:[0.038,0.078,0.124],swi:[0.20,0.25,0.35],
+           rho:[600,670,720],E:[0.015,0.035,0.060],life:25,k:215,bhp_hr:4.5},
   '15_32':{r:[2.5,2.5,2.5],h:[30,37,44],phi:[0.038,0.078,0.124],swi:[0.20,0.25,0.35],
            rho:[680,708,740],E:[0.015,0.035,0.060],life:25,k:215,bhp_hr:7.0},
   '08_17':{r:[2.5,2.5,2.5],h:[20,28,40],phi:[0.027,0.051,0.088],swi:[0.20,0.30,0.40],
@@ -239,7 +245,8 @@ function applyPreset(name){
   calc();
 }
 document.querySelectorAll('.preset').forEach(el=>el.addEventListener('click',()=>applyPreset(el.dataset.preset)));
-function resetAll(){applyPreset('15_32');}
+applyPreset('pine_oak_cedar');  // load Pine/Oak/Cedar defaults on startup
+function resetAll(){applyPreset('pine_oak_cedar');}
 
 // Triangular sampler
 function tri(lo,md,hi){
@@ -385,6 +392,6 @@ function drawSens(caps, inp){
 document.querySelectorAll('input').forEach(el=>{
   el.addEventListener('input', calc);
 });
-calc();
+// calc() already called via applyPreset('pine_oak_cedar') above
 </script>
 </body></html>
