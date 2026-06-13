@@ -99,7 +99,7 @@ svg{display:block}
     <div class="sec" id="s-scope">
       <div class="hd" onclick="toggleSec('s-scope')"><span class="ti">1. Project Scope</span><span class="ch">▾</span></div>
       <div class="bd">
-        <div class="row"><label>Injection rate (Mt/yr)</label><input type="number" id="rate_Mt" value="1.0" step="0.1" min="0.1"></div>
+        <div class="row"><label>Field rate, TOTAL (Mt/yr)</label><input type="number" id="rate_Mt" value="1.0" step="0.1" min="0.1"></div>
         <div class="row"><label>Wells (Pine/Oak/Cedar)</label><input type="number" id="n_wells" value="3" min="1" step="1"></div>
         <div class="row"><label>Project life (yr)</label><input type="number" id="life_yr" value="25" min="1"></div>
         <div class="row"><label>Lease area (km²)</label><input type="number" id="lease_km2" value="500" min="1"></div>
@@ -124,12 +124,18 @@ svg{display:block}
     <div class="sec" id="s-fluids">
       <div class="hd" onclick="toggleSec('s-fluids')"><span class="ti">3. Fluids & Pressure</span><span class="ch">▾</span></div>
       <div class="bd">
-        <div class="row"><label>Initial P gradient (kPa/m)</label><input type="number" id="p_grad" value="10.5" step="0.1"></div>
+        <div class="row"><label>P-regime scenario</label>
+          <select id="p_scenario" onchange="applyPscenario()" style="width:100%;padding:4px 6px;border:1px solid var(--border);background:#0e1629;color:var(--ink);border-radius:4px;font-family:var(--mono);font-size:11px">
+            <option value="10.79">Brine-hydrostatic 10.79</option>
+            <option value="7.58">Subhydrostatic 7.58 (measured)</option>
+            <option value="custom">Custom (edit ↓)</option>
+          </select></div>
+        <div class="row"><label>Initial P gradient (kPa/m)</label><input type="number" id="p_grad" value="10.79" step="0.01"></div>
         <div class="row"><label>Temp gradient (°C/km)</label><input type="number" id="t_grad" value="30" step="1"></div>
         <div class="row"><label>Surface T (°C)</label><input type="number" id="t_surf" value="5" step="1"></div>
         <div class="row"><label>Brine salinity (mg/L TDS)</label><input type="number" id="salt" value="210000" step="10000"></div>
         <div class="row"><label>Brine viscosity (cP)</label><input type="number" id="mu_w" value="0.60" step="0.05"></div>
-        <div class="note"><span class="pill lit">LIT</span> Wabamun-area Nisku salinity 180–230 kppm (Stoakes 2010; WASP). Gradient 10.5 kPa/m is virgin hydrostatic — note regional disposal wells are sub-hydrostatic (depleted pools, not applicable here).</div>
+        <div class="note"><span class="pill assump">DECISION</span> P_init is the make-or-break variable for a 1010–1090 m project. <b>Brine-hydrostatic (10.79 kPa/m)</b> → P_init 11.3 MPa, dense CO₂ (~710 kg/m³). <b>Measured regional disposal data is subhydrostatic (7.58 kPa/m</b>, 8 wells) → P_init ~8 MPa, near-critical CO₂ (~340 kg/m³) — capacity ~halves and storage security degrades. <b>A Phase-1 DST/RFT resolves which is real; do not file without it.</b></div>
       </div>
     </div>
 
@@ -166,9 +172,11 @@ svg{display:block}
     <div class="sec col" id="s-aor">
       <div class="hd" onclick="toggleSec('s-aor')"><span class="ti">7. AOR delineation</span><span class="ch">▾</span></div>
       <div class="bd">
-        <div class="row"><label>Critical ΔP (MPa)</label><input type="number" id="dp_crit" value="1.5" step="0.1"></div>
+        <div class="row"><label>Base of USDW (m)</label><input type="number" id="z_usdw" value="200" step="10"></div>
+        <div class="row"><label>Fresh-water ρ (kg/m³)</label><input type="number" id="rho_fresh" value="1000" step="5"></div>
+        <div class="row"><label>Dual-criterion ΔP (MPa)</label><input type="number" id="dp_crit" value="1.5" step="0.1"></div>
         <div class="row"><label>Storativity S (−)</label><input type="number" id="storativity" value="2.5e-4" step="0.5e-4"></div>
-        <div class="note">Critical ΔP = column head needed to displace brine through any unplugged legacy well into overlying USDW.</div>
+        <div class="note"><span class="pill lit">EPA Eq.5-1</span> AOR criterion ΔP<sub>c</sub> is computed from USDW-lift (Nicot 2008/Bandilla 2012): ΔP<sub>c</sub> = ρ<sub>f</sub>·g·z<sub>USDW</sub> + ρ<sub>b</sub>·g·(z<sub>inj</sub>−z<sub>USDW</sub>) − P<sub>init</sub>. The binding AOR uses min(ΔP<sub>c</sub>, dual-criterion 1.5 MPa). At 1050 m with brine-hydrostatic P_init the reservoir sits near balance → ΔP<sub>c</sub> is small → large AOR.</div>
       </div>
     </div>
 
@@ -226,6 +234,7 @@ svg{display:block}
 
       <div class="callout ok" id="exec-headline"></div>
       <div class="callout warn" id="exec-warning" style="display:none"></div>
+      <div class="callout bad" id="exec-pressure-risk" style="display:none"></div>
     </div>
 
     <!-- ============= RESERVOIR ============= -->
@@ -280,7 +289,7 @@ svg{display:block}
       </div>
       <div class="callout">
         <b>Equation:</b> &nbsp; M<sub>CO₂</sub> = A · h · φ · N/G · (1−S<sub>wi</sub>) · ρ<sub>CO₂</sub> · E &nbsp;
-        with E = 0.03 (saline aquifer, Bachu class F). ρ<sub>CO₂</sub> ≈ 720 kg/m³ at 21 MPa / 61 °C.
+        with E = 0.03 (saline aquifer, Bachu class F). ρ<sub>CO₂</sub> ≈ 710 kg/m³ at brine-hydrostatic P_init 11.3 MPa / 36.5 °C (PR+Péneloux) — but only ~340 kg/m³ if the reservoir is subhydrostatic. <b>ρ is computed live from the P-regime scenario.</b>
       </div>
     </div>
 
@@ -324,7 +333,7 @@ svg{display:block}
       </div>
       <div class="callout" id="plume-verdict"></div>
       <div class="eq">
-        r<sub>CO₂</sub>(t) = √( Q·t·Γ / (π·h·φ·(1−S<sub>wi</sub>)) ) &nbsp; where Γ is mobility-ratio correction (M ≈ 10, λ ≈ 2.3)
+        r<sub>CO₂</sub>(t) = √( V<sub>inj</sub>(t) / (π·h<sub>net</sub>·φ·(1−S<sub>wi</sub>)·E<sub>sweep</sub>) ) &nbsp; E<sub>sweep</sub> ≈ 0.35 (gravity-override sweep; replace with Nordbotten–Celia / GEM)
       </div>
     </div>
 
@@ -347,8 +356,9 @@ svg{display:block}
         </div>
       </div>
       <div class="callout warn">
-        <b>AER Directive 065 / EPA Class VI:</b> AOR must be the envelope of (a) CO₂ plume stabilized, and (b) pressure front where ΔP exceeds the threshold that could drive brine into the deepest USDW through any legacy penetration.
+        <b>AER Directive 065 §6.1.4 / EPA Class VI (40 CFR 146.84):</b> AOR is the envelope of (a) the stabilized CO₂ plume, and (b) the pressure front where ΔP exceeds the USDW-lift threshold ΔP<sub>c</sub> (EPA Eq. 5-1). ΔP<sub>c</sub> is computed from reservoir/USDW geometry, not assumed.
       </div>
+      <div class="callout bad" id="aor-balance-note" style="display:none"></div>
     </div>
 
     <!-- ============= DFIT ============= -->
@@ -390,7 +400,7 @@ svg{display:block}
         <div class="chart-wrap"><canvas id="pore-throat"></canvas></div>
       </div>
       <div class="callout">
-        <b>Seal capacity:</b> P<sub>entry</sub> ≈ 1.8 MPa (Calmar shale, analog). Column height = (P<sub>entry</sub> − P<sub>displ</sub>) / (ρ<sub>w</sub>−ρ<sub>CO₂</sub>)·g → <span id="column-cap"></span> m. &gt; planned gas column ✓
+        <b>Seal capacity:</b> P<sub>entry</sub> ≈ 0.68 MPa in-situ (Calmar shale lab Hg 12.5 MPa × IFT-scaling 0.054). Column height = P<sub>entry</sub> / (ρ<sub>w</sub>−ρ<sub>CO₂</sub>)·g → <span id="column-cap"></span> m. &gt; planned gas column ✓
       </div>
     </div>
 
@@ -438,7 +448,7 @@ svg{display:block}
         <h4><span class="num">3</span> How we compute storage capacity</h4>
         <p>We use the CSA Z741 / Bachu volumetric equation:</p>
         <div class="eq">M<sub>CO₂</sub> = A · h · φ · (N/G) · (1 − S<sub>wi</sub>) · ρ<sub>CO₂</sub> · E</div>
-        <p>Every factor: <b>A</b> is lease area, <b>h</b> gross thickness, <b>φ</b> porosity, <b>N/G</b> net-to-gross, <b>(1−S<sub>wi</sub>)</b> mobile-brine fraction that CO₂ can displace, <b>ρ<sub>CO₂</sub></b> in-situ CO₂ density (~670 kg/m³ at Winterburn Nisku P/T: 11 MPa / 36.5°C, PR-EOS), <b>E</b> is storage efficiency — the fraction of pore volume that actually sees CO₂ in a realistic, gravity-stratified plume. For saline aquifers, Bachu recommends 1–4%. We use 3%. <b>This is the single biggest lever in the equation.</b> If you want to push back on capacity numbers, stress-test E first.</p>
+        <p>Every factor: <b>A</b> is lease area, <b>h</b> gross thickness, <b>φ</b> porosity, <b>N/G</b> net-to-gross, <b>(1−S<sub>wi</sub>)</b> mobile-brine fraction that CO₂ can displace, <b>ρ<sub>CO₂</sub></b> in-situ CO₂ density (~710 kg/m³ at brine-hydrostatic P/T: 11.3 MPa / 36.5°C, PR+Péneloux; collapses to ~340 kg/m³ if subhydrostatic — see the P-regime toggle), <b>E</b> is storage efficiency — the fraction of pore volume that actually sees CO₂ in a realistic, gravity-stratified plume. For saline aquifers, Bachu recommends 1–4%. We use 3%. <b>This is the single biggest lever in the equation.</b> If you want to push back on capacity numbers, stress-test E first.</p>
         <p>Monte Carlo runs 10,000 realizations varying φ (p10/p50/p90 from core), E (uniform 1–5%), h, N/G. Output is a distribution — we report P10 / P50 / P90 capacity.</p>
       </div>
 
@@ -454,7 +464,7 @@ svg{display:block}
         <h4><span class="num">5</span> How we compute the CO₂ plume</h4>
         <p>The Nordbotten–Celia 2006 similarity solution treats the plume as a gravity tongue in a confined aquifer. At late time, plume radius scales as:</p>
         <div class="eq">r<sub>CO₂</sub>(t) ≈ √( V<sub>inj</sub>(t) / (π·h·φ·(1−S<sub>wi</sub>)) )</div>
-        <p>V<sub>inj</sub>(t) is cumulative reservoir volume injected. This is the <b>upper-bound lateral footprint</b>. We then add a mobility-ratio correction (M ≈ 10 unfavourable for CO₂ displacing brine) that inflates the radius by ~√M. The plume plan view is drawn as a circle — the cross-section shows the characteristic gravity-override tongue where CO₂ occupies a thin slice at the top of the reservoir and brine the rest. With Kv/Kh = 0.03 the tongue is <b>thinner</b> than in a homogeneous case — good for capacity per area, bad for caprock stress distribution.</p>
+        <p>V<sub>inj</sub>(t) is cumulative reservoir volume injected per well. Instead of a blanket ×√M mobility multiplier (which over-inflates plume area by ~M ≈ 12× and is not the actual Nordbotten–Celia result), we divide the swept pore volume by an explicit <b>gravity-override sweep efficiency E<sub>sweep</sub> ≈ 0.35</b> — i.e. the CO₂ contacts only ~35% of the net pore volume inside radius r because, with Kv/Kh ≈ 0.03 and unfavourable mobility, it overrides into a thin tongue. The real footprint must come from a Nordbotten–Celia similarity solution or a CMG-GEM / OPM Flow run. The plume plan view is drawn as a circle — the cross-section shows the characteristic gravity-override tongue where CO₂ occupies a thin slice at the top of the reservoir and brine the rest. With Kv/Kh = 0.03 the tongue is <b>thinner</b> than in a homogeneous case — good for capacity per area, bad for caprock stress distribution.</p>
       </div>
 
       <div class="step">
@@ -586,10 +596,16 @@ const DATA = {
 };
 
 const FLUID = {
-  co2_density_kgm3:670,  // PR-EOS at 11 MPa / 36.5°C (Winterburn Nisku P_init)
-  co2_mu_cP:0.05,        // CO₂ viscosity at 36.5°C / 11 MPa (lower than deep wells)
+  // ρ_CO₂ is computed live by co2Density(P,T) — NOT read from here. This value is a
+  // reference anchor only: ~710 kg/m³ (PR+Péneloux) at brine-hydrostatic P_init 11.3 MPa /
+  // 36.5°C. Under the MEASURED subhydrostatic gradient (7.58 kPa/m → ~8 MPa) it collapses
+  // to ~340 kg/m³ — see pressure-scenario toggle.
+  co2_density_kgm3:710,
+  co2_mu_cP:0.05,        // CO₂ viscosity at 36.5°C, near-critical (regional gap — measure)
   water_mu_cP:0.6,
-  brine_density_kgm3:1100, M_mobility:12  // slightly higher mobility ratio at shallower T
+  brine_density_kgm3:1100,   // 210 kppm TDS Na-Ca-Cl (regional; shallower zone may be fresher — gap)
+  E_sweep:0.35,          // plume vertical+areal sweep (gravity override, Kv/Kh≈0.03) — screening proxy
+  M_mobility:12          // CO₂/brine mobility ratio (reference; see plume note)
 };
 
 // ================================================================
@@ -605,8 +621,20 @@ function getInputs(){
     fg:v('fg'), sf:v('sf'), shmin:v('shmin'), biot:v('biot'),
     E:v('effic'), dhd:v('dhd'),
     skin:v('skin'), rw:v('rw'), krg:v('krg'), h_perf:v('h_perf'),
-    dp_crit:v('dp_crit'), S:v('storativity')
+    dp_crit:v('dp_crit'), S:v('storativity'),
+    z_usdw:v('z_usdw'), rho_fresh:v('rho_fresh')
   };
+}
+
+// EPA Class VI Eq. 5-1 USDW-lift critical pressure increase (Nicot 2008 / Bandilla 2012).
+// ΔP_c = ρ_fresh·g·z_USDW + ρ_brine·g·(z_inj − z_USDW) − P_init   [MPa]
+// ΔP_c ≤ 0 ⇒ reservoir already at/above balance, any injection lifts brine (binding).
+function epaClassVI_DPc(i){
+  const g = 9.81;
+  const P_init = i.depth*i.pgrad/1000;                       // MPa
+  const Pbal = (i.rho_fresh*g*i.z_usdw
+              + FLUID.brine_density_kgm3*g*(i.depth - i.z_usdw))/1e6;  // MPa
+  return { Pbal, dPc: Pbal - P_init, P_init };
 }
 
 // CO2 density via Peng-Robinson EOS (Cardano exact cubic solution)
@@ -657,7 +685,16 @@ function co2Density(P_MPa, T_C){
     Z = Math.max(z1, z2, z3);
   }
   Z = Math.max(Z, B + 1e-6);   // Z must exceed B (physical lower bound)
-  return P*M / (Z*RT);
+
+  // Péneloux (1982) volume translation — removes PR's systematic ~4–8% dense-phase
+  // density bias near the critical point. Brings ρ into line with Span–Wagner / NIST
+  // REFPROP (the PVT engine CMG-GEM and OPM Flow CO2STORE both use), which is the
+  // reference standard a regulator will benchmark against.
+  const Vm_PR = Z*RT/P;                                  // PR molar volume, m³/mol
+  const Zra   = 0.29056 - 0.08775*w;                     // Rackett compressibility
+  const cShift= 0.40768*(R*Tc/Pc)*(0.29441 - Zra);       // translation constant, m³/mol
+  const Vm    = Math.max(b*0.4, Vm_PR - cShift);         // translated molar volume
+  return M / Vm;
 }
 
 function staticCapacity(i){
@@ -671,7 +708,9 @@ function staticCapacity(i){
 }
 
 function cumulativeMass(i){
-  return i.rate * i.life * i.n_wells; // Mt
+  // `rate` is the TOTAL field injection rate (Mt/yr) across all wells — NOT per-well.
+  // Per-well rate is rate/n_wells, applied consistently in injectivity() and plumeRadius_m().
+  return i.rate * i.life; // Mt
 }
 
 // Monte Carlo capacity
@@ -718,46 +757,57 @@ function injectivity(i){
   return {P_init, T_C, rho, Qsurf_kg_s, Qres_m3_s, dP_MPa, BHP, BHP_max, window_MPa: BHP_max-P_init, Qsurf_Mt_yr:i.rate};
 }
 
-// Plume radius (Nordbotten-Celia, simplified)
+// Per-injector plume radius — volumetric footprint with an explicit gravity-override
+// sweep efficiency. The CO₂ injected per well fills only a fraction E_sweep of the net
+// pore volume (1−Swi) inside radius r, because under Kv/Kh≈0.03 and an unfavourable
+// mobility ratio it overrides into a thin tongue rather than sweeping the full column:
+//     r = √( V / (π · h_net · φ · (1−Swi) · E_sweep) )
+// This replaces the previous blanket ×√M multiplier, which inflated plume AREA by ~M (≈12×)
+// and is not the Nordbotten–Celia solution. E_sweep (FLUID.E_sweep≈0.35) is a screening
+// proxy — the true footprint must come from a Nordbotten–Celia similarity solution or a
+// CMG-GEM / OPM Flow run.
 function plumeRadius_m(i, t_yr){
   const rho = co2Density(i.depth*i.pgrad/1000, i.tsurf+i.depth*i.tgrad/1000);
-  const Qsurf_kg_s = (i.rate*1e9/i.n_wells)/(365*24*3600);
+  const Qsurf_kg_s = (i.rate*1e9/i.n_wells)/(365*24*3600);  // per-injector
   const Qres_m3_s = Qsurf_kg_s/rho;
   const V_m3 = Qres_m3_s * t_yr * 3.156e7;
-  // r^2 = V / (pi h phi (1-Swi))
-  const r_base = Math.sqrt(V_m3/(Math.PI*i.h*i.ntg*i.phi*(1-i.swi)));
-  // mobility ratio correction
-  const lambda = Math.sqrt(FLUID.M_mobility);
-  return r_base*lambda;
+  const h_net = i.h*i.ntg;
+  return Math.sqrt(V_m3/(Math.PI*h_net*i.phi*(1-i.swi)*FLUID.E_sweep));
 }
 
 // Theis pressure (ΔP at r,t) using classic diffusion form
 // ΔP = (Q·μ)/(4π·k·h) · W(u),  u = r²·φ·μ·c_t / (4·k·t)
 function theisDeltaP(i, r_m, t_yr){
+  // Far-field pressure diffusion from the WHOLE injector pattern as an aggregated source
+  // (Q_total, NOT per-well) — correct for AOR-scale radii r >> well spacing, and the
+  // conservative basis a regulator expects for the pressure-front AOR.
   const rho = co2Density(i.depth*i.pgrad/1000, i.tsurf+i.depth*i.tgrad/1000);
-  const Qres = (i.rate*1e9/i.n_wells)/(365*24*3600)/rho; // m3/s
+  const Qres = (i.rate*1e9)/(365*24*3600)/rho; // m3/s, TOTAL field volumetric rate
   const k_m2 = i.k*9.869e-16;
-  const mu = i.mu_w*1e-3;     // Pa.s
+  const mu = i.mu_w*1e-3;      // brine viscosity governs the displaced-phase diffusion
   const h = i.h*i.ntg;
-  const phi = i.phi;
-  const c_t = 6e-10;          // 1/Pa, rock + brine total compressibility
+  const c_t = 6e-10;           // 1/Pa, rock + brine total compressibility
   const t_s = Math.max(1, t_yr*3.156e7);
-  const u = (r_m*r_m*phi*mu*c_t)/(4*k_m2*t_s);
-  let W;
-  if(u<0.01) W = -0.5772 - Math.log(u);
-  else if(u<1) W = -0.5772 - Math.log(u) + u - u*u/4 + u*u*u/18;
-  else W = Math.exp(-u)/u * (1 - 1/u + 2/(u*u));  // asymptotic for large u
-  W = Math.max(0, W);
+  const u = (r_m*r_m*i.phi*mu*c_t)/(4*k_m2*t_s);
+  const W = theisW(u);
   const dP_Pa = (Qres*mu/(4*Math.PI*k_m2*h))*W;
   return dP_Pa/1e6;
 }
+// Theis well function W(u) = -γ - ln u + Σ (-1)^(n+1) u^n/(n·n!) — full series (accurate all u)
+function theisW(u){
+  if(u<=0) return 0;
+  if(u<1e-10) return -0.5772156649 - Math.log(u);
+  let s = -0.5772156649 - Math.log(u), term=1;
+  for(let n=1;n<100;n++){ term *= -u/n; s -= term/n; if(Math.abs(term/n)<1e-12) break; }
+  return Math.max(0, s);
+}
 function aorRadius(i, dp_crit_MPa, t_yr){
-  // bisect radius where Theis dP = dp_crit
-  let lo=10, hi=100000;
+  // bisect radius where Theis ΔP = ΔP_crit (ΔP_crit floored positive by the caller)
+  let lo=10, hi=150000;             // search out to 150 km
+  if(theisDeltaP(i,hi,t_yr) > dp_crit_MPa) return hi;  // criterion still exceeded at 150 km
   for(let k=0;k<60;k++){
     const m=(lo+hi)/2;
-    const dp=theisDeltaP(i,m,t_yr);
-    if(dp>dp_crit_MPa) lo=m; else hi=m;
+    if(theisDeltaP(i,m,t_yr) > dp_crit_MPa) lo=m; else hi=m;
   }
   return (lo+hi)/2;
 }
@@ -788,7 +838,9 @@ function renderSummary(){
   const mc = mcCapacity(i, 5000);
   const inj = injectivity(i);
   const r25 = plumeRadius_m(i, i.life);
-  const aor = aorRadius(i, i.dp_crit, i.life);
+  const epa = epaClassVI_DPc(i);
+  const dpc_bind = Math.max(0.01, Math.min(epa.dPc, i.dp_crit));   // binding = smaller ΔP_c
+  const aor = aorRadius(i, dpc_bind, i.life);
 
   document.getElementById('base-case-rate').textContent = i.rate.toFixed(1);
   document.getElementById('base-case-life').textContent = i.life;
@@ -799,11 +851,11 @@ function renderSummary(){
 
   document.getElementById('kpi-exec').innerHTML = kpiHTML([
     {label:"P50 Static Capacity", val:mc.p50.toFixed(1), unit:"Mt", cls: cap_ok?'ok':'bad', foot:`P10: ${mc.p10.toFixed(1)}  P90: ${mc.p90.toFixed(1)} Mt`},
-    {label:"Cumulative Injection", val:cum.toFixed(1), unit:"Mt", cls:'ok', foot:`${i.rate}×${i.life}×${i.n_wells} well${i.n_wells>1?'s':''}`},
+    {label:"Cumulative Injection", val:cum.toFixed(1), unit:"Mt", cls:'ok', foot:`${i.rate} Mt/yr total × ${i.life} yr (${(i.rate/i.n_wells).toFixed(2)}/well × ${i.n_wells})`},
     {label:"CO₂ density @ res.", val:cap.rho_co2.toFixed(0), unit:"kg/m³", foot:`P=${cap.P_MPa.toFixed(1)} MPa, T=${cap.T_C.toFixed(0)} °C`},
     {label:"Injection ΔP", val:inj.dP_MPa.toFixed(2), unit:"MPa", cls: inj_ok?'ok':'bad', foot:`BHP ${inj.BHP.toFixed(1)} / limit ${inj.BHP_max.toFixed(1)} MPa`},
     {label:"Plume radius @ end", val:(r25/1000).toFixed(2), unit:"km", cls:'warn', foot:`at t = ${i.life} yr`},
-    {label:"AOR radius", val:(aor/1000).toFixed(2), unit:"km", cls:'warn', foot:`ΔP crit = ${i.dp_crit} MPa`}
+    {label:"AOR radius", val:(aor/1000).toFixed(2), unit:"km", cls:'warn', foot:`ΔP_c(EPA 5-1)=${epa.dPc.toFixed(2)} · binding ${dpc_bind.toFixed(2)} MPa`}
   ]);
   // Exec narrative
   const margin = mc.p50/cum;
@@ -820,6 +872,19 @@ function renderSummary(){
     headlineEl.innerHTML = `<b>✗ NO-GO as scoped:</b> P50 capacity <b>${mc.p50.toFixed(1)} Mt</b> is <b>below</b> ${cum.toFixed(0)} Mt target. The physical container is too small for the planned injection.`;
     warnEl.style.display='block';
     warnEl.innerHTML = `<b>Options to unlock:</b> (a) expand lease to ≥${(i.lease_km2*cum/mc.p50*1.3).toFixed(0)} km², (b) raise efficiency to E ≈ ${((i.E*cum/mc.p50*1.3)*100).toFixed(1)}% via brine-production pressure management, (c) reduce rate to ${(i.rate*mc.p50/cum/1.3).toFixed(2)} Mt/yr, or (d) add second reservoir (BCS stacked storage).`;
+  }
+
+  // ---- Near-critical CO₂ / pressure-regime risk (shallow-reservoir specific) ----
+  const Pc_CO2 = 7.377, dP_to_crit = cap.P_MPa - Pc_CO2;
+  const prEl = document.getElementById('exec-pressure-risk');
+  if(cap.rho_co2 < 500){
+    prEl.style.display='block'; prEl.className='callout bad';
+    prEl.innerHTML = `<b>⛔ Near-critical CO₂ at this depth & pressure.</b> P_init ${cap.P_MPa.toFixed(1)} MPa is only ${dP_to_crit.toFixed(1)} MPa above CO₂'s critical pressure (7.38 MPa) and modelled density is just <b>${cap.rho_co2.toFixed(0)} kg/m³</b> (gas-like). Capacity scales with ρ, so the numbers above are <b>overstated by ~2× unless P_init is confirmed ≥ ~10 MPa</b>. This is the subhydrostatic case implied by the regional disposal-well data (7.58 kPa/m). <b>Resolve with a Phase-1 DST/RFT before FID.</b>`;
+  } else if(cap.rho_co2 < 650 || dP_to_crit < 2.0){
+    prEl.style.display='block'; prEl.className='callout warn';
+    prEl.innerHTML = `<b>⚠ Thin supercritical margin.</b> P_init ${cap.P_MPa.toFixed(1)} MPa, ρ_CO₂ ${cap.rho_co2.toFixed(0)} kg/m³ — only ${dP_to_crit.toFixed(1)} MPa above critical. At 1010–1090 m the density is sensitive to small pressure changes; carry the subhydrostatic case as the downside bound.`;
+  } else {
+    prEl.style.display='none';
   }
 
   // Kaldi-Bachu screening
@@ -921,7 +986,7 @@ function renderCapacity(){
     {label:'P10 capacity',val:mc.p10.toFixed(1),unit:'Mt',cls:'warn',foot:'conservative'},
     {label:'P50 capacity',val:mc.p50.toFixed(1),unit:'Mt',cls:'ok',foot:'base case'},
     {label:'P90 capacity',val:mc.p90.toFixed(1),unit:'Mt',cls:'ok',foot:'upside'},
-    {label:'Planned injection',val:cum.toFixed(1),unit:'Mt',foot:`${i.rate}×${i.life} yr × ${i.n_wells} w`},
+    {label:'Planned injection',val:cum.toFixed(1),unit:'Mt',foot:`${i.rate} Mt/yr total × ${i.life} yr`},
     {label:'P50/cum ratio',val:(mc.p50/cum).toFixed(1),unit:'×',cls:mc.p50>cum?'ok':'bad'},
     {label:'CO₂ density',val:cap.rho_co2.toFixed(0),unit:'kg/m³'}
   ]);
@@ -1108,8 +1173,11 @@ function renderPlume(){
 function renderAOR(){
   const i=getInputs();
   const r_plume25 = plumeRadius_m(i, i.life);
-  const r_aor = aorRadius(i, i.dp_crit, i.life);
+  const epa = epaClassVI_DPc(i);
+  const dpc_bind = Math.max(0.01, Math.min(epa.dPc, i.dp_crit));   // binding = smaller ΔP_c → larger AOR
+  const r_aor = aorRadius(i, dpc_bind, i.life);
   const r_monitor = Math.max(r_aor, r_plume25);
+  const balance_flag = epa.dPc <= 0.2;   // reservoir at/above USDW-lift balance
 
   document.getElementById('kpi-aor').innerHTML = kpiHTML([
     {label:'CO₂ plume 25 yr',val:(r_plume25/1000).toFixed(2),unit:'km'},
@@ -1117,7 +1185,7 @@ function renderAOR(){
     {label:'Effective AOR',val:(r_monitor/1000).toFixed(2),unit:'km',cls:'warn',foot:'max of the two'},
     {label:'AOR area',val:(Math.PI*r_monitor*r_monitor/1e6).toFixed(1),unit:'km²'},
     {label:'Legacy wells in AOR',val:DATA.legacy.filter(w=>Math.hypot(w.x,w.y)<r_monitor/1000).length,unit:''},
-    {label:'ΔP critical',val:i.dp_crit.toFixed(1),unit:'MPa'},
+    {label:'ΔP_c (EPA Eq.5-1)',val:epa.dPc.toFixed(2),unit:'MPa',cls:balance_flag?'bad':'warn',foot:`P_bal ${epa.Pbal.toFixed(1)} − P_init ${epa.P_init.toFixed(1)}`},
   ]);
 
   // AOR SVG map
@@ -1183,6 +1251,13 @@ function renderAOR(){
       const inAOR = d < r_monitor/1000;
       return `<tr><td class="num">${w.uwi.substring(0,14)}</td><td>${w.op}</td><td>${w.fluid}</td><td class="num">${d.toFixed(1)}</td><td><span class="badge ${inAOR?'bad':'ok'}">${inAOR?'YES':'no'}</span></td><td><span class="badge ${w.risk==='High'?'bad':w.risk==='Med'?'warn':'ok'}">${w.risk}</span></td></tr>`;
     }).join('');
+
+  // Balance flag — if reservoir sits at/above USDW-lift balance, the pressure AOR is effectively unbounded
+  const bn = document.getElementById('aor-balance-note');
+  if(epa.dPc <= 0.2){
+    bn.style.display='block';
+    bn.innerHTML = `<b>⛔ Reservoir at USDW-lift balance.</b> ΔP_c (EPA Eq.5-1) = ${epa.dPc.toFixed(2)} MPa (P_balance ${epa.Pbal.toFixed(1)} ≈ P_init ${epa.P_init.toFixed(1)}). At brine-hydrostatic P_init the 1050 m Nisku barely supports the overlying brine+USDW column, so almost any injection overpressure is theoretically sufficient to lift brine up a defective legacy well — the pressure AOR balloons to ${(r_aor/1000).toFixed(0)} km. This is a direct consequence of shallow depth + dense brine. Two levers move it: (1) a measured subhydrostatic P_init (more headroom), or (2) confirm the base-of-USDW depth (currently ${i.z_usdw} m — verify against Alberta Base of Groundwater Protection).`;
+  } else { bn.style.display='none'; }
 }
 
 // ============= DFIT =============
@@ -1238,8 +1313,12 @@ function renderDFIT(){
 // ============= MICP / SCAL =============
 function renderMICP(){
   const i=getInputs();
-  const Pentry_MPa = 1.8;
-  const rho_diff = 1100-720;
+  // In-situ CO₂/brine entry pressure, IFT-scaled from lab Hg/air MICP (Calmar shale analog):
+  // 12.5 MPa lab × (IFT_CO₂brine·cosθ / IFT_Hg/air ≈ 0.054) ≈ 0.68 MPa in-situ. Consistent
+  // with the CCS Reference Guide derivation. Replace with measured Calmar/Ireton MICP.
+  const Pentry_MPa = 0.68;
+  const rhoCO2 = co2Density(i.depth*i.pgrad/1000, i.tsurf + i.depth*i.tgrad/1000);
+  const rho_diff = Math.max(50, FLUID.brine_density_kgm3 - rhoCO2);
   const column = Pentry_MPa*1e6 / (rho_diff*9.81);
   document.getElementById('kpi-micp').innerHTML = kpiHTML([
     {label:'P entry (seal)',val:Pentry_MPa.toFixed(2),unit:'MPa',cls:'ok'},
@@ -1343,6 +1422,17 @@ document.querySelectorAll('.tab').forEach(t=>{
 function toggleSec(id){
   document.getElementById(id).classList.toggle('col');
 }
+function applyPscenario(){
+  const sel = document.getElementById('p_scenario').value;
+  if(sel !== 'custom'){ document.getElementById('p_grad').value = sel; }
+  recompute();
+}
+// If the user hand-edits the gradient, flip the scenario selector to "custom"
+document.getElementById('p_grad').addEventListener('input',()=>{
+  const v = document.getElementById('p_grad').value;
+  const sel = document.getElementById('p_scenario');
+  sel.value = (v==='10.79'||v==='7.58') ? v : 'custom';
+});
 function recompute(){
   renderSummary();
   renderRes();
@@ -1355,8 +1445,9 @@ function recompute(){
   renderXRD();
 }
 function resetDefaults(){
-  const defaults = {rate_Mt:1,n_wells:3,life_yr:25,lease_km2:500,depth_m:1050,h_gross:65,ntg:0.65,phi:0.078,k_mD:215,kvkh:0.029,swi:0.22,p_grad:10.5,t_grad:30,t_surf:5,salt:210000,mu_w:0.6,fg:16.5,sf:0.9,shmin:17.3,biot:0.75,effic:0.04,dhd:50,skin:0,rw:0.11,krg:0.45,h_perf:42,dp_crit:1.5,storativity:2.5e-4};
-  Object.entries(defaults).forEach(([k,v])=>document.getElementById(k).value=v);
+  const defaults = {rate_Mt:1,n_wells:3,life_yr:25,lease_km2:500,depth_m:1050,h_gross:65,ntg:0.65,phi:0.078,k_mD:215,kvkh:0.029,swi:0.22,p_grad:10.79,t_grad:30,t_surf:5,salt:210000,mu_w:0.6,fg:16.5,sf:0.9,shmin:17.3,biot:0.75,effic:0.04,dhd:50,skin:0,rw:0.11,krg:0.45,h_perf:42,dp_crit:1.5,storativity:2.5e-4,z_usdw:200,rho_fresh:1000};
+  Object.entries(defaults).forEach(([k,v])=>{const el=document.getElementById(k); if(el) el.value=v;});
+  const sc=document.getElementById('p_scenario'); if(sc) sc.value='10.79';
   recompute();
 }
 // Bind recompute on change

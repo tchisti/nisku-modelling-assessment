@@ -175,7 +175,7 @@ adjust a slider there and the KPIs below update.
 <div class="card warn"><h3 style="margin-top:0;color:var(--warn)">⚠ What is marginal or unknown</h3>
 <ul style="margin:4px 0 4px 18px;padding:0">
 <li><b>Capacity is marginal at default E=3%.</b> P50 lease capacity 24 Mt vs 25 Mt commit → utilization 104%. Headroom only emerges at E ≥ 3.5% (requires pressure management / brine extraction).</li>
-<li><b>USDW-lift AOR is binding under the regional pressure scenario.</b> Per <b>EPA Class VI Eq. 5-1 (Nicot 2008 / Bandilla 2012)</b>, ΔP<sub>c</sub> = 1.01 MPa under freshwater-hydrostatic P<sub>init</sub> (Wabamun regional default) → r<sub>USDW</sub> ≈ 18 km, outside the 12.6 km lease radius. Under <i>subhydrostatic</i> P<sub>init</sub> (7.58 kPa/m), ΔP<sub>c</sub> rises to 5.17 MPa and AOR collapses to &lt;0.1 km — non-binding. <b>A single Phase-1 DST resolves which scenario is real.</b> EPA dual-criterion (1.5 MPa) gives 5.4 km. See AOR tab for editable calculator and scenario sensitivity.</li>
+<li><b>USDW-lift AOR hinges entirely on the pressure regime (EPA Class VI Eq. 5-1, Nicot 2008 / Bandilla 2012).</b> At 1050 m the balance pressure is P<sub>bal</sub> ≈ 11.1 MPa. Under <i>brine-hydrostatic</i> P<sub>init</sub> (11.3 MPa) the reservoir sits at/above balance → ΔP<sub>c</sub> ≈ −0.2 MPa → the pressure AOR is effectively <b>unbounded (&gt;100 km)</b>, far beyond the 12.6 km lease radius. Under the <i>measured subhydrostatic</i> gradient (7.58 kPa/m → 8.0 MPa) ΔP<sub>c</sub> ≈ +3.2 MPa → AOR shrinks to sub-km — but the CO₂ is then near-critical (~340 kg/m³), roughly halving static capacity. EPA dual-criterion (1.5 MPa) gives ≈11.5 km, just inside the lease. <b>A single Phase-1 DST resolves which regime governs both AOR and capacity — the highest-value data item.</b> (Radius is horizon- and density-dependent, so the index dashboard at a 25-yr horizon shows a different number; both reduce to the same ΔP<sub>c</sub>.)</li>
 <li><b>No 15-32 DFIT, no caprock MICP on Calmar, no 15-32 SCAL.</b> These block FID-grade submission. See Gap Register.</li>
 </ul></div>
 </div>
@@ -202,7 +202,7 @@ real measured inputs, and to identify exactly which data gaps block FID-grade mo
 <h3>Workflow</h3>
 <ol class="stepper">
 <li><b>Anchor on measured data.</b> 15-32 (45 Nisku samples, full-diameter + routine k-φ) provides the primary reservoir description. 8-17 (20 samples, SLBCARB XRD + TRAdata) calibrates mineralogy and provides a secondary permeability realization.</li>
-<li><b>Fluid properties from correlations.</b> Span &amp; Wagner CO₂ EOS at T_res 62 °C, P_init 19.8 MPa → ρ_CO₂ 708 kg/m³, μ_CO₂ 0.058 cP. Brine density 1062 kg/m³ (75,000 ppm TDS), μ_brine 0.45 cP.</li>
+<li><b>Fluid properties from correlations.</b> Span &amp; Wagner CO₂ EOS at T_res 36.5 °C, brine-hydrostatic P_init 11.3 MPa → ρ_CO₂ ≈ 715 kg/m³, μ_CO₂ ≈ 0.05 cP. <b>Under the measured subhydrostatic gradient (7.58 kPa/m → 8 MPa) ρ_CO₂ collapses to ~340 kg/m³ (near-critical).</b> Brine density 1100 kg/m³ (210,000 ppm TDS — shallower zone may be fresher; gap), μ_brine 0.6 cP.</li>
 <li><b>Capacity by Bachu 2008 volumetric.</b> M = A·h_net·φ·(1−S_wi)·ρ_CO₂·E with Monte Carlo over all six inputs (10,000 realizations). Storage efficiency E sampled from USDOE Atlas triangular distribution (1%, 3%, 6%).</li>
 <li><b>Injectivity by Mathias 2009 radial.</b> ΔP = (Q·μ_CO₂)/(2π·k·k_rg·h_net)·[ln(r_e/r_w) + s]. Peaceman correction for well-block geometry at FV scale.</li>
 <li><b>Plume by Nordbotten-Celia 2006 similarity.</b> r(t) ≈ √[Q·t/(π·h_net·φ·(1−S_wi))] · √M for viscosity ratio M ≈ 8. Extended post-injection stabilization via gravity-dominated tongue model.</li>
@@ -427,7 +427,7 @@ effects (salt precipitation, dry-out halo, thermal cooldown).
 <tbody>
 <tr><td>Salt precipitation (halite)</td><td>Brine vapourisation in dry-out halo</td><td class="num">+10 to +30%</td><td>Low-salinity pre-flush; water-alternating-CO₂ cycling</td></tr>
 <tr><td>Capillary hysteresis</td><td>Two-phase S_gr trapping near well</td><td class="num">+5 to +15%</td><td>Cyclic injection; controlled shut-ins</td></tr>
-<tr><td>Thermal contraction fracturing</td><td>T_injection 20 °C vs T_res 62 °C</td><td class="num">−5 to −15%</td><td>Beneficial if controlled; risk to seal integrity if uncontrolled</td></tr>
+<tr><td>Thermal contraction fracturing</td><td>T_injection 20 °C vs T_res 36.5 °C</td><td class="num">−5 to −15%</td><td>Beneficial if controlled; risk to seal integrity if uncontrolled</td></tr>
 <tr><td>Geochemical precipitation</td><td>Calcite dissolution/reprecipitation</td><td class="num">±5%</td><td>Generally net-permeability-positive in carbonates (XRD Nisku is 82% calcite)</td></tr>
 </tbody></table>
 <p style="color:var(--mute)">We carry a <b>net skin of s=+3</b> in the live model as a composite allowance. Field DFIT + step-rate tests should calibrate s directly.</p>
@@ -497,20 +497,20 @@ This is the binding test. References: <i>Nicot, J.-P. (2008) Int. J. Greenh. Gas
 <thead><tr><th>Parameter</th><th>Value</th><th>Source / note</th></tr></thead>
 <tbody>
 <tr><td>z<sub>inj</sub> — top of injection zone (m)</td>
-    <td><input type="number" id="aor_zinj" value="1863" step="1" style="width:90px"></td>
-    <td>15-32 Nisku top <span class="pill used">REAL</span></td></tr>
+    <td><input type="number" id="aor_zinj" value="1050" step="1" style="width:90px"></td>
+    <td>Pine/Oak/Cedar injection mid-depth (analog core is deeper, 1863 m)</td></tr>
 <tr><td>z<sub>USDW</sub> — base of lowermost USDW (m)</td>
     <td><input type="number" id="aor_zusdw" value="200" step="10" style="width:90px"></td>
-    <td>Alberta Environment, base-of-groundwater-protection, Highvale-Wabamun area</td></tr>
+    <td>Alberta Environment, base-of-groundwater-protection, Highvale-Wabamun area <span class="pill warn">verify — gating at this depth</span></td></tr>
 <tr><td>ρ<sub>brine</sub> — formation brine density (kg/m³)</td>
-    <td><input type="number" id="aor_rhob" value="1062" step="1" style="width:90px"></td>
-    <td>Batzle-Wang at 75 kppm TDS, 62°C, 19.8 MPa</td></tr>
+    <td><input type="number" id="aor_rhob" value="1100" step="1" style="width:90px"></td>
+    <td>210 kppm TDS, 36.5°C, 11.3 MPa (shallower zone may be fresher — gap)</td></tr>
 <tr><td>ρ<sub>USDW</sub> — fresh-water density (kg/m³)</td>
     <td><input type="number" id="aor_rhof" value="1000" step="1" style="width:90px"></td>
-    <td>conservative; some operators use 1010 (basal Paskapoo)</td></tr>
+    <td>conservative; basal Paskapoo fresh water</td></tr>
 <tr><td>P<sub>init,inj</sub> — pre-injection pressure at z<sub>inj</sub> (MPa)</td>
-    <td><input type="number" id="aor_pinit" value="18.27" step="0.01" style="width:90px"></td>
-    <td>regional gradient × z<sub>inj</sub> — see scenarios below</td></tr>
+    <td><input type="number" id="aor_pinit" value="11.33" step="0.01" style="width:90px"></td>
+    <td>brine-hydrostatic 10.79 kPa/m × z<sub>inj</sub> — see scenarios below</td></tr>
 <tr style="background:#1a1f3a"><td><b>P<sub>balance</sub> at z<sub>inj</sub></b></td>
     <td class="num"><b><span id="aor_pbal">—</span> MPa</b></td>
     <td>= ρ<sub>USDW</sub>·g·z<sub>USDW</sub> + ρ<sub>brine</sub>·g·(z<sub>inj</sub>−z<sub>USDW</sub>)</td></tr>
@@ -531,29 +531,31 @@ range of pressure gradients in the WCSB literature; the table below presents the
 Click any row to load it into the calculator above.
 </p>
 <table>
-<thead><tr><th>Scenario</th><th>Gradient (kPa/m)</th><th>P<sub>init</sub> @ 1863 m (MPa)</th><th>ΔP<sub>c</sub> (MPa)</th><th>r<sub>AOR,USDW</sub> (km)</th><th>Source / typical use</th><th>Apply</th></tr></thead>
+<thead><tr><th>Scenario</th><th>Gradient (kPa/m)</th><th>P<sub>init</sub> @ 1050 m (MPa)</th><th>ΔP<sub>c</sub> (MPa)</th><th>r<sub>AOR,USDW</sub> (km)</th><th>Source / typical use</th><th>Apply</th></tr></thead>
 <tbody id="aor-scenario-tbl">
-<tr data-scen="sub" data-grad="7.58" data-pinit="14.12">
-  <td><b>Subhydrostatic (low end)</b></td><td class="num">7.58</td><td class="num">14.12</td>
+<tr data-scen="sub" data-grad="7.58" data-pinit="7.96">
+  <td><b>Subhydrostatic (low end)</b></td><td class="num">7.58</td><td class="num">7.96</td>
   <td class="num"><span id="scen-sub-dpc">—</span></td><td class="num"><span id="scen-sub-r">—</span></td>
-  <td>Local DST P50 from Nisku Disposal wells in Larger AOI; permissive case</td>
+  <td>Local DST P50 from Nisku Disposal wells in Larger AOI; bounded AOR but near-critical CO₂</td>
   <td><button class="btn-scen" data-scen="sub">Load</button></td></tr>
-<tr data-scen="reg" data-grad="9.81" data-pinit="18.27">
-  <td><b>Freshwater hydrostatic (regional)</b></td><td class="num">9.81</td><td class="num">18.27</td>
+<tr data-scen="reg" data-grad="9.81" data-pinit="10.30">
+  <td><b>Freshwater hydrostatic (regional)</b></td><td class="num">9.81</td><td class="num">10.30</td>
   <td class="num"><span id="scen-reg-dpc">—</span></td><td class="num"><span id="scen-reg-r">—</span></td>
-  <td>Bachu (2008) WCSB regional; <b>recommended filing default</b></td>
+  <td>Bachu (2008) WCSB regional; middle case</td>
   <td><button class="btn-scen" data-scen="reg">Load</button></td></tr>
-<tr data-scen="bri" data-grad="10.62" data-pinit="19.78">
-  <td><b>Brine hydrostatic (conservative)</b></td><td class="num">10.62</td><td class="num">19.78</td>
+<tr data-scen="bri" data-grad="10.79" data-pinit="11.33">
+  <td><b>Brine hydrostatic (conservative)</b></td><td class="num">10.79</td><td class="num">11.33</td>
   <td class="num"><span id="scen-bri-dpc">—</span></td><td class="num"><span id="scen-bri-r">—</span></td>
-  <td>ρ<sub>brine</sub>·g·z; AER conservative default when no DST</td>
+  <td>ρ<sub>brine</sub>·g·z; dense CO₂ but near USDW-lift balance → largest AOR; <b>conservative filing bound</b></td>
   <td><button class="btn-scen" data-scen="bri">Load</button></td></tr>
 </tbody></table>
 <p style="color:var(--mute);font-size:12px;margin-top:6px">
-<b>Engineering call:</b> file the <em>regional</em> case as primary (P<sub>init</sub> = 9.81 kPa/m × z<sub>inj</sub>) and carry the
-<em>brine-hydrostatic</em> case as the conservative bound, per the precedent set by ATCO Sturgeon's 2023 Class VI-equivalent
-submission. The <em>subhydrostatic</em> case should only be filed if a direct DST/RFT measurement on a Phase-1 appraisal well
-confirms it — currently a Tier-1 data gap.
+<b>Engineering call (shallow-Nisku inversion):</b> at 1050 m the two pressure scenarios trade off against each other.
+<em>Brine-hydrostatic</em> P_init sits at/above the USDW-lift balance (ΔP<sub>c</sub> ≤ 0 → effectively unbounded pressure AOR) but
+gives dense, storable CO₂ (~715 kg/m³). <em>Subhydrostatic</em> P_init bounds the AOR (ΔP<sub>c</sub> ≈ +3 MPa → ~25 km) but the
+CO₂ turns near-critical (~340 kg/m³), roughly halving static capacity. File the <em>brine-hydrostatic</em> case as the conservative
+AOR bound; a direct DST/RFT on a Phase-1 appraisal well is the single Tier-1 item that resolves both the AOR size and the
+capacity — do not reach FID without it.
 </p>
 <p style="color:var(--mute);font-size:11.5px;margin-top:4px">
 <b>Conduit-fill correction:</b> if the legacy wellbore is back-filled with cement (ρ ≈ 1800 kg/m³) or weighted mud
@@ -605,10 +607,10 @@ Closing this gap requires one DFIT on the first Phase-1 injector and is estimate
 <thead><tr><th>Quantity</th><th>Value</th><th>Source</th><th>Confidence</th></tr></thead>
 <tbody>
 <tr><td>Regional σ_hmin gradient (WCSB)</td><td class="num">16.0–17.5 kPa/m</td><td>Bell &amp; Bachu 2003; AER ST98</td><td>±10%</td></tr>
-<tr><td>P_frac @ 1950 m (Nisku mid-depth)</td><td class="num">31.2 MPa</td><td>16 kPa/m × 1950 m</td><td>±10%</td></tr>
-<tr><td>BHP_max (AER 90% rule)</td><td class="num">28.1 MPa</td><td>0.9 × P_frac</td><td>±10%</td></tr>
-<tr><td>P_init @ 1950 m (regional gradient)</td><td class="num">19.8 MPa</td><td>Pressure.xlsx, 8 samples <span class="pill used">REAL</span></td><td>±5%</td></tr>
-<tr><td>Max allowable ΔP</td><td class="num">8.3 MPa</td><td>28.1 − 19.8</td><td>±12%</td></tr>
+<tr><td>P_frac @ 1050 m (injection mid-depth)</td><td class="num">17.3 MPa</td><td>16.5 kPa/m × 1050 m</td><td>±10%</td></tr>
+<tr><td>BHP_max (AER 90% rule)</td><td class="num">15.6 MPa</td><td>0.9 × P_frac</td><td>±10%</td></tr>
+<tr><td>P_init @ 1050 m (brine-hydrostatic)</td><td class="num">11.3 MPa</td><td>10.79 kPa/m × 1050 m; measured regional 7.58 kPa/m → 8.0 MPa <span class="pill used">REAL</span></td><td>±5%</td></tr>
+<tr><td>Max allowable ΔP</td><td class="num">4.3 MPa</td><td>15.6 − 11.3 (brine-hydro); 7.6 if subhydrostatic</td><td>±12%</td></tr>
 <tr><td>Mechanical earth model (MEM)</td><td class="num">— none built —</td><td><span class="pill gap">GAP</span> Requires cross-dipole sonic on 15-32</td><td>—</td></tr>
 </tbody></table>
 
@@ -970,18 +972,18 @@ function filterNav(q){
 
 // ---------- Physics constants ----------
 const G=9.81;
-const MU_CO2 = 0.058e-3;   // Pa·s at 62°C, 19.8 MPa
-const MU_W   = 0.45e-3;    // Pa·s brine at 62°C, 75kppm
-const RHO_CO2_DEFAULT = 708;   // kg/m3
-const RHO_BRINE = 1062;    // kg/m3
+const MU_CO2 = 0.05e-3;    // Pa·s at 36.5°C, ~11 MPa (near-critical — regional gap)
+const MU_W   = 0.6e-3;     // Pa·s brine at 36.5°C, 210 kppm
+const RHO_CO2_DEFAULT = 715;   // kg/m3 (PR+Péneloux at brine-hydrostatic 11.3 MPa/36.5°C)
+const RHO_BRINE = 1100;    // kg/m3 (210 kppm TDS)
 const RHO_FRESH = 1000;
 const C_T = 7e-10;         // Pa^-1 total compressibility
 const R_W = 0.108;         // m wellbore radius (8.5" OH)
 const SKIN = 3;
-const TOP_DEPTH = 1863;    // m 15-32 Nisku top
-const P_INIT_MPA = 19.8;
-const SIG_HMIN_GRAD = 16.0; // kPa/m
-const T_RES = 62;          // °C
+const TOP_DEPTH = 1050;    // m — Pine/Oak/Cedar injection mid-depth (NOT the 15-32 analog core at 1863 m)
+const P_INIT_MPA = 11.33;  // brine-hydrostatic 10.79 kPa/m × 1050 m (subhydrostatic case ≈ 8.0 MPa)
+const SIG_HMIN_GRAD = 16.5; // kPa/m
+const T_RES = 36.5;        // °C (5°C surface + 30°C/km × 1.05 km)
 const USDW_DEPTH = 200;    // m base groundwater protection
 const YEAR_SEC = 365.25*86400;
 const KM_SQ_TO_M_SQ = 1e6;
@@ -1093,8 +1095,8 @@ function bisectAOR(dp_crit, t_years){
 // ---------- AOR USDW-lift — EPA Class VI Eq. 5-1 (Nicot 2008 / Bandilla 2012) ----------
 // ΔP_c = ρ_USDW·g·z_USDW + ρ_brine·g·(z_inj − z_USDW) − P_init,inj
 // Editable parameters live in the AOR section as <input> fields.
-// Defaults match 15-32 Highvale and Wabamun regional pressure gradient (9.81 kPa/m).
-const AOR_IN = { zinj:1863, zusdw:200, rhob:1062, rhof:1000, pinit:18.27 };
+// Defaults: Pine/Oak/Cedar injection mid-depth 1050 m, brine-hydrostatic P_init (10.79 kPa/m × z).
+const AOR_IN = { zinj:1050, zusdw:200, rhob:1100, rhof:1000, pinit:11.33 };
 
 function readAORInputs(){
   const ids = ['zinj','zusdw','rhob','rhof','pinit'];
@@ -1552,7 +1554,7 @@ function updateAORLive(){
   const SCEN = [
     {key:'sub', grad:7.58},
     {key:'reg', grad:9.81},
-    {key:'bri', grad:10.62}
+    {key:'bri', grad:10.79}
   ];
   SCEN.forEach(sc=>{
     const pinit = sc.grad * AOR_IN.zinj / 1000;          // MPa

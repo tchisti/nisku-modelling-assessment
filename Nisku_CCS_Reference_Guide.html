@@ -155,7 +155,7 @@
 
   <div class="card tech">
     <span class="tag tech">Technical</span>
-    <p>The Nisku Formation is an Upper Devonian carbonate ramp with ~57 m gross thickness at 1,890 m TVDSS in the Wabamun area. Two cored wells (15-32-050-03W5 Enbridge; 8-17-051-03W5 TransAlta) provide direct rock property control. Regional context comes from Stoakes (2010), Machel (2005), and the WASP multi-operator study. We apply CSA Z741 / Bachu (2008) volumetric capacity; Mathias (2009) radial injectivity; Nordbotten-Celia (2006) plume similarity; Theis (1935) pressure diffusion for AOR; Kaldi-Bachu (2009) site screening criteria.</p>
+    <p>The Nisku Formation is an Upper Devonian carbonate ramp. The Pine/Oak/Cedar injection zone is ~65 m gross at <b>1010–1090 m TVDSS</b> (mid-depth 1050 m); petrophysics is anchored on two deeper cored analog wells in the same formation (15-32-050-03W5 Enbridge, Nisku at 1863–1920 m; 8-17-051-03W5 TransAlta) that provide direct rock-property control. <b>The ~800 m gap between the analog cores and the project injection depth is itself a structural assumption that needs a depth-structure map to defend.</b> Regional context comes from Stoakes (2010), Machel (2005), and the WASP multi-operator study. We apply CSA Z741 / Bachu (2008) volumetric capacity; Mathias (2009) radial injectivity; Nordbotten-Celia (2006) plume similarity; Theis (1935) pressure diffusion + EPA Eq. 5-1 USDW-lift for AOR; Kaldi-Bachu (2009) site screening criteria.</p>
   </div>
 
   <h3>The two-layer explanation convention</h3>
@@ -405,9 +405,9 @@
   <table>
     <tr><th>Section</th><th>What's in it</th></tr>
     <tr><td><b>PROJECT SCOPE</b></td><td>Injection rate (1 Mt/yr), number of wells, project life (25 yr), lease area (500 km²)</td></tr>
-    <tr><td><b>RESERVOIR (15-32)</b></td><td>Depth (1,890 m), thickness (57 m), NTG (0.65), porosity (7.8%), permeability (215 mD), Kv/Kh (0.029), Swi (0.22)</td></tr>
-    <tr><td><b>FLUIDS &amp; PRESSURE</b></td><td>Pressure gradient (10.5 kPa/m virgin), temperature gradient (30 °C/km), surface T (5 °C), brine salinity/viscosity/density, total compressibility</td></tr>
-    <tr><td><b>DFIT / GEOMECHANICS</b></td><td>Frac gradient (16.5 kPa/m), safety factor (0.9), σ_hmin (31.2 MPa — placeholder), Biot α (0.75)</td></tr>
+    <tr><td><b>RESERVOIR (Pine/Oak/Cedar)</b></td><td>Depth (1010–1090 m, mid 1050 m), thickness (65 m), NTG (0.65), porosity (7.8%), permeability (215 mD, 15-32 analog), Kv/Kh (0.029), Swi (0.22)</td></tr>
+    <tr><td><b>FLUIDS &amp; PRESSURE</b></td><td>Pressure regime toggle (brine-hydrostatic 10.79 kPa/m vs measured subhydrostatic 7.58 kPa/m), temperature gradient (30 °C/km), surface T (5 °C), brine salinity/viscosity/density, total compressibility</td></tr>
+    <tr><td><b>DFIT / GEOMECHANICS</b></td><td>Frac gradient (16.5 kPa/m), safety factor (0.9), σ_hmin (17.3 MPa at 1050 m — placeholder), Biot α (0.75)</td></tr>
     <tr><td><b>CAPACITY</b></td><td>Efficiency factor E (3%)</td></tr>
     <tr><td><b>INJECTIVITY</b></td><td>Skin, wellbore radius, krg endpoint, perforation length, drainage radius</td></tr>
     <tr><td><b>AOR</b></td><td>Critical ΔP (1.5 MPa), storativity (2.5e-4)</td></tr>
@@ -461,9 +461,9 @@
 <section id="tab-fluid">
   <h2>Tab 6 · Fluid_Properties</h2>
   <div class="card plain"><span class="tag plain">Plain English</span>
-    What the CO₂ and the brine look like down there. At 1,890 m deep and ~62 °C, CO₂ is a supercritical fluid — denser than gas, less viscous than liquid. The brine is heavy salty water. The ratio between the two matters for how fast CO₂ spreads.</div>
+    What the CO₂ and the brine look like down there. At ~1050 m and ~36.5 °C, CO₂ is <b>only just</b> supercritical — and only if the reservoir is near brine-hydrostatic pressure. If the measured subhydrostatic regime holds, CO₂ is near-critical and far less dense (gas-like). The brine is heavy salty water. The density ratio drives how fast and how far CO₂ spreads.</div>
   <div class="card tech"><span class="tag tech">Technical</span>
-    P_init = 19.8 MPa, T = 61.7 °C → supercritical CO₂. ρ_CO₂ ≈ 708 kg/m³ (Span-Wagner anchor). μ_CO₂ = 0.06 cP. Brine: ρ_w = 1,100 kg/m³, μ_w = 0.6 cP. Mobility ratio M = (μ_w · krw*)/(μ_CO₂ · krg*) ≈ 7.8. √M = 2.79 → Nordbotten finger-factor. Δρ = 392 kg/m³ → buoyancy driver.</div>
+    Brine-hydrostatic: P_init = 11.3 MPa, T = 36.5 °C → supercritical CO₂, ρ_CO₂ ≈ 715 kg/m³ (PR+Péneloux, ≈ Span-Wagner). μ_CO₂ ≈ 0.05 cP. <b>Subhydrostatic (measured 7.58 kPa/m): P_init ≈ 8.0 MPa → ρ_CO₂ ≈ 340 kg/m³ (near-critical).</b> Brine: ρ_w = 1,100 kg/m³, μ_w = 0.6 cP. Mobility ratio M = (μ_w · krw*)/(μ_CO₂ · krg*) ≈ 9. Δρ ≈ 385 kg/m³ (brine-hydro) drives buoyancy. Plume footprint now uses an explicit gravity-override sweep efficiency (E_sweep ≈ 0.35), not a ×√M radius multiplier.</div>
   <div class="callout">
     <b>Why mobility matters.</b> M&gt;1 means CO₂ fingers through the brine rather than pushing it out like a piston. Our M = 8 is an "unfavourable" displacement — typical for CCS. The plume doesn't move as a neat circle; the leading edge reaches ~2.8× further than volume-balance would predict.
   </div>
@@ -525,20 +525,21 @@
 <section id="tab-aor">
   <h2>Tab 11 · AOR_Theis</h2>
   <div class="card plain"><span class="tag plain">Plain English</span>
-    The most important regulatory tab. Pressure spreads through the aquifer much further and faster than the CO₂ plume. AOR = "Area of Review" = the radius where pressure increase is big enough that an old leaky well could leak brine to surface. EPA says use 1.5 MPa. Our answer: ~9.8 km. Every existing well within 9.8 km of our injector has to be reviewed for integrity.</div>
+    The most important regulatory tab. Pressure spreads through the aquifer much further and faster than the CO₂ plume. AOR = "Area of Review" = the radius where the pressure increase is big enough to push brine up an old leaky well toward drinking water. The threshold is <b>not</b> a fixed 1.5 MPa — it is computed from reservoir/USDW geometry via EPA Eq. 5-1 (USDW-lift). At 1050 m under brine-hydrostatic pressure the reservoir barely supports the overlying column, so that threshold is near zero and the AOR is very large; under the measured subhydrostatic case it shrinks dramatically. This swing is why a Phase-1 pressure test gates the whole AOR.</div>
   <div class="equation">
     ΔP(r,t) = (Q · μ<sub>w</sub>) / (4π · k · h<sub>eff</sub>) × W(u)     where W(u) is the Theis well function, u = r² · φ · μ<sub>w</sub> · c<sub>t</sub> / (4 · k · t)
   </div>
   <div class="card tech"><span class="tag tech">Technical</span>
     Classical Theis (1935) for confined aquifer transient pressure. Solution in terms of the exponential integral W(u) — approximated here with Cooper-Jacob (u&lt;0.01) and series expansion (0.01&lt;u&lt;1). Bisection solver for r at ΔP_crit. Table on tab sweeps r from 100 m to 100 km and shows how quickly ΔP drops off.</div>
-  <h4>AOR by criterion</h4>
+  <h4>AOR by criterion (brine-hydrostatic, 25-yr injection horizon — index dashboard engine)</h4>
   <table>
     <tr><th>ΔP_crit</th><th>r_AOR</th><th>Regulatory context</th></tr>
-    <tr><td>0.5 MPa</td><td>~25 km</td><td>Ultra-conservative (drinking-water protection)</td></tr>
-    <tr><td>1.0 MPa</td><td>~15 km</td><td>Conservative</td></tr>
-    <tr><td>1.5 MPa</td><td>~9.8 km</td><td>EPA Class VI default</td></tr>
-    <tr><td>2.0 MPa</td><td>~7 km</td><td>Typical Alberta disposal</td></tr>
+    <tr><td>0.5 MPa</td><td>~41 km</td><td>Ultra-conservative (drinking-water protection)</td></tr>
+    <tr><td>1.0 MPa</td><td>~14 km</td><td>Conservative</td></tr>
+    <tr><td>1.5 MPa</td><td>~4.7 km</td><td>EPA dual-criterion default</td></tr>
+    <tr><td>2.0 MPa</td><td>~1.6 km</td><td>Typical Alberta disposal</td></tr>
   </table>
+  <p style="font-size:12px;color:#90a0bb">Radii are horizon- and density-dependent (the Reservoir-Characterization tab uses a longer post-injection horizon and reports larger radii). The <b>governing</b> criterion is the EPA Eq. 5-1 USDW-lift ΔP_c, not a fixed ΔP — at brine-hydrostatic P_init that ΔP_c ≈ 0, so the pressure AOR is effectively unbounded until a DST confirms the regime.</p>
 </section>
 
 <section id="tab-dfit">
@@ -546,7 +547,7 @@
   <div class="card plain"><span class="tag plain">Plain English</span>
     DFIT = "Diagnostic Fracture Injection Test". A short test you run before real injection where you pump a tiny amount of water at high rate, then shut in and watch how pressure decays. The decay pattern tells you the horizontal stress in the rock and the fracture propagation pressure. From that you compute the maximum BHP you're allowed to run at. Required by AER before permitting.</div>
   <div class="callout warn">
-    <b>Gap:</b> σ<sub>hmin</sub> = 31.2 MPa in our model is a regional placeholder from Lund Snee &amp; Zoback (2020). A dedicated DFIT on 15-32 is needed before FID. If real DFIT shows σ<sub>hmin</sub> is lower than 31 MPa, our injection-rate ceiling drops proportionally.
+    <b>Gap:</b> σ<sub>hmin</sub> ≈ 17.3 MPa at 1050 m (16.5 kPa/m × 1050 m) is a regional placeholder from Lund Snee &amp; Zoback (2020). A dedicated DFIT on the first injector is needed before FID. If real DFIT shows σ<sub>hmin</sub> is lower than ~17 MPa, the injection-rate ceiling drops proportionally — and at this shallow depth the ΔP window is already tight (~4 MPa).
   </div>
   <h4>Required DFIT deliverables for the regulator</h4>
   <ol>
@@ -568,7 +569,7 @@
   <div class="equation">
     Max column height = P<sub>entry,CO₂/brine</sub> / [(ρ<sub>w</sub> − ρ<sub>CO₂</sub>) · g]
   </div>
-  <p>Our Nisku caprock (Calmar Fm / Ireton shale) holds ~176 m of CO₂ column vs 57 m reservoir thickness → <b>3.1× safety factor</b>.</p>
+  <p>Our Nisku caprock (Calmar Fm / Ireton shale) holds ~180 m of CO₂ column vs 65 m reservoir thickness → <b>2.8× safety factor</b>.</p>
   <div class="callout warn">
     <b>Gap:</b> P<sub>entry</sub> = 12.5 MPa is a regional shale analog (Calmar Fm). Need dedicated MICP on 15-32 caprock cuttings to confirm.
   </div>
@@ -607,7 +608,7 @@
 <section id="tab-legacy">
   <h2>Tab 16 · Legacy_Wells</h2>
   <div class="card plain"><span class="tag plain">Plain English</span>
-    Every well ever drilled through the Nisku near our injection site. Each one is a potential leak path — if the cement is bad or the plug is degraded, pressure from our injection could push brine (or eventually CO₂) up that old well to surface. This tab lists them, whether they're within the 9.8 km AOR, and what we have to do about them.</div>
+    Every well ever drilled through the Nisku near our injection site. Each one is a potential leak path — if the cement is bad or the plug is degraded, pressure from our injection could push brine (or eventually CO₂) up that old well to surface. This tab lists them, whether they fall within the AOR (which, per the EPA Eq. 5-1 finding, may span the full lease until a DST fixes the pressure regime), and what we have to do about them.</div>
   <h4>The action matrix</h4>
   <table>
     <tr><th>Well category</th><th>Required action</th><th>Timing</th><th>Typical cost</th></tr>
@@ -656,11 +657,11 @@
     <table>
       <tr><th>Symbol</th><th>Meaning</th><th>Typical range</th><th>Our value</th></tr>
       <tr><td>A</td><td>Lease area</td><td>100–10,000 km²</td><td>500 km²</td></tr>
-      <tr><td>h</td><td>Gross reservoir thickness</td><td>10–100 m</td><td>57 m</td></tr>
+      <tr><td>h</td><td>Gross reservoir thickness</td><td>10–100 m</td><td>65 m</td></tr>
       <tr><td>NTG</td><td>Net-to-gross (fraction that's good reservoir)</td><td>0.4–0.9</td><td>0.65</td></tr>
       <tr><td>φ</td><td>Porosity</td><td>0.05–0.25</td><td>0.078</td></tr>
       <tr><td>S<sub>wi</sub></td><td>Irreducible water saturation</td><td>0.15–0.35</td><td>0.22</td></tr>
-      <tr><td>ρ<sub>CO₂</sub></td><td>CO₂ density at reservoir P,T</td><td>600–800 kg/m³</td><td>708</td></tr>
+      <tr><td>ρ<sub>CO₂</sub></td><td>CO₂ density at reservoir P,T</td><td>600–800 kg/m³</td><td>715 (brine-hydro) / ~340 (subhydro)</td></tr>
       <tr><td>E</td><td>Efficiency (fraction of pore volume actually usable)</td><td>0.01–0.10</td><td>0.03</td></tr>
     </table>
     <p>E is the fudge factor that captures everything the simple volumetrics can't: heterogeneity, gravity override, mobility contrast, pressure compartmentalization. Bachu (2008/2015) gives 1–4% for open saline aquifers without pressure management.</p>
@@ -677,7 +678,7 @@
     <div class="equation">ΔP<sub>bh</sub> = (Q<sub>res</sub> · μ<sub>CO₂</sub>) / (2π · k · k<sub>rg</sub> · h<sub>perf</sub>) · [ln(r<sub>e</sub>/r<sub>w</sub>) + s]</div>
     <p>Classical radial steady-state Darcy. Mathias (2009) adapts it for CO₂ with relative-permeability and buoyancy corrections; for a Phase-1 estimate the krg·h formulation above is sufficient.</p>
     <p><b>Units check:</b> Q in m³/s, μ in Pa·s, k in m² (multiply mD × 9.869e-16), h in m → ΔP in Pa.</p>
-    <p><b>Our result:</b> Q_res = 0.044 m³/s, μ = 6e-5, k = 2.12e-13 m², krg = 0.45, h = 37 m, ln(500/0.11) = 8.4 → ΔP = 1.02 MPa. BHP = P_init + ΔP = 20.9 MPa vs ceiling 28.1 MPa. OK.</p>
+    <p><b>Our result (1 Mt/yr through one well, stress test):</b> Q_res = 0.044 m³/s, μ = 5e-5, k = 2.12e-13 m², krg = 0.45, h = 37 m, ln(500/0.11) = 8.4 → ΔP ≈ 1.0 MPa. BHP = P_init + ΔP = 12.3 MPa vs ceiling 15.6 MPa (0.9 × 17.3). OK at brine-hydrostatic, with ~3 MPa to spare — tighter than a deep reservoir.</p>
   </div>
 </section>
 
@@ -716,11 +717,11 @@
   <h2>Physics primer · Seal capacity (MICP)</h2>
 
   <div class="card plain"><span class="tag plain">Plain English</span>
-    The caprock (Calmar shale) is a lid. The tighter the pores in that lid, the more pressure you need before CO₂ squeezes through. Also, the denser the CO₂ is compared to the brine it's displacing, the less buoyancy force there is pushing the CO₂ up through the lid. Both effects combine to give a "maximum column height" of CO₂ the lid can hold. Ours is about 176 m — way more than our 57 m reservoir needs.</div>
+    The caprock (Calmar shale) is a lid. The tighter the pores in that lid, the more pressure you need before CO₂ squeezes through. Also, the denser the CO₂ is compared to the brine it's displacing, the less buoyancy force there is pushing the CO₂ up through the lid. Both effects combine to give a "maximum column height" of CO₂ the lid can hold. Ours is about 180 m — way more than our 65 m reservoir needs.</div>
 
   <div class="card tech"><span class="tag tech">Technical</span>
     <div class="equation">h<sub>max</sub> = P<sub>entry,CO₂/brine</sub> / [(ρ<sub>w</sub> − ρ<sub>CO₂</sub>) · g]</div>
-    <p>Lab MICP uses Hg/air (high IFT, 480 mN/m). In-situ is CO₂/brine (lower IFT ~30 mN/m at supercritical, contact angle ~30°). Scale lab P<sub>entry</sub> by (IFT<sub>CO₂/brine</sub> · cos θ) / IFT<sub>Hg/air</sub> ≈ 0.054 factor. A 12.5 MPa lab entry → 0.68 MPa in-situ CO₂/brine entry pressure → 176 m holdback column against 392 kg/m³ density contrast.</p>
+    <p>Lab MICP uses Hg/air (high IFT, 480 mN/m). In-situ is CO₂/brine (lower IFT ~30 mN/m at supercritical, contact angle ~30°). Scale lab P<sub>entry</sub> by (IFT<sub>CO₂/brine</sub> · cos θ) / IFT<sub>Hg/air</sub> ≈ 0.054 factor. A 12.5 MPa lab entry → 0.68 MPa in-situ CO₂/brine entry pressure → ~180 m holdback column against the ~385 kg/m³ density contrast (brine-hydrostatic; under subhydrostatic the contrast rises to ~760 kg/m³ and the column nearly halves).</p>
   </div>
 </section>
 
@@ -838,10 +839,10 @@
     <dd>Annual pressure test required on injection wells to prove casing integrity. ≤10% pressure drop over 30 min = pass.</dd>
 
     <dt>NTG (Net-to-Gross)</dt>
-    <dd>The fraction of total rock thickness that is actually flowable reservoir. A 57 m Nisku with NTG = 0.65 has 37 m of "net pay". Reduces the 57 m gross in all volumetric calculations.</dd>
+    <dd>The fraction of total rock thickness that is actually flowable reservoir. A 65 m Nisku with NTG = 0.65 has ~42 m of "net pay". Reduces the 65 m gross in all volumetric calculations.</dd>
 
     <dt>Nisku Formation</dt>
-    <dd>Upper Devonian (Frasnian) carbonate ramp in western Canada. Our target reservoir. Complex facies: reef buildups, open marine shelf, basin-margin shales. At Wabamun: ~57 m thick at 1,890 m depth.</dd>
+    <dd>Upper Devonian (Frasnian) carbonate ramp in western Canada. Our target reservoir. Complex facies: reef buildups, open marine shelf, basin-margin shales. Pine/Oak/Cedar injection zone: ~65 m thick at 1010–1090 m depth (the 15-32 analog core is deeper, at 1863–1920 m).</dd>
 
     <dt>Nordbotten &amp; Celia</dt>
     <dd>Princeton researchers who produced the similarity solution for CO₂ plume radius (2006 JFM paper). Our plume tab uses their equation.</dd>
@@ -903,7 +904,7 @@
     <dd>Classical transient pressure diffusion solution in a confined aquifer. The foundation of AOR analysis.</dd>
 
     <dt>TVDSS (True Vertical Depth Sub-Sea)</dt>
-    <dd>Elevation measured from sea level downward. Our Nisku top: 1,890 m TVDSS.</dd>
+    <dd>Elevation measured from sea level downward. Pine/Oak/Cedar Nisku top: ~1010 m TVDSS (15-32 analog core top: 1863 m).</dd>
 
     <dt>USDW (Underground Source of Drinking Water)</dt>
     <dd>In EPA Class VI, aquifers with TDS &lt; 10,000 mg/L. AOR exists to protect these.</dd>
