@@ -293,6 +293,16 @@ canvas.plot{width:100%;background:#0a0f1a;border:1px solid var(--border);border-
       <button class="btn ghost" id="copyDeck">Copy to clipboard</button>
       <span class="sm" id="deckMeta"></span>
     </div>
+    <div class="callout ok" style="margin-bottom:10px">
+      <strong>GEM 2025.40 syntax.</strong> Deck rebuilt against the CMG-GEM 2025.40 keyword reference and the CMG CCS Process-Wizard pattern:
+      strict section ordering (I/O → Reservoir → Component → Rock-Fluid → Initial → Numerical → Recurrent),
+      2-component fluid (CO₂ + CH₄ trace 0.001 for EOS stability; brine handled via <code>SALINITY</code>),
+      <code>SOLUBILITY HENRYC</code> with Li-Nghiem salting-out, <code>AQUEOUS-DENSITY ROWE-CHOU</code>,
+      <code>AQUEOUS-VISCOSITY KESTIN</code>, <code>HYS_KRG CARLSON</code> + <code>SGRWMAX</code>,
+      <code>INVENTORY-CO2</code> for trapping report, <code>OGW_FLASH</code> + <code>NO_H2OVAP</code>.
+      Wells use <code>INJECTOR MOBWEIGHT</code> + <code>INCOMP GAS</code> + <code>PERF GEOA</code> with UBA + FLOW-TO chain.
+      Outer boundary is <em>closed (no-flow)</em> by default — add Carter-Tracy in CMG Builder once the base case converges.
+    </div>
     <div class="deck" id="deckPreview">…</div>
   </section>
 
@@ -1329,208 +1339,325 @@ function renderTrapSnapshot(){
 }
 
 /* ============================================================
-   CMG-GEM .DAT FILE BUILDER
+   CMG-GEM .DAT FILE BUILDER  —  GEM 2025.40 syntax
+   Section order (strict): I/O Control -> Reservoir Description ->
+   Component Properties -> Rock-Fluid -> Initial Conditions ->
+   Numerical -> Recurrent (RUN + DATE/WELL cards).
+   Pattern follows CMG CCS Process-Wizard output for saline-aquifer
+   CO2 storage: 2 components (CO2 + CH4 trace for EOS stability),
+   SOLUBILITY HENRYC + SALINITY for brine dissolution, HYS_KRG
+   CARLSON + SGRWMAX for residual trapping, INVENTORY-CO2 for the
+   AER/Class VI trapping report, closed boundary (regional aquifer
+   support added in CMG Builder once the base case converges).
    ============================================================ */
 function buildDeck(){
   const p = PARAMS, d = derive();
-  const C  = s => `<span class="com">${s}</span>`;
-  const K  = s => `<span class="key">${s}</span>`;
-  const V  = s => `<span class="val">${s}</span>`;
+  const C = s => `<span class="com">${s}</span>`;
+  const K = s => `<span class="key">${s}</span>`;
+  const V = s => `<span class="val">${s}</span>`;
   const startY = p.startYear, endInj = startY + p.injYears, endSim = startY + p.injYears + p.piscYears;
 
-  const layerLines = d.cellNK.map((c,i)=>{
+  // ===== Per-layer arrays =====
+  const dz = d.cellNK.map(c => c.dz.toFixed(2)).join(' ');
+  const por = d.layerProps.map(lp => lp.phi.toFixed(4)).join(' ');
+  const permi = d.layerProps.map(lp => lp.k.toFixed(3)).join(' ');
+  const permk = d.layerProps.map(lp => (lp.k * d.kvkh).toFixed(4)).join(' ');
+  const NK = d.totalNK, NIJ = p.ni * p.nj;
+
+  // ===== Layer description as inline comment block =====
+  const layerLines = d.cellNK.map((c, i) => {
     const lp = d.layerProps[i];
-    return `${C('** K=')}${i+1} ${C(lp.label.padEnd(12))} dz=${c.dz.toFixed(2)} m   K=${lp.k.toFixed(2)} mD   φ=${(lp.phi*100).toFixed(2)}%`;
+    return `${C(`**  K=${(i+1).toString().padStart(2)}  ${lp.label.padEnd(13)} dz=${c.dz.toFixed(2).padStart(6)} m   K=${lp.k.toFixed(2).padStart(8)} mD   phi=${(lp.phi*100).toFixed(2)}%`)}`;
   }).join('\n');
 
-  // Dates for schedule (quarterly during inj, annual PISC)
+  // ===== Surface gas rate (sm3/d at SI standard conditions: 15.55 C, 101.325 kPa) =====
+  // CO2 density at SI std conditions ~ 1.846 kg/sm3 (NIST)
+  const rhoCO2_SC = 1.846;
+  const stg = (p.injRateMtpy * 1e9 / 365.25 / rhoCO2_SC).toFixed(0);
+  const tDay = (p.injRateMtpy * 1e6 / 365.25).toFixed(0);
+
+  // ===== SWT (water-gas drainage), monotonic, clean endpoints =====
+  const swt = [];
+  const Swi=p.swi, krwMax=p.krwMax, nw=p.nw, pe=p.pe, lam=p.lambda;
+  const NSWT = 9;
+  for(let i=0; i<NSWT; i++){
+    const Sw = Swi + (1 - Swi) * i/(NSWT-1);   // last row exactly Sw=1.0
+    const Swn = (Sw - Swi) / (1 - Swi);        // 0 at Swi, 1 at Sw=1
+    // Endpoint conditioning:
+    let krw, krow, Pc;
+    if(i === 0){
+      krw = 0.0; krow = 1.0;                   // exact endpoints at Swi
+      Pc  = Math.max(pe * 8, 1000);            // large Pc at residual water
+    } else if(i === NSWT - 1){
+      krw = krwMax; krow = 0.0;                // exact endpoints at Sw=1
+      Pc  = 0.0;                                // Pc=0 at fully water-saturated
+    } else {
+      krw  = krwMax * Math.pow(Swn, nw);
+      krow = Math.pow(1 - Swn, 2);
+      Pc   = pe * Math.pow(Swn, -1/lam);
+      Pc   = Math.min(5000, Pc);
+    }
+    swt.push(`   ${Sw.toFixed(4).padStart(7)}  ${krw.toFixed(5).padStart(9)}  ${krow.toFixed(5).padStart(9)}  ${Pc.toFixed(2).padStart(9)}`);
+  }
+  const swtBlock = swt.join('\n');
+
+  // ===== SLT (liquid-gas drainage), Sl monotonic Swi -> 1.0 =====
+  const slt = [];
+  const Sgr=p.sgr, krgMax=p.krgMax, ng=p.ng;
+  const NSLT = 9;
+  for(let i=0; i<NSLT; i++){
+    const Sl = Swi + (1 - Swi) * i/(NSLT-1);   // last row exactly Sl=1.0
+    const Sg = 1 - Sl;
+    let krg, krog;
+    if(i === 0){
+      // Sl=Swi means Sg=1-Swi (max gas)
+      krg = krgMax; krog = 0.0;
+    } else if(i === NSLT - 1){
+      // Sl=1, no gas
+      krg = 0.0; krog = 1.0;
+    } else {
+      const Sgn = Math.max(0, (Sg - Sgr) / (1 - Swi - Sgr));
+      krg  = Sg <= Sgr ? 0 : krgMax * Math.pow(Sgn, ng);
+      krog = Math.pow(1 - Sgn, 2);
+    }
+    slt.push(`   ${Sl.toFixed(4).padStart(7)}  ${krg.toFixed(5).padStart(9)}  ${krog.toFixed(5).padStart(9)}`);
+  }
+  const sltBlock = slt.join('\n');
+
+  // ===== PERF block: UBA + FLOW-TO chain (PERF GEOA style) =====
+  const kPerfStart = p.caprockLayers + 1;
+  const kPerfEnd = p.caprockLayers + p.nkRes;
+  const buildPerfs = (ii, jj) => {
+    const lines = [];
+    for(let kk = kPerfStart; kk <= kPerfEnd; kk++){
+      const conn = (kk === kPerfStart) ? `OPEN  FLOW-TO  'SURFACE'  REFLAYER` : `OPEN  FLOW-TO  ${kk - kPerfStart}`;
+      lines.push(`   ${ii.toString().padStart(3)} ${jj.toString().padStart(3)} ${kk.toString().padStart(3)}   1.0  ${conn}`);
+    }
+    return lines.join('\n');
+  };
+  const perfInj  = buildPerfs(p.injI, p.injJ);
+  const perfObs1 = buildPerfs(p.obs1I, p.obs1J);
+  const perfObs2 = buildPerfs(p.obs2I, p.obs2J);
+
+  // ===== Schedule dates =====
   const dates = [];
-  for(let y=0; y<=p.injYears; y++){
+  // Quarterly years 0–2
+  for(let y=0; y<2; y++){
     for(let q=0; q<4; q++){
       if(y===0 && q===0) continue;
-      dates.push({y:startY+y, m:1+q*3, d:1, phase:'inj'});
+      dates.push([startY+y, 1+q*3, 1]);
     }
   }
+  // Semi-annual years 2–5
+  for(let y=2; y<5; y++){
+    dates.push([startY+y, 1, 1]);
+    dates.push([startY+y, 7, 1]);
+  }
+  // Annual years 5..endInj
+  for(let y=5; y<=p.injYears; y++){
+    dates.push([startY+y, 1, 1]);
+  }
+  // PISC dates: first 5 yr annual, then every 2 yr, plus final
   for(let y=1; y<=p.piscYears; y++){
-    dates.push({y:endInj+y, m:1, d:1, phase:'pisc'});
+    if(y<=5 || y%2===0 || y===p.piscYears) dates.push([endInj+y, 1, 1]);
   }
-  const dateLines = dates.slice(0, 80).map(dt=>{
-    if(dt.y===endInj && dt.m===1 && dt.d===1){
-      return `${K('DATE')} ${V(dt.y)} ${V(dt.m)} ${V(dt.d)}    ${C('** END OF INJECTION')}\n${K('SHUTIN')} ${V("'CO2-INJ-1'")}`;
+  // Dedup AND remove any date >= endSim (will be emitted as final STOP date)
+  const seen = new Set();
+  const uniq = dates.filter(d => {
+    const [y,m,dy] = d;
+    if(y > endSim || (y === endSim && m === 1 && dy === 1)) return false;
+    const k=d.join('-'); if(seen.has(k)) return false; seen.add(k); return true;
+  });
+  // Render
+  const dateLines = uniq.map(([y,m,dy]) => {
+    if(y === endInj && m === 1 && dy === 1){
+      return `${K('DATE')} ${V(`${y} ${m.toString().padStart(2)} ${dy.toString().padStart(2)}`)}    ${C('** END OF INJECTION')}\n${K('SHUTIN')} ${V("'CO2-INJ-1'")}`;
     }
-    return `${K('DATE')} ${V(dt.y)} ${V(dt.m)} ${V(dt.d)}`;
+    return `${K('DATE')} ${V(`${y} ${m.toString().padStart(2)} ${dy.toString().padStart(2)}`)}`;
   }).join('\n');
 
-  const sm3 = d.sm3PerDay.toFixed(0);
-
+  // ===== Build deck =====
   const deck =
 `${C(`** ============================================================`)}
-${C(`**  WABAMUN DEEP NISKU CCS — CMG-GEM SIMULATION DECK`)}
+${C(`**  WABAMUN DEEP NISKU CCS  —  CMG-GEM 2025.40 SIMULATION DECK`)}
 ${C(`**  Project        : Enbridge NET / Wabamun Area`)}
 ${C(`**  Location       : Twp 050-051, Rge 26-27, W4M, Alberta`)}
 ${C(`**  Target         : Saline Nisku carbonate aquifer @ ${p.topDepth} m`)}
-${C(`**  Injection      : ${p.injRateMtpy} Mt/yr CO2 × ${p.injYears} yr + ${p.piscYears} yr PISC`)}
-${C(`**  AER D065 + EPA Class VI compliant — 11 fixes applied to FABLE-5 spec`)}
+${C(`**  Injection      : ${p.injRateMtpy} Mt/yr CO2 x ${p.injYears} yr + ${p.piscYears} yr PISC`)}
+${C(`**  AER D065 + EPA Class VI — 11 fixes applied to FABLE-5 spec`)}
+${C(`**  Fluid model    : CO2 + CH4 trace (CMG CCS Process-Wizard pattern)`)}
+${C(`**                   - CH4 trace 0.001 keeps gas phase numerically stable`)}
+${C(`**                   - Brine salinity handled via SALINITY keyword, not as component`)}
+${C(`**                   - CO2 dissolution via SOLUBILITY HENRYC (Li-Nghiem salting-out implicit)`)}
 ${C(`**  Auto-generated : ${new Date().toISOString().split('T')[0]}`)}
 ${C(`** ============================================================`)}
 
-${K('RESULTS SIMULATOR GEM')} ${V('202410')}
-${K('TITLE1')} ${V("'Wabamun Deep Nisku CCS - 1 Mt/yr CO2 - 60yr (10inj+50PISC)'")}
+${K('RESULTS SIMULATOR')} ${V('GEM 202540')}
+
+${C(`** ============================================================`)}
+${C(`** I/O CONTROL`)}
+${C(`** ============================================================`)}
+${K('TITLE1')} ${V("'Wabamun Deep Nisku CCS'")}
+${K('TITLE2')} ${V(`'${p.injRateMtpy} Mt-yr CO2  ${p.injYears}+${p.piscYears} yr'`)}
 ${K('INUNIT')} ${V('SI')}
-${K('WRST')} ${V('2000')}
-${K('WPRN')} GRID ${V('0')}
-${K('OUTPRN')} GRID ${V('PRES SW SG XCO2 ZCO2 MFRAC')}
-${K('OUTPRN')} WELL ${V('ALL')}
-${K('OUTSRF')} GRID ${V('PRES SW SG XCO2 ZCO2 RHOG RHOW')}
-${K('OUTSRF')} SPECIAL  ${V('BLOCKVAR PRES')}
-${K('DIM')} ${V(`MDPERF ${p.ni*p.nj*d.totalNK}`)}
+${K('WSRF')} ${K('GRID')} ${V('TIME')}
+${K('WSRF')} ${K('WELL')} ${V('TIME')}
+${K('WPRN')} ${K('GRID')} ${V('0')}
+${K('WPRN')} ${K('ITER')} ${V('NONE')}
+${K('OUTPRN')} ${K('GRID')} ${V('NONE')}
+${K('OUTPRN')} ${K('WELL')} ${V('BRIEF')}
+${K('OUTSRF')} ${K('GRID')} ${V("PRES SW SG SOLCONC 'CO2' MOLALITY 'CO2' RHOG RHOW")}
+${K('OUTSRF')} ${K('SPECIAL')} ${V("MATBAL FLUID 'CO2'")}
+${K('OUTSRF')} ${K('SPECIAL')} ${V("MATBAL CURRENT 'CO2'")}
+${K('OUTSRF')} ${K('SPECIAL')} ${V(`BLOCKVAR PRES  ${p.injI}  ${p.injJ}  ${p.caprockLayers + Math.ceil(p.nkRes/2)}`)}
+${K('OUTSRF')} ${K('SPECIAL')} ${V(`BLOCKVAR SG    ${p.injI}  ${p.injJ}  ${p.caprockLayers + 1}`)}
+${K('WRST')} ${V('TIME')}
+${K('INVENTORY-CO2')}    ${C('** track CO2 trapping inventory (AER MMV)')}
 
-${C(`** ===== 1.1 GRID =====`)}
-${K('GRID')} ${V(`VARI ${p.ni} ${p.nj} ${d.totalNK}`)}
+${C(`** ============================================================`)}
+${C(`** RESERVOIR DESCRIPTION`)}
+${C(`** ============================================================`)}
+${C(`** Grid: ${p.ni} x ${p.nj} x ${NK}  (Nisku ${p.nkRes} layers + ${p.caprockLayers} caprock + ${p.underburdenLayers} underburden)`)}
+${K('GRID')} ${K('VARI')} ${V(`${p.ni}  ${p.nj}  ${NK}`)}
 ${K('KDIR')} ${V('DOWN')}
-${K('DI')}  ${K('IVAR')} ${V(`${p.ni}*${(p.areal/p.ni).toFixed(1)}`)}
-${K('DJ')}  ${K('JVAR')} ${V(`${p.nj}*${(p.areal/p.nj).toFixed(1)}`)}
-${K('DK')}  ${K('KVAR')} ${V(d.cellNK.map(c=>c.dz.toFixed(2)).join(' '))}
-${K('DTOP')} ${V(`${p.ni*p.nj}*${p.topDepth.toFixed(1)}`)}
+${K('DI')} ${K('IVAR')} ${V(`${p.ni}*${(p.areal/p.ni).toFixed(1)}`)}
+${K('DJ')} ${K('JVAR')} ${V(`${p.nj}*${(p.areal/p.nj).toFixed(1)}`)}
+${K('DK')} ${K('KVAR')} ${V(dz)}
+${K('DTOP')} ${K('CON')} ${V(p.topDepth.toFixed(1))}
 
-${C(`** Layer description (Caprock = Calmar, Underburden = Ireton):`)}
+${C(`** Layer description (top down):`)}
 ${layerLines}
 
-${C(`** ===== 1.2 POROSITY / PERMEABILITY =====`)}
-${K('POR')} ${K('KVAR')} ${V(d.layerProps.map(lp=>lp.phi.toFixed(4)).join(' '))}
-${K('PERMI')} ${K('KVAR')} ${V(d.layerProps.map(lp=>lp.k.toFixed(3)).join(' '))}
+${K('NULL')} ${K('CON')} ${V('1')}
+${K('POR')} ${K('KVAR')} ${V(por)}
+${K('PERMI')} ${K('KVAR')} ${V(permi)}
 ${K('PERMJ')} ${K('EQUALSI')}
-${K('PERMK')} ${K('KVAR')} ${V(d.layerProps.map(lp=>(lp.k*d.kvkh).toFixed(4)).join(' '))}
-${K('CPOR')}  ${V(p.cRock.toExponential(2))}
-${K('PRPOR')} ${V(d.pInit.toFixed(0))}
+${K('PERMK')} ${K('KVAR')} ${V(permk)}    ${C(`** Kv = Kh * ${d.kvkh.toFixed(4)} (= ${p.kv}/${p.kh})`)}
+${K('CPOR')} ${V(p.cRock.toExponential(2))}
+${K('PRPOR')} ${V(d.pInit.toFixed(1))}
 
-${C(`** ===== 1.3 ROCK COMPRESSIBILITY / NTG =====`)}
-${K('ROCKTYPE')} ${V('1 NETPAY')}  ${C(`** NTG = ${p.ntg}`)}
-
-${C(`** ===== 1.4 FLUID MODEL (PR EOS, ${p.components}-component) =====`)}
+${C(`** ============================================================`)}
+${C(`** COMPONENT PROPERTIES  (PR EOS, CO2 + CH4 trace)`)}
+${C(`** ============================================================`)}
 ${K('MODEL')} ${V('PR')}
-${K('NC')}    ${V(`${p.components} ${p.components}`)}
-${p.components===3
-  ? `${K('COMPNAME')} ${V("'CO2' 'H2O' 'NaCl'")}`
-  : `${K('COMPNAME')} ${V("'CO2' 'H2O'")}`}
-${K('TRES')} ${V(d.tInit.toFixed(1))}
-${K('PRES-EOS')} ${V(d.pInit.toFixed(0))}
-${C(`** Aqueous phase`)}
-${K('AQUEOUS-DENSITY')} ${V('LINEAR')}
-${K('AQUEOUS-VISCOSITY')} ${V('LINEAR')}
-${K('SALINITY')} ${V(p.salinity)}    ${C(`** ppm NaCl`)}
-${C(`** CO2 solubility model: ${p.solubility}`)}
-${K('SOLUBILITY')} ${V(p.solubility.toUpperCase())}
+${K('NC')} ${V('2  2')}
+${K('COMPNAME')} ${V("'CO2'   'CH4'")}
+${K('HCFLAG')} ${V('1  1')}
+${K('TRES')} ${V(d.tInit.toFixed(2))}
+${K('PCRIT')} ${V('7383.0   4604.0')}             ${C('** kPa (CO2 / CH4)')}
+${K('TCRIT')} ${V('304.21   190.55')}             ${C('** K')}
+${K('AC')}    ${V('0.225    0.0115')}             ${C('** acentric factor')}
+${K('PCHOR')} ${V('78.0     71.0')}               ${C('** parachor')}
+${K('MW')}    ${V('44.01    16.04')}              ${C('** g/gmol')}
+${K('VSHIFT')} ${V('0.0      0.0')}
+${K('ZRA')}   ${V('0.2729   0.2876')}             ${C('** Rackett')}
+${K('VISCOR')} ${V('HZYT')}
+${K('BIN')}
+   ${V('0.10')}                                     ${C('** CO2 - CH4 BIC')}
+${C('**')}
+${C(`** Aqueous phase / CO2 solubility`)}
+${K('AQUEOUS-DENSITY')} ${V('ROWE-CHOU')}
+${K('AQUEOUS-VISCOSITY')} ${V('KESTIN')}
+${K('SOLUBILITY')} ${V('HENRYC')}                  ${C('** Henry constants with Li-Nghiem salinity correction')}
+${K('SALINITY')} ${V(p.salinity.toFixed(0))}       ${C(`** ppm NaCl-equivalent`)}
+${K('OGW_FLASH')}                                  ${C('** Oil-Gas-Water flash with full water solubility')}
+${K('NO_H2OVAP')}                                  ${C('** Disable water vaporization for screening run')}
 
-${C(`** ===== 1.5 ROCK-FLUID (Corey + Brooks-Corey Pc + ${p.hysteresis} hysteresis) =====`)}
+${C(`** ============================================================`)}
+${C(`** ROCK-FLUID  (Corey + Brooks-Corey Pc + ${p.hysteresis} hysteresis)`)}
+${C(`** ============================================================`)}
 ${K('ROCKFLUID')}
-${K('RPT')} ${V('1 STONE2')}
-${C(`** Water-gas drainage`)}
+${K('RPT')} ${V('1')}
+${C(`** Drainage water-table (water-gas system)`)}
 ${K('SWT')}
-${C(`** Sw     Krw                 Krow      Pcow (kPa)`)}
-${(() => {
-  const swt = []; const Swi=p.swi, krwMax=p.krwMax, nw=p.nw, pe=p.pe, lam=p.lambda;
-  for(let i=0;i<=10;i++){
-    const Sw = Swi + (1-Swi) * i/10;
-    const Swn = (Sw-Swi)/(1-Swi);
-    const krw = krwMax * Math.pow(Swn, nw);
-    const krow = Math.pow(1-Swn, 2);
-    const Pc = i===0 ? 1000 : pe * Math.pow(Swn, -1/lam);
-    swt.push(`${Sw.toFixed(3).padStart(7)}  ${krw.toFixed(5).padStart(8)}  ${krow.toFixed(5).padStart(8)}  ${Pc.toFixed(2).padStart(8)}`);
-  }
-  return V(swt.join('\n'));
-})()}
+${C(`**     Sw       Krw         Krow        Pcow (kPa)`)}
+${V(swtBlock)}
+${C(`** Drainage liquid-table`)}
 ${K('SLT')}
-${C(`** Sl     Krg                 Krog`)}
-${(() => {
-  const slt = []; const Sgr=p.sgr, krgMax=p.krgMax, ng=p.ng;
-  for(let i=10;i>=0;i--){
-    const Sg = Sgr + (1 - p.swi - Sgr) * i/10;
-    const Sl = 1 - Sg;
-    const Sgn = (Sg - Sgr)/(1 - p.swi - Sgr);
-    const krg = i===0 ? 0 : krgMax * Math.pow(Math.max(0,Sgn), ng);
-    const krog = Math.pow(Sgn, 2);
-    slt.push(`${Sl.toFixed(3).padStart(7)}  ${krg.toFixed(5).padStart(8)}  ${krog.toFixed(5).padStart(8)}`);
-  }
-  return V(slt.join('\n'));
-})()}
-${K('HYS_KRG')} ${V(p.hysteresis.toUpperCase())}
-${K('SGRMAX')} ${V(p.sgrMax)}
+${C(`**     Sl       Krg         Krog`)}
+${V(sltBlock)}
+${K('HYS_KRG')} ${V(p.hysteresis.toUpperCase())}                ${C('** gas relperm hysteresis method')}
+${K('SGRWMAX')} ${V(p.sgrMax.toFixed(3))}                       ${C('** max residual gas saturation')}
 
-${C(`** ===== 1.6 INITIAL CONDITIONS =====`)}
+${C(`** ============================================================`)}
+${C(`** INITIAL CONDITIONS`)}
+${C(`** ============================================================`)}
 ${K('INITIAL')}
-${K('VERTICAL')} ${V('DEPTH_AVE EQUIL')}
-${K('REFDEPTH')} ${V(p.topDepth)}
-${K('REFPRES')}  ${V(d.pInit.toFixed(0))}
-${K('DWOC')}     ${V('5000')}
-${K('TEMPER')} ${K('CON')} ${V(d.tInit.toFixed(1))}
+${K('VERTICAL')} ${V('DEPTH_AVE WATER_OIL EQUIL')}
+${K('REFDEPTH')} ${V(p.topDepth.toFixed(1))}
+${K('REFPRES')}  ${V(d.pInit.toFixed(1))}
+${K('DWOC')} ${V('9999.0')}                                     ${C('** water-oil contact below all blocks (no oil)')}
+${K('DGOC')} ${V('0.0')}                                        ${C('** gas-oil contact above all blocks (no free gas)')}
+${K('TEMPER')} ${K('CON')} ${V(d.tInit.toFixed(2))}
+${K('ZGAS')} ${K('CON')} ${V('0.001  0.999')}                   ${C('** trace CO2, mostly CH4 gas-phase composition')}
+${K('ZOIL')} ${K('CON')} ${V('0.0    0.0')}                     ${C('** no oil phase')}
 
-${C(`** ===== 1.7 WELLS =====`)}
+${C(`** ============================================================`)}
+${C(`** NUMERICAL`)}
+${C(`** ============================================================`)}
 ${K('NUMERICAL')}
 ${K('DTMIN')}  ${V(p.dtMin)}
 ${K('DTMAX')}  ${V(p.dtMax)}
 ${K('DTWELL')} ${V(p.dtWell)}
+${K('NORTH')}  ${V('200')}
+${K('ITERMAX')} ${V('200')}
+${K('NORM')} ${K('PRESS')} ${V('500.0')}
+${K('NORM')} ${K('SATUR')} ${V('0.05')}
+${K('NORM')} ${K('GMOLAR')} ${V('0.05')}
+${K('CONVERGE')} ${K('MAXRES')} ${V('NORMAL')}
 ${K('MAXSTEPS')} ${V(p.maxSteps)}
-${K('SOLVER')} ${V(p.solver)}
+${K('SOLVER')} ${V('PARASOL')}
 
+${C(`** ============================================================`)}
+${C(`** RECURRENT / WELLS`)}
+${C(`** ============================================================`)}
 ${K('RUN')}
 
-${K('DATE')} ${V(`${startY} 1 1`)}
+${K('DATE')} ${V(`${startY}  1  1`)}
 
+${C(`** ----- CO2 INJECTOR (1 Mt/yr = ${tDay} t/d = ${stg} sm3/d at SI std cond) -----`)}
 ${K('WELL')} ${V("'CO2-INJ-1'")}
-${K('INJECTOR')} ${V("'CO2-INJ-1'")}
-${K('INCOMP GAS')} ${V('1.0 0.0' + (p.components===3 ? ' 0.0':''))}
-${K('TINJW')} ${V(d.tInit.toFixed(1))}
-${K('OPERATE')} ${K('MAX STG')} ${V(`${sm3} CONT`)}     ${C(`** ${sm3} sm3/d ≈ ${d.dailyTonnes.toFixed(0)} t/d`)}
-${K('OPERATE')} ${K('MAX BHP')} ${V(`${d.bhpCap.toFixed(0)} CONT`)}   ${C(`** 0.9 × frac (${d.fracP.toFixed(0)} kPa)`)}
-${K('GEOMETRY K')} ${V(`${p.wellbore} 0.30 1.0 ${p.skin}`)}
-${K('PERF GEO')} ${V("'CO2-INJ-1'")}
-${V(`${p.injI} ${p.injJ} ${p.caprockLayers+1}:${p.caprockLayers+p.nkRes}    ${p.wellbore}  1.0`)}
+${K('INJECTOR')} ${V("MOBWEIGHT 'CO2-INJ-1'")}
+${K('INCOMP')} ${V('GAS  1.0  0.0')}                            ${C('** 100% CO2, 0% CH4')}
+${K('TINJW')} ${V(d.tInit.toFixed(2))}
+${K('OPERATE')} ${K('MAX')} ${K('STG')} ${V(`${stg}`)}  ${K('CONT')} ${K('REPEAT')}    ${C(`** ${tDay} t/d at SC`)}
+${K('OPERATE')} ${K('MAX')} ${K('BHP')} ${V(`${d.bhpCap.toFixed(1)}`)}  ${K('CONT')} ${K('REPEAT')}  ${C(`** 0.9 x frac (${d.fracP.toFixed(0)} kPa)`)}
+${K('GEOMETRY')} ${K('K')} ${V(`${p.wellbore.toFixed(3)}  0.37  1.0  ${p.skin.toFixed(2)}`)}
+${K('PERF')} ${K('GEOA')} ${V("'CO2-INJ-1'")}
+${C(`**   i   j   k    ff   Status  Connection`)}
+${V(perfInj)}
 
+${C(`** ----- OBS-MW-1 (near-field monitor, shut-in) -----`)}
 ${K('WELL')} ${V("'OBS-MW-1'")}
 ${K('PRODUCER')} ${V("'OBS-MW-1'")}
-${K('OPERATE')} ${K('SHUTIN')}
-${K('PERF GEO')} ${V("'OBS-MW-1'")}
-${V(`${p.obs1I} ${p.obs1J} ${p.caprockLayers+1}:${p.caprockLayers+p.nkRes}    ${p.wellbore}  1.0`)}
+${K('OPERATE')} ${K('MIN')} ${K('BHP')} ${V('1000.0')} ${K('CONT')} ${K('REPEAT')}
+${K('GEOMETRY')} ${K('K')} ${V(`${p.wellbore.toFixed(3)}  0.37  1.0  0.00`)}
+${K('PERF')} ${K('GEOA')} ${V("'OBS-MW-1'")}
+${V(perfObs1)}
+${K('SHUTIN')} ${V("'OBS-MW-1'")}
 
+${C(`** ----- OBS-MW-2 (far-field AOR-boundary monitor, shut-in) -----`)}
 ${K('WELL')} ${V("'OBS-MW-2'")}
 ${K('PRODUCER')} ${V("'OBS-MW-2'")}
-${K('OPERATE')} ${K('SHUTIN')}
-${K('PERF GEO')} ${V("'OBS-MW-2'")}
-${V(`${p.obs2I} ${p.obs2J} ${p.caprockLayers+1}:${p.caprockLayers+p.nkRes}    ${p.wellbore}  1.0`)}
+${K('OPERATE')} ${K('MIN')} ${K('BHP')} ${V('1000.0')} ${K('CONT')} ${K('REPEAT')}
+${K('GEOMETRY')} ${K('K')} ${V(`${p.wellbore.toFixed(3)}  0.37  1.0  0.00`)}
+${K('PERF')} ${K('GEOA')} ${V("'OBS-MW-2'")}
+${V(perfObs2)}
+${K('SHUTIN')} ${V("'OBS-MW-2'")}
 
-${C(`** ===== 1.8 BOUNDARY (${p.boundary}) =====`)}
-${p.boundary==='cartertracy'
-  ? `${K('AQUIFER')} ${V(`CARTER-TRACY BOUNDARY ${p.ctROuter} ${p.ctH} ${d.phiAvg.toFixed(4)} ${d.kAvg.toFixed(1)} ${p.muBrine}`)}`
-  : p.boundary==='pv1000'
-    ? `${K('VAMOD')} ${V(`1  ${p.pvMult}`)}
-${K('VATYPE')} ${V(`I=1,${p.ni} J=1 K=1:${d.totalNK}  1`)}
-${K('VATYPE')} ${V(`I=1,${p.ni} J=${p.nj} K=1:${d.totalNK}  1`)}
-${K('VATYPE')} ${V(`I=1 J=1,${p.nj} K=1:${d.totalNK}  1`)}
-${K('VATYPE')} ${V(`I=${p.ni} J=1,${p.nj} K=1:${d.totalNK}  1`)}`
-    : `${C('** Closed (no-flow) boundary')}`}
-
-${C(`** ===== 1.9 SECTORS (AER MMV) =====`)}
-${K('SECTOR')} ${V("'CAPROCK'")}      ${V(`1:${p.ni} 1:${p.nj} 1:${p.caprockLayers}`)}
-${K('SECTOR')} ${V("'UPPER_NISKU'")}  ${V(`1:${p.ni} 1:${p.nj} ${p.caprockLayers+1}:${p.caprockLayers+2}`)}
-${K('SECTOR')} ${V("'MID_NISKU'")}    ${V(`1:${p.ni} 1:${p.nj} ${p.caprockLayers+3}:${p.caprockLayers+7}`)}
-${K('SECTOR')} ${V("'LOWER_NISKU'")}  ${V(`1:${p.ni} 1:${p.nj} ${p.caprockLayers+8}:${p.caprockLayers+p.nkRes}`)}
-${K('SECTOR')} ${V("'NISKU_TOTAL'")}  ${V(`1:${p.ni} 1:${p.nj} ${p.caprockLayers+1}:${p.caprockLayers+p.nkRes}`)}
-${K('SECTOR')} ${V("'UNDERBURDEN'")}  ${V(`1:${p.ni} 1:${p.nj} ${p.caprockLayers+p.nkRes+1}:${d.totalNK}`)}
-
-${C(`** ===== 1.10 SCHEDULE =====`)}
+${C(`** Schedule: quarterly first 2 yr, semi-annual yr 2-5, annual yr 5-${p.injYears}, then PISC yr ${p.injYears}-${p.injYears+p.piscYears}`)}
 ${dateLines}
 
-${K('DATE')} ${V(`${endSim} 1 1`)}    ${C('** END OF SIMULATION (' + (p.injYears+p.piscYears) + ' yr total)')}
+${K('DATE')} ${V(`${endSim}  1  1`)}    ${C(`** END OF SIMULATION (${p.injYears+p.piscYears} yr total)`)}
 ${K('STOP')}
 
 ${C(`** ============================================================`)}
 ${C(`**  END OF DECK — compliance summary`)}
 ${C(`**  Initial P     : ${d.pInit.toFixed(0)} kPa`)}
-${C(`**  Reservoir T   : ${d.tInit.toFixed(1)} °C`)}
+${C(`**  Reservoir T   : ${d.tInit.toFixed(1)} deg C`)}
 ${C(`**  Frac P (gate) : ${d.fracP.toFixed(0)} kPa`)}
 ${C(`**  BHP cap       : ${d.bhpCap.toFixed(0)} kPa (${(d.bhpCap/d.fracP*100).toFixed(1)}% of frac)`)}
-${C(`**  MSP (σ_h,min) : ${d.msp.toFixed(0)} kPa  -> BHP/MSP margin = ${d.bhpMargin.toFixed(1)} %`)}
+${C(`**  MSP (sh_min)  : ${d.msp.toFixed(0)} kPa  -> BHP/MSP margin = ${d.bhpMargin.toFixed(1)} %`)}
 ${C(`**  PV utilized   : ${d.pvUtil.toFixed(2)} %  (cumulative ${d.totalMt.toFixed(2)} Mt CO2)`)}
 ${C(`**  PISC          : ${p.piscYears} yr  (Class VI default = 50 yr)`)}
 ${C(`** ============================================================`)}`;
@@ -1546,8 +1673,15 @@ function renderDeck(){
     `Grid: ${PARAMS.ni}×${PARAMS.nj}×${d.totalNK} cells · ${PARAMS.injRateMtpy} Mt/yr × ${PARAMS.injYears} yr + ${PARAMS.piscYears} yr PISC`;
 }
 
+// Strip syntax-highlight spans AND non-ASCII chars (CMG GEM expects ASCII-clean .dat)
+function rawDeck(){
+  return buildDeck()
+    .replace(/<[^>]+>/g, '')              // remove <span class="..."> wrappers
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/[^\x00-\x7F]/g, '');         // strip any non-ASCII (deg sign, sub/superscript, etc.)
+}
 document.getElementById('downloadDeck').addEventListener('click', ()=>{
-  const raw = buildDeck().replace(/<[^>]+>/g,''); // strip syntax-highlight spans
+  const raw = rawDeck();
   const blob = new Blob([raw], {type:'text/plain'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1555,8 +1689,7 @@ document.getElementById('downloadDeck').addEventListener('click', ()=>{
   a.click();
 });
 document.getElementById('copyDeck').addEventListener('click', ()=>{
-  const raw = buildDeck().replace(/<[^>]+>/g,'');
-  navigator.clipboard.writeText(raw);
+  navigator.clipboard.writeText(rawDeck());
   alert('CMG-GEM .dat copied to clipboard.');
 });
 
