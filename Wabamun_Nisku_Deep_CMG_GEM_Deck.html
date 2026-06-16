@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wabamun Deep Nisku CCS — CMG-GEM Deck Builder | 1250 m</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0b1220;--panel:#121a2d;--panel-2:#17223b;--border:#2a3554;
+  --ink:#e8edf7;--muted:#9aa8c7;--accent:#4fb3ff;--accent-2:#f8c150;
+  --ok:#44d07b;--warn:#f7a35c;--bad:#ff5e6c;--hi:#b78dff;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,sans-serif;font-size:13px;line-height:1.45}
+h1,h2,h3{margin:0 0 .35em 0;color:#fff;font-weight:700;letter-spacing:-0.01em}
+h1{font-size:18px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent)}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-2)}
+.app{display:grid;grid-template-columns:420px 1fr;min-height:100vh}
+.sidebar{background:var(--panel);border-right:1px solid var(--border);padding:14px;overflow-y:auto;max-height:100vh;position:sticky;top:0}
+.main{padding:16px 22px;overflow-y:auto;max-height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:10px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--hi));box-shadow:0 0 14px var(--accent)}
+.brand .sub{color:var(--muted);font-size:11px}
+.sec{border:1px solid var(--border);border-radius:8px;background:var(--panel-2);margin-bottom:10px}
+.sec>.hd{padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none}
+.sec>.hd .ti{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#cfe1ff;font-weight:700}
+.sec>.hd .ch{color:var(--muted);font-size:10px;font-family:var(--mono)}
+.sec>.bd{padding:10px 10px 4px 10px}
+.sec.col>.bd{display:none}
+.row{display:grid;grid-template-columns:1fr 100px 38px;gap:6px;align-items:center;margin-bottom:6px}
+.row label{color:var(--muted);font-size:11px}
+.row input[type=number],.row input[type=text],.row select{width:100%;padding:4px 6px;border:1px solid var(--border);background:#0e1629;color:var(--ink);border-radius:4px;font-family:var(--mono);font-size:11px}
+.row .u{font-size:10px;color:var(--muted);font-family:var(--mono);text-align:left}
+.row.full{grid-template-columns:1fr}
+.tip{display:inline-block;font-size:9px;color:var(--accent);cursor:help;margin-left:4px;border:1px solid var(--accent);border-radius:50%;width:13px;height:13px;text-align:center;line-height:11px;font-weight:700}
+.note{font-size:10.5px;color:var(--muted);padding:6px 8px;background:#0e1629;border:1px dashed var(--border);border-radius:4px;margin:4px 0 6px 0;font-style:italic}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px;flex-wrap:wrap}
+.tab{padding:7px 12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;font-size:12px;font-weight:600}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:hover{color:#fff}
+.panel{display:none}.panel.active{display:block}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.kpi .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.kpi .val{font-size:20px;font-weight:700;color:#fff;margin-top:2px;font-family:var(--mono)}
+.kpi .unit{font-size:11px;color:var(--muted);margin-left:4px}
+.kpi .foot{font-size:10.5px;color:var(--muted);margin-top:4px}
+.kpi.ok{border-left:3px solid var(--ok)}.kpi.warn{border-left:3px solid var(--warn)}.kpi.bad{border-left:3px solid var(--bad)}
+.chart-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px}
+.chart-wrap{position:relative;height:340px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:1100px){.two-col{grid-template-columns:1fr}}
+table.t{width:100%;border-collapse:collapse;font-size:11.5px}
+table.t th,table.t td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left}
+table.t th{color:var(--accent);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+.badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-family:var(--mono)}
+.badge.ok{background:rgba(68,208,123,.15);color:var(--ok);border:1px solid rgba(68,208,123,.35)}
+.badge.warn{background:rgba(247,163,92,.15);color:var(--warn);border:1px solid rgba(247,163,92,.35)}
+.badge.bad{background:rgba(255,94,108,.15);color:var(--bad);border:1px solid rgba(255,94,108,.35)}
+.footer{color:var(--muted);font-size:10px;padding:14px 0;border-top:1px solid var(--border);margin-top:14px}
+.num{font-family:var(--mono)}
+.btn{background:var(--accent);color:#06121f;border:0;padding:6px 12px;border-radius:4px;font-weight:700;cursor:pointer;font-size:11px;letter-spacing:.04em}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.btn.warn{background:var(--warn);color:#1b1300}
+.callout{border-left:3px solid var(--accent-2);background:#1b1f2f;padding:8px 12px;border-radius:0 6px 6px 0;margin-bottom:10px;font-size:11.5px}
+.callout.bad{border-color:var(--bad)}.callout.ok{border-color:var(--ok)}.callout.warn{border-color:var(--warn)}
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;background:#0e1629;border:1px solid var(--border);color:var(--muted);font-family:var(--mono)}
+.pill.data{border-color:var(--ok);color:var(--ok)}
+.pill.assump{border-color:var(--warn);color:var(--warn)}
+.pill.lit{border-color:#77a0d8;color:#a6c8f0}
+.pill.fix{border-color:var(--hi);color:var(--hi)}
+.sm{font-size:10.5px;color:var(--muted)}
+.hr{height:1px;background:var(--border);margin:12px 0}
+.eq{background:#0e1629;border:1px solid var(--border);border-radius:4px;padding:8px;margin:6px 0;font-family:var(--mono);font-size:11.5px;color:#d4e3f5}
+.deck{background:#0a0f1a;border:1px solid var(--border);border-radius:6px;padding:12px;font-family:var(--mono);font-size:11px;color:#bdd4ed;max-height:520px;overflow:auto;white-space:pre;line-height:1.42}
+.deck .com{color:#5d728f}
+.deck .key{color:var(--accent)}
+.deck .val{color:var(--accent-2)}
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+canvas.plot{width:100%;background:#0a0f1a;border:1px solid var(--border);border-radius:6px;display:block}
+.slider-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px}
+.slider-row{display:grid;grid-template-columns:60px 1fr 80px;align-items:center;gap:10px}
+.slider-row input[type=range]{width:100%}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:10.5px;color:var(--muted);margin-top:6px}
+.legend .sw{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:middle;margin-right:4px}
+.check{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11.5px}
+.check:last-child{border-bottom:0}
+.check .mk{flex-shrink:0;font-family:var(--mono);font-size:10px;padding:1px 5px;border-radius:3px}
+.check .mk.ok{background:rgba(68,208,123,.15);color:var(--ok);border:1px solid rgba(68,208,123,.3)}
+.check .mk.warn{background:rgba(247,163,92,.15);color:var(--warn);border:1px solid rgba(247,163,92,.3)}
+.check .mk.bad{background:rgba(255,94,108,.15);color:var(--bad);border:1px solid rgba(255,94,108,.3)}
+.minibar{display:flex;height:8px;border-radius:4px;overflow:hidden;border:1px solid var(--border);margin-top:6px}
+.minibar div{height:100%}
+.minibar .mob{background:var(--bad)}
+.minibar .res{background:var(--warn)}
+.minibar .dis{background:var(--accent)}
+.minibar .min{background:var(--hi)}
+.nav{display:flex;gap:8px;font-size:11px;color:var(--muted);margin-bottom:10px}
+.nav a{color:var(--accent);text-decoration:none}
+.nav a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============= SIDEBAR (EDITABLE PARAMS) ============= -->
+<aside class="sidebar">
+  <div class="brand">
+    <span class="dot"></span>
+    <div>
+      <div style="font-weight:700;color:#fff;font-size:13px">Wabamun Deep Nisku</div>
+      <div class="sub">CMG-GEM Deck Builder · 1250 m · AER D065 + Class VI</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn ghost" id="presetDefault">Recommended</button>
+    <button class="btn ghost" id="presetSpec">Original Spec</button>
+    <button class="btn warn" id="presetReset">Reset</button>
+  </div>
+
+  <!-- Sections rendered by JS -->
+  <div id="paramSections"></div>
+
+  <div class="footer">
+    Defaults reflect AER D065 / EPA Class VI corrections to the original CLAUDE FABLE 5 spec.
+    Hover the <span class="tip">i</span> tooltip on any field to see the original spec value vs the recommended fix.
+  </div>
+</aside>
+
+<!-- ============= MAIN ============= -->
+<main class="main">
+  <div class="nav">
+    <a href="index.html">← Shallow Nisku (Pine/Oak/Cedar, 1010–1090 m)</a>
+    <span>·</span>
+    <a href="Nisku_Enhanced_Reservoir_Characterization.html">Characterization</a>
+    <span>·</span>
+    <a href="Nisku_CCS_Reference_Guide.html">Reference Guide</a>
+    <span>·</span>
+    <a href="Nisku_Quick_Capacity_Calculator.html">Capacity Calc</a>
+  </div>
+
+  <h1>Wabamun Deep Nisku CCS — CMG-GEM Reservoir Simulation Deck</h1>
+  <div class="sm" style="margin-bottom:14px">
+    Enbridge NET / Wabamun Area · Twp 050–051, Rge 26–27 W4M · Saline Nisku carbonate aquifer at ~1250 m ·
+    1 Mt/yr CO₂ for 10 yr + 50 yr PISC
+    <span class="pill fix">FABLE-5 spec + 11 regulatory fixes applied</span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">1 · Overview &amp; Compliance</div>
+    <div class="tab" data-tab="plume">2 · Plume Visualization</div>
+    <div class="tab" data-tab="pressure">3 · Pressure / AOR</div>
+    <div class="tab" data-tab="mass">4 · Mass &amp; Trapping</div>
+    <div class="tab" data-tab="deck">5 · CMG-GEM .dat</div>
+    <div class="tab" data-tab="docs">6 · Fixes &amp; References</div>
+  </div>
+
+  <!-- =============== TAB 1: OVERVIEW =============== -->
+  <section class="panel active" id="panel-overview">
+    <div class="kpi-row" id="kpiRow"></div>
+
+    <div class="two-col">
+      <div class="chart-card">
+        <h2>AER D065 / EPA Class VI Compliance Checklist</h2>
+        <div id="complianceList"></div>
+      </div>
+      <div class="chart-card">
+        <h2>Static Mass Balance (Quick Look)</h2>
+        <table class="t">
+          <thead><tr><th>Quantity</th><th>Value</th><th>Notes</th></tr></thead>
+          <tbody id="massBalance"></tbody>
+        </table>
+        <div class="callout" style="margin-top:10px">
+          <strong>Reservoir CO₂ density at P,T:</strong> uses NIST-corrected supercritical value (≈ 615 kg/m³ at 12.26 MPa / 55 °C). Update via "Fluid → ρ_CO₂ at reservoir" if you re-tune the EOS.
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h2>Project Geometry</h2>
+      <canvas id="geomCanvas" class="plot" height="280"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:#3a4a6e"></span>Caprock (Calmar)</span>
+        <span><span class="sw" style="background:#4fb3ff"></span>Upper Nisku</span>
+        <span><span class="sw" style="background:#7fd5b8"></span>Mid Nisku (best reservoir)</span>
+        <span><span class="sw" style="background:#f8c150"></span>Lower Nisku</span>
+        <span><span class="sw" style="background:#2a3554"></span>Underburden (Ireton)</span>
+        <span><span class="sw" style="background:#ff5e6c"></span>CO₂-INJ-1</span>
+        <span><span class="sw" style="background:#44d07b"></span>OBS-MW-1 / MW-2</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============== TAB 2: PLUME =============== -->
+  <section class="panel" id="panel-plume">
+    <div class="slider-card">
+      <div class="slider-row">
+        <label class="sm">Time (yr)</label>
+        <input type="range" id="timeSlider" min="0" max="60" value="10" step="0.25">
+        <span class="num" id="timeReadout" style="text-align:right">10.00</span>
+      </div>
+      <div class="legend">
+        <span class="sm">Snapshots:</span>
+        <a href="#" class="snap" data-y="1" style="color:var(--accent)">1y</a>
+        <a href="#" class="snap" data-y="3" style="color:var(--accent)">3y</a>
+        <a href="#" class="snap" data-y="5" style="color:var(--accent)">5y</a>
+        <a href="#" class="snap" data-y="7" style="color:var(--accent)">7y</a>
+        <a href="#" class="snap" data-y="10" style="color:var(--accent)">10y (EOI)</a>
+        <a href="#" class="snap" data-y="12" style="color:var(--accent)">12y</a>
+        <a href="#" class="snap" data-y="15" style="color:var(--accent)">15y</a>
+        <a href="#" class="snap" data-y="30" style="color:var(--accent)">30y</a>
+        <a href="#" class="snap" data-y="50" style="color:var(--accent)">50y</a>
+        <a href="#" class="snap" data-y="60" style="color:var(--accent)">60y (EoSim)</a>
+      </div>
+      <div class="sm" style="margin-top:8px">
+        <span class="pill lit">Plan view</span> = Nordbotten sharp-interface radial plume.
+        <span class="pill lit">Cross-section</span> = gravity-override tongue (Nordbotten–Celia 2006 approximation).
+        Plume radii are <em>analytical proxies</em> for CMG-GEM output; use them for sanity-checking, not regulatory submission.
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="chart-card">
+        <h2>Plan View — Top of Nisku (K=1 of reservoir)</h2>
+        <canvas id="planCanvas" class="plot" height="420"></canvas>
+        <div class="legend" id="planLegend"></div>
+      </div>
+      <div class="chart-card">
+        <h2>Cross-section — I–K through injector (J=25)</h2>
+        <canvas id="sectionCanvas" class="plot" height="420"></canvas>
+        <div class="legend" id="sectionLegend"></div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h2>Plume Radius &amp; Pressure Front vs. Time</h2>
+      <div class="chart-wrap"><canvas id="radiusChart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- =============== TAB 3: PRESSURE =============== -->
+  <section class="panel" id="panel-pressure">
+    <div class="two-col">
+      <div class="chart-card">
+        <h2>Theis ΔP Map (radial, t = slider)</h2>
+        <canvas id="pressureMap" class="plot" height="420"></canvas>
+        <div class="legend">
+          <span><span class="sw" style="background:#ff5e6c"></span>ΔP &gt; 1000 kPa</span>
+          <span><span class="sw" style="background:#f8c150"></span>ΔP &gt; 100 kPa</span>
+          <span><span class="sw" style="background:#4fb3ff"></span>ΔP &gt; 10 kPa (AOR boundary)</span>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h2>BHP &amp; Pressure Margins</h2>
+        <div class="chart-wrap"><canvas id="bhpChart"></canvas></div>
+        <div class="callout ok" id="mspCallout">…</div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h2>AOR Radius Evolution (ΔP ≥ 10 kPa threshold)</h2>
+      <div class="chart-wrap"><canvas id="aorChart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- =============== TAB 4: MASS / TRAPPING =============== -->
+  <section class="panel" id="panel-mass">
+    <div class="chart-card">
+      <h2>Cumulative CO₂ Injected</h2>
+      <div class="chart-wrap"><canvas id="cumChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h2>Trapping Mechanism Partitioning (mass fraction)</h2>
+      <div class="chart-wrap"><canvas id="trapChart"></canvas></div>
+      <div class="callout">
+        <strong>Trapping model:</strong> simple kinetic proxy — mobile → residual (after passage of plume tail) → dissolved (Spycher-Pruess solubility at 12.26 MPa, 55 °C, 150 000 ppm) → mineral (1 %/decade post-injection, capped at 8 %). Real CMG-GEM with full geochemistry will redistribute mass — this view is for screening.
+      </div>
+    </div>
+    <div class="chart-card">
+      <h2>Trapping Snapshot at slider time</h2>
+      <div id="trapSnapshot"></div>
+    </div>
+  </section>
+
+  <!-- =============== TAB 5: CMG .DAT =============== -->
+  <section class="panel" id="panel-deck">
+    <div class="toolbar">
+      <button class="btn" id="downloadDeck">Download .dat</button>
+      <button class="btn ghost" id="copyDeck">Copy to clipboard</button>
+      <span class="sm" id="deckMeta"></span>
+    </div>
+    <div class="deck" id="deckPreview">…</div>
+  </section>
+
+  <!-- =============== TAB 6: DOCS =============== -->
+  <section class="panel" id="panel-docs">
+    <div class="chart-card">
+      <h2>11 Fixes Applied to the FABLE-5 Spec</h2>
+      <table class="t">
+        <thead><tr><th>#</th><th>Item</th><th>FABLE-5 Spec</th><th>Recommended (default)</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Brine ρ at SC</td><td>1020 kg/m³</td><td><strong>1100 kg/m³</strong></td><td>150 000 ppm TDS gives ≈1100 SC. 1020 is fresh-water-like → physics inconsistency.</td></tr>
+          <tr><td>2</td><td>Caprock in grid</td><td>(absent)</td><td><strong>2 caprock layers above K=1</strong> (K=0.001 mD, φ=0.03, Pe=300 kPa)</td><td>Calmar seal must be in the model to demonstrate containment for AER D065.</td></tr>
+          <tr><td>3</td><td>Underburden</td><td>(absent)</td><td><strong>1 underburden layer below K=10</strong> (K=0.01 mD, φ=0.02)</td><td>Required to evaluate downward leakage / Ireton baseline.</td></tr>
+          <tr><td>4</td><td>PISC duration</td><td>5 yr</td><td><strong>50 yr</strong></td><td>Class VI default. AER also expects plume stabilization (≥50 yr).</td></tr>
+          <tr><td>5</td><td>Boundary</td><td>PV multiplier 1000×</td><td><strong>Carter-Tracy analytical aquifer</strong> (PV-mult kept as fallback)</td><td>Class VI submission expects analytical aquifer or 20×20 km grid.</td></tr>
+          <tr><td>6</td><td>Sgr</td><td>0.12</td><td><strong>0.20</strong></td><td>Published Wabamun-area carbonate: 0.15–0.30; raises residual trapping (regulator-positive).</td></tr>
+          <tr><td>7</td><td>Capillary Pe</td><td>20 kPa</td><td><strong>75 kPa</strong></td><td>Typical for dolomitic carbonate at φ=7.6 %.</td></tr>
+          <tr><td>8</td><td>Components</td><td>2 (CO₂ + H₂O)</td><td><strong>3 (CO₂ + H₂O + NaCl)</strong></td><td>Captures salinity-driven salting-out at 150 000 ppm.</td></tr>
+          <tr><td>9</td><td>ρ_CO₂ at P,T</td><td>640 kg/m³</td><td><strong>615 kg/m³</strong></td><td>NIST: 614.6 kg/m³ at 12.26 MPa / 55 °C.</td></tr>
+          <tr><td>10</td><td>Geomechanics gate</td><td>(none)</td><td><strong>Static MSP check</strong> (MSP = 0.9 × σ_h,min)</td><td>AER D065 expects fracture-propagation gate.</td></tr>
+          <tr><td>11</td><td>Trapping output</td><td>(not specified)</td><td><strong>Mobile / residual / dissolved / mineral mass reported</strong></td><td>Required for AER MMV reports.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-card">
+      <h2>Analytical Model References</h2>
+      <ul style="margin:6px 0 0 18px;line-height:1.7;font-size:11.5px">
+        <li><strong>Plume radius (sharp-interface)</strong> — Nordbotten, Celia &amp; Bachu (2005). <em>Transport in Porous Media</em>, 58(3): 339–360. r²(t) = M(t) / (ρ_CO₂ · π · H · φ · (1 – S_wi – S_gr)).</li>
+        <li><strong>Gravity-override tongue</strong> — Nordbotten &amp; Celia (2006). <em>JFM</em>, 561: 307–327. Self-similar dimensionless solution.</li>
+        <li><strong>Pressure buildup (radial)</strong> — Theis (1935). ΔP(r,t) = (Q·μ)/(4πkH) · W(u), with u = r²·φ·μ·c_t /(4kt). E₁(u) computed by Cody &amp; Thacher rational approximation.</li>
+        <li><strong>CO₂ solubility in brine</strong> — Spycher &amp; Pruess (2005) GCA + Li &amp; Nghiem (1986) salting-out correction.</li>
+        <li><strong>Class VI / D065</strong> — 40 CFR §146.81–95 (UIC Class VI); AER Directive 065 + Appendix P (MMV).</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="footer">
+    Wabamun Deep Nisku CCS · CMG-GEM Deck Builder · part of <a style="color:var(--accent)" href="index.html">nisku-modelling-assessment</a> ·
+    physics by analytical proxies — final regulatory model still requires a full CMG-GEM run with geomechanics and geochemistry coupling.
+  </div>
+</main>
+</div>
+
+<script>
+/* ============================================================
+   PARAMETER SCHEMA — defaults are post-fix recommended values
+   ============================================================ */
+const SPEC_DEFAULTS = {  // original FABLE-5 spec (for "Original Spec" preset)
+  rhoBrineSC:1020, sgr:0.12, sgrMax:0.12, pe:20, components:2, rhoCO2:640,
+  piscYears:5, caprockLayers:0, underburdenLayers:0, boundary:'pv1000', mspCheck:false
+};
+
+const REC_DEFAULTS = {   // post-fix recommended values
+  // GRID
+  topDepth:1250, thickness:50, ni:50, nj:50, nkRes:10,
+  caprockLayers:2, caprockThk:5, underburdenLayers:1, underburdenThk:10,
+  dxCenter:25, dxEdge:500, areal:5000,
+  // ROCK
+  kh:435.11, kv:67.38, phi:0.0761, swi:0.22, sgr:0.20,
+  rhoGrain:2811, cRock:5e-7, ntg:0.70, hetero:'layer3',
+  caprockK:0.001, caprockPhi:0.03, caprockPe:300,
+  underburdenK:0.01, underburdenPhi:0.02,
+  // INITIAL
+  pGrad:9.81, tGrad:30, tSurf:17.5, sw0:1.0, salinity:150000, rhoBrineSC:1100,
+  // FLUID
+  components:3, eos:'PR', solubility:'LiNghiem',
+  rhoCO2:615, muCO2:0.045, rhoBrineRes:1070, muBrine:0.50,
+  // RELPERM / Pc
+  krwMax:0.30, krgMax:0.80, nw:4.0, ng:2.0,
+  pe:75, lambda:2.0, hysteresis:'Carlson', sgrMax:0.20,
+  // WELLS
+  injRateMtpy:1.0, injI:25, injJ:25, bhpMaxUser:0,    // 0 = auto from frac × 0.9
+  obs1I:38, obs1J:25, obs2I:25, obs2J:45,
+  wellbore:0.10, skin:0,
+  // BOUNDARY
+  boundary:'cartertracy', pvMult:1000, ctROuter:25000, ctH:50,
+  // SCHEDULE
+  startYear:2026, injYears:10, piscYears:50, outputFreq:'quarterly',
+  // NUMERICAL
+  solver:'AIMSOL', dtMin:0.0001, dtMax:30, dtWell:0.01, maxSteps:50000,
+  // FRAC GRADIENT
+  fracGrad:20.0,
+  // GEOMECH
+  mspCheck:true, sigmaHminGrad:18.0  // kPa/m for σ_h,min
+};
+
+// CURRENT live state
+const PARAMS = JSON.parse(JSON.stringify(REC_DEFAULTS));
+
+// SCHEMA for sidebar rendering
+const SCHEMA = [
+  { group:'1.1 Grid &amp; Domain', items:[
+    {k:'topDepth',  l:'Top of caprock', t:'num', u:'m',       spec:'1250'},
+    {k:'thickness', l:'Net Nisku thickness', t:'num', u:'m',  spec:'50'},
+    {k:'nkRes',     l:'Nisku layers (NK)', t:'int', u:'–',    spec:'10'},
+    {k:'caprockLayers',  l:'Caprock layers (Calmar)', t:'int', u:'–',  spec:'2 (was 0)', fix:true},
+    {k:'caprockThk',     l:'Caprock layer thickness', t:'num', u:'m',  spec:'5'},
+    {k:'underburdenLayers', l:'Underburden layers (Ireton)', t:'int', u:'–', spec:'1 (was 0)', fix:true},
+    {k:'underburdenThk',    l:'Underburden layer thickness', t:'num', u:'m', spec:'10'},
+    {k:'ni',  l:'NI',  t:'int', u:'–', spec:'50'},
+    {k:'nj',  l:'NJ',  t:'int', u:'–', spec:'50'},
+    {k:'areal',     l:'Areal extent (side)', t:'num', u:'m',  spec:'5000'},
+    {k:'dxCenter',  l:'Cell size at well', t:'num',   u:'m',  spec:'25'},
+    {k:'dxEdge',    l:'Cell size at edge', t:'num',   u:'m',  spec:'500'},
+  ]},
+  { group:'1.2 Rock Properties', items:[
+    {k:'kh',    l:'Horizontal perm K_h', t:'num', u:'mD',   spec:'435.11'},
+    {k:'kv',    l:'Vertical perm K_v',   t:'num', u:'mD',   spec:'67.38'},
+    {k:'phi',   l:'Porosity φ',          t:'num', u:'frac', spec:'0.0761'},
+    {k:'swi',   l:'Irreducible Sw',      t:'num', u:'frac', spec:'0.22'},
+    {k:'sgr',   l:'Residual gas Sgr',    t:'num', u:'frac', spec:'0.20 (was 0.12)', fix:true},
+    {k:'rhoGrain', l:'Grain density',    t:'num', u:'kg/m³', spec:'2811'},
+    {k:'cRock',    l:'Rock compress.',   t:'num', u:'1/kPa', spec:'5e-7'},
+    {k:'ntg',      l:'Net/Gross',        t:'num', u:'frac', spec:'0.70'},
+    {k:'hetero',   l:'Heterogeneity', t:'sel', u:'–', spec:'layer3', opts:[
+      ['homo','Homogeneous'],['layer3','3-zone layer cake'],['random','Layered + random ±20 %']
+    ]},
+    {k:'caprockK',   l:'Caprock K', t:'num', u:'mD',   spec:'0.001 (new)', fix:true},
+    {k:'caprockPhi', l:'Caprock φ', t:'num', u:'frac', spec:'0.03'},
+    {k:'caprockPe',  l:'Caprock Pe', t:'num', u:'kPa', spec:'300'},
+    {k:'underburdenK',   l:'Underburden K',   t:'num', u:'mD',   spec:'0.01 (new)', fix:true},
+    {k:'underburdenPhi', l:'Underburden φ',   t:'num', u:'frac', spec:'0.02'},
+  ]},
+  { group:'1.3 Initial Conditions', items:[
+    {k:'pGrad',   l:'Pressure gradient', t:'num', u:'kPa/m', spec:'9.81'},
+    {k:'tGrad',   l:'Geothermal gradient', t:'num', u:'°C/km', spec:'30'},
+    {k:'tSurf',   l:'Surface T',         t:'num', u:'°C',    spec:'17.5'},
+    {k:'sw0',     l:'Initial Sw',        t:'num', u:'frac',  spec:'1.0'},
+    {k:'salinity', l:'Brine TDS (NaCl)', t:'num', u:'ppm',   spec:'150000'},
+    {k:'rhoBrineSC', l:'Brine ρ at SC',  t:'num', u:'kg/m³', spec:'1100 (was 1020)', fix:true},
+  ]},
+  { group:'1.4 Fluid System (CO₂/Brine)', items:[
+    {k:'components', l:'Components', t:'sel', u:'–', spec:'3 (was 2)', fix:true, opts:[
+      [2,'2 (CO₂ + H₂O)'],[3,'3 (CO₂ + H₂O + NaCl)']
+    ]},
+    {k:'eos', l:'EOS', t:'sel', u:'–', spec:'PR', opts:[['PR','Peng-Robinson'],['SRK','SRK']]},
+    {k:'solubility', l:'CO₂ solubility', t:'sel', u:'–', spec:'LiNghiem', opts:[
+      ['LiNghiem','Li-Nghiem (salt-corr.)'],['SpycherPruess','Spycher-Pruess'],['Henry','Henry']
+    ]},
+    {k:'rhoCO2', l:'ρ_CO₂ at reservoir P,T', t:'num', u:'kg/m³', spec:'615 (was 640)', fix:true},
+    {k:'muCO2',  l:'μ_CO₂ at reservoir',     t:'num', u:'mPa·s', spec:'0.045'},
+    {k:'rhoBrineRes', l:'ρ_brine at reservoir', t:'num', u:'kg/m³', spec:'1070'},
+    {k:'muBrine',     l:'μ_brine at reservoir', t:'num', u:'mPa·s', spec:'0.50'},
+  ]},
+  { group:'1.5 Rel-perm &amp; Capillary Pc', items:[
+    {k:'krwMax', l:'krw_max', t:'num', u:'–', spec:'0.30'},
+    {k:'krgMax', l:'krg_max', t:'num', u:'–', spec:'0.80'},
+    {k:'nw',     l:'Corey n_w', t:'num', u:'–', spec:'4.0'},
+    {k:'ng',     l:'Corey n_g', t:'num', u:'–', spec:'2.0'},
+    {k:'pe',     l:'Pc entry pressure Pe', t:'num', u:'kPa', spec:'75 (was 20)', fix:true},
+    {k:'lambda', l:'Brooks-Corey λ',       t:'num', u:'–',   spec:'2.0'},
+    {k:'hysteresis', l:'Hysteresis', t:'sel', u:'–', spec:'Carlson', opts:[
+      ['Carlson','Carlson'],['Killough','Killough'],['None','None']
+    ]},
+    {k:'sgrMax', l:'Sgr_max (hysteresis)', t:'num', u:'frac', spec:'0.20 (was 0.12)', fix:true},
+  ]},
+  { group:'1.6 Wells', items:[
+    {k:'injRateMtpy', l:'CO₂ injection rate', t:'num', u:'Mt/yr', spec:'1.0'},
+    {k:'injI', l:'INJ-1 I-index', t:'int', u:'–', spec:'25'},
+    {k:'injJ', l:'INJ-1 J-index', t:'int', u:'–', spec:'25'},
+    {k:'bhpMaxUser', l:'BHP cap (0 = auto)', t:'num', u:'kPa', spec:'auto = 0.9 × frac P'},
+    {k:'obs1I', l:'OBS-MW-1 I', t:'int', u:'–', spec:'38'},
+    {k:'obs1J', l:'OBS-MW-1 J', t:'int', u:'–', spec:'25'},
+    {k:'obs2I', l:'OBS-MW-2 I', t:'int', u:'–', spec:'25'},
+    {k:'obs2J', l:'OBS-MW-2 J', t:'int', u:'–', spec:'45'},
+    {k:'wellbore', l:'Wellbore radius', t:'num', u:'m', spec:'0.10'},
+    {k:'skin',     l:'Skin factor',     t:'num', u:'–', spec:'0'},
+  ]},
+  { group:'1.7 Boundary', items:[
+    {k:'boundary', l:'Outer boundary', t:'sel', u:'–', spec:'Carter-Tracy (was PV×1000)', fix:true, opts:[
+      ['cartertracy','Carter-Tracy analytical'],['pv1000','PV multiplier 1000×'],['noflow','Closed (no flow)']
+    ]},
+    {k:'pvMult', l:'PV multiplier (if used)', t:'num', u:'×', spec:'1000'},
+    {k:'ctROuter', l:'C-T outer radius', t:'num', u:'m', spec:'25000'},
+    {k:'ctH',      l:'C-T aquifer thickness', t:'num', u:'m', spec:'50'},
+  ]},
+  { group:'1.8 Schedule', items:[
+    {k:'startYear', l:'Start year',          t:'int', u:'yr', spec:'2026'},
+    {k:'injYears',  l:'Injection duration',  t:'num', u:'yr', spec:'10'},
+    {k:'piscYears', l:'PISC duration',       t:'num', u:'yr', spec:'50 (was 5)', fix:true},
+    {k:'outputFreq', l:'Output frequency', t:'sel', u:'–', spec:'quarterly', opts:[
+      ['monthly','Monthly'],['quarterly','Quarterly'],['semiannual','Semi-annual'],['annual','Annual']
+    ]},
+  ]},
+  { group:'1.9 Numerical &amp; Geomech', items:[
+    {k:'solver',    l:'Solver',          t:'sel', u:'–', spec:'AIMSOL', opts:[['AIMSOL','AIMSOL'],['ITER','ITER'],['DIRECT','DIRECT']]},
+    {k:'dtMin',     l:'DT min',          t:'num', u:'d',  spec:'0.0001'},
+    {k:'dtMax',     l:'DT max',          t:'num', u:'d',  spec:'30'},
+    {k:'dtWell',    l:'DT well',         t:'num', u:'d',  spec:'0.01'},
+    {k:'maxSteps',  l:'Max steps',       t:'int', u:'–',  spec:'50000'},
+    {k:'fracGrad',  l:'Frac gradient',   t:'num', u:'kPa/m', spec:'20.0'},
+    {k:'sigmaHminGrad', l:'σ_h,min grad', t:'num', u:'kPa/m', spec:'18.0 (MSP gate)', fix:true},
+  ]},
+];
+
+/* ============================================================
+   DERIVED VALUES (recomputed live)
+   ============================================================ */
+function derive(){
+  const p = PARAMS;
+  const d = {};
+  d.pInit   = p.pGrad * p.topDepth;                                     // kPa
+  d.tInit   = p.tSurf + (p.tGrad/1000) * p.topDepth;                   // °C
+  d.fracP   = p.fracGrad * p.topDepth;                                  // kPa
+  d.bhpCap  = p.bhpMaxUser > 0 ? p.bhpMaxUser : 0.9 * d.fracP;          // kPa
+  d.msp     = p.sigmaHminGrad * p.topDepth;                             // kPa (σ_h,min ≈ MSP basis)
+  d.bhpMargin = (1 - d.bhpCap/d.msp) * 100;                             // %
+  d.kvkh    = p.kv / p.kh;
+  d.mobRatio = p.muBrine / p.muCO2;                                     // unfavorable if >>1
+  d.dailyTonnes = p.injRateMtpy * 1e6 / 365;                            // t/d
+  d.sm3PerDay   = d.dailyTonnes * 1000 / 1.861;                         // sm³/d (CO₂ at SC)
+  d.totalNK = p.caprockLayers + p.nkRes + p.underburdenLayers;
+  d.cellNK = [];
+  for(let i=0;i<p.caprockLayers;i++)     d.cellNK.push({type:'caprock',  dz:p.caprockThk});
+  for(let i=0;i<p.nkRes;i++)             d.cellNK.push({type:'nisku',    dz:p.thickness/p.nkRes});
+  for(let i=0;i<p.underburdenLayers;i++) d.cellNK.push({type:'ub',       dz:p.underburdenThk});
+  // Layer-cake heterogeneity
+  d.layerProps = d.cellNK.map((c,idx)=>{
+    if(c.type==='caprock')   return {phi:p.caprockPhi, k:p.caprockK, label:'CAPROCK'};
+    if(c.type==='ub')        return {phi:p.underburdenPhi, k:p.underburdenK, label:'UNDERBURDEN'};
+    const niskuIdx = idx - p.caprockLayers; // 0..nkRes-1
+    if(p.hetero==='homo')   return {phi:p.phi, k:p.kh, label:'NISKU'};
+    if(p.hetero==='layer3' || p.hetero==='random'){
+      // Top 20% = Upper (tight), Middle 50% = Mid (best), Bottom 30% = Lower (tight)
+      const frac = niskuIdx / Math.max(1,p.nkRes-1);
+      let prop;
+      if(frac < 0.20)      prop = {phi:0.04, k:75,   label:'UPPER_NISKU'};
+      else if(frac < 0.70) prop = {phi:0.10, k:1500, label:'MID_NISKU'};
+      else                 prop = {phi:0.03, k:30,   label:'LOWER_NISKU'};
+      if(p.hetero==='random'){
+        const noise = (Math.sin(idx*97.31)+Math.cos(idx*13.7))*0.5;
+        prop.phi = prop.phi * (1 + 0.20*noise);
+        prop.k   = prop.k   * (1 + 0.20*noise);
+      }
+      return prop;
+    }
+    return {phi:p.phi, k:p.kh, label:'NISKU'};
+  });
+  // Effective volumetric averages on Nisku reservoir only
+  const niskuCells = d.layerProps.filter(p=>p.label.includes('NISKU'));
+  d.phiAvg = niskuCells.reduce((s,c)=>s+c.phi,0) / Math.max(1,niskuCells.length);
+  d.kAvg   = Math.exp(niskuCells.reduce((s,c)=>s+Math.log(c.k),0) / Math.max(1,niskuCells.length));
+  // PV available for CO₂
+  d.areaM2 = Math.pow(p.areal,2);
+  d.bulkPV = d.areaM2 * p.thickness * d.phiAvg;                         // m³
+  d.effPV  = d.bulkPV * (1 - p.swi - p.sgr);                            // m³ available for mobile CO₂
+  // Total CO₂ mass at end of injection
+  d.totalMt = p.injRateMtpy * p.injYears;
+  d.totalVolCO2 = d.totalMt * 1e9 / p.rhoCO2;                            // m³ at reservoir
+  d.pvUtil = (d.totalVolCO2 / d.effPV) * 100;                            // %
+  return d;
+}
+
+/* ============================================================
+   ANALYTICAL PHYSICS
+   ============================================================ */
+// Sharp-interface Nordbotten radial plume
+function plumeRadius(tYears){
+  const p = PARAMS, d = derive();
+  const tEff = Math.min(tYears, p.injYears); // injection stops at injYears
+  if(tEff <= 0) return 0;
+  const M = p.injRateMtpy * 1e9 * tEff;       // kg
+  const V = M / p.rhoCO2;                     // m³ at reservoir
+  const phi_eff = d.phiAvg * (1 - p.swi - p.sgr);
+  const r2 = V / (Math.PI * p.thickness * phi_eff);
+  let r = Math.sqrt(r2);
+  // Post-injection: residual trapping + dissolution shrinks mobile plume
+  if(tYears > p.injYears){
+    const tPost = tYears - p.injYears;
+    const decay = Math.exp(-tPost / 40); // mobile shrinks with τ≈40 yr
+    r *= Math.sqrt(0.4 + 0.6*decay);
+  }
+  return r; // m
+}
+
+// Theis well function E1(u) by Cody-Thacher rational approx
+function expE1(u){
+  if(u <= 0) return Infinity;
+  if(u < 1){
+    // series: E1(u) = -γ - ln(u) - sum_{n>=1} (-u)^n / (n·n!)
+    const g = 0.5772156649;
+    let s = -g - Math.log(u);
+    let term = 1, n=0;
+    for(let i=1;i<=25;i++){
+      term *= -u/i;
+      s -= term/i;
+      if(Math.abs(term/i) < 1e-12) break;
+    }
+    return s;
+  } else {
+    // asymptotic: E1(u) ≈ exp(-u)/u · (1 - 1/u + 2/u² - ...)
+    return Math.exp(-u)/u * (1 - 1/u + 2/(u*u) - 6/(u*u*u) + 24/(u*u*u*u));
+  }
+}
+
+// Theis ΔP(r,t) in kPa for radial constant-rate injection
+function theisDP(rMeters, tYears){
+  const p = PARAMS, d = derive();
+  if(rMeters <= 0 || tYears <= 0) return 0;
+  // For post-injection use superposition: ΔP = ΔP(t) - ΔP(t - injYears)
+  const tEff = tYears * 365.25 * 86400; // s
+  // Volumetric injection at reservoir conditions
+  const Qkg = p.injRateMtpy * 1e9 / (365.25 * 86400);
+  const Q = Qkg / p.rhoCO2; // m³/s
+  const mu = p.muBrine * 1e-3; // Pa·s — pressure front is brine-displacement dominated
+  const k = d.kAvg * 9.869e-16; // m² (1 mD = 9.869e-16 m²)
+  const H = p.thickness;
+  const phi = d.phiAvg;
+  const cBrine = 4.5e-10; // 1/Pa typical
+  const ct = cBrine + p.cRock * 1000; // total compressibility 1/Pa (cRock from 1/kPa)
+  function dP(tSec){
+    if(tSec <= 0) return 0;
+    const u = (rMeters*rMeters * phi * mu * ct) / (4 * k * tSec);
+    const W = expE1(u);
+    const dp_Pa = (Q * mu) / (4 * Math.PI * k * H) * W;
+    return dp_Pa / 1000; // kPa
+  }
+  let total = dP(tEff);
+  if(tYears > p.injYears){
+    total -= dP((tYears - p.injYears) * 365.25 * 86400);
+  }
+  return Math.max(0, total);
+}
+
+// Find AOR radius where ΔP = 10 kPa
+function aorRadius(tYears){
+  if(tYears <= 0.001) return 0;
+  let lo=10, hi=20000; // m
+  for(let i=0;i<40;i++){
+    const mid = (lo+hi)/2;
+    const dp = theisDP(mid, tYears);
+    if(dp > 10) lo = mid; else hi = mid;
+  }
+  return (lo+hi)/2;
+}
+
+// Trapping partitioning (mass fractions over time)
+function trapping(tYears){
+  const p = PARAMS, d = derive();
+  const Mtot = (tYears <= p.injYears ? p.injRateMtpy * tYears : p.totalMt || d.totalMt) || (p.injRateMtpy * Math.min(tYears,p.injYears));
+  // During injection: ramp up dissolved, residual still small
+  const tau_diss = 25; // years, partial-equilibrium
+  const dissoFinal = 0.30; // ultimate solubility fraction at 150,000 ppm brine
+  let fDiss = dissoFinal * (1 - Math.exp(-tYears/tau_diss));
+  const tau_res = 60;
+  const resFinal = p.sgr * 1.5; // empirical scaling
+  let fRes = Math.min(resFinal, resFinal * (1 - Math.exp(-tYears/tau_res)));
+  let fMin = 0;
+  if(tYears > p.injYears){
+    const tPost = tYears - p.injYears;
+    fMin = Math.min(0.08, 0.01 * (tPost/10));
+  }
+  let fMob = Math.max(0, 1 - fDiss - fRes - fMin);
+  return {mobile:fMob, residual:fRes, dissolved:fDiss, mineral:fMin, Mt:Mtot};
+}
+
+/* ============================================================
+   SIDEBAR RENDERING
+   ============================================================ */
+function renderSidebar(){
+  const root = document.getElementById('paramSections');
+  root.innerHTML = '';
+  SCHEMA.forEach((group,gi)=>{
+    const sec = document.createElement('div');
+    sec.className = 'sec' + (gi>2 ? ' col' : ''); // collapse all but first 3 by default
+    sec.innerHTML = `<div class="hd"><span class="ti">${group.group}</span><span class="ch">[+]</span></div><div class="bd"></div>`;
+    const bd = sec.querySelector('.bd');
+    group.items.forEach(it=>{
+      const row = document.createElement('div');
+      row.className = 'row';
+      const tipHTML = `<span class="tip" title="Spec / Default: ${it.spec}${it.fix?' — applied as regulatory fix':''}">i</span>`;
+      let inputHTML = '';
+      if(it.t==='sel'){
+        inputHTML = `<select data-k="${it.k}">${it.opts.map(o=>{
+          const sel = String(PARAMS[it.k])===String(o[0]) ? ' selected':'';
+          return `<option value="${o[0]}"${sel}>${o[1]}</option>`;
+        }).join('')}</select>`;
+      } else {
+        const step = it.t==='int' ? '1' : 'any';
+        inputHTML = `<input type="number" step="${step}" data-k="${it.k}" value="${PARAMS[it.k]}">`;
+      }
+      row.innerHTML = `<label>${it.l}${tipHTML}${it.fix?' <span class="pill fix" style="font-size:9px;padding:0 4px">FIX</span>':''}</label>${inputHTML}<span class="u">${it.u}</span>`;
+      bd.appendChild(row);
+    });
+    root.appendChild(sec);
+    sec.querySelector('.hd').addEventListener('click',()=>{
+      sec.classList.toggle('col');
+      sec.querySelector('.ch').textContent = sec.classList.contains('col') ? '[+]' : '[−]';
+    });
+  });
+  // Wire inputs
+  root.querySelectorAll('input,select').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const k = e.target.dataset.k;
+      let v = e.target.value;
+      if(e.target.type==='number') v = parseFloat(v);
+      if(e.target.tagName==='SELECT' && !isNaN(parseInt(v))) v = parseInt(v);
+      PARAMS[k] = v;
+      updateAll();
+    });
+  });
+}
+
+/* ============================================================
+   OVERVIEW + COMPLIANCE
+   ============================================================ */
+function renderKPIs(){
+  const d = derive(), p = PARAMS;
+  const kpis = [
+    {l:'Initial Pressure',     v:d.pInit.toFixed(0), u:'kPa', foot:`@ ${p.topDepth} m × ${p.pGrad} kPa/m`},
+    {l:'Reservoir T',           v:d.tInit.toFixed(1), u:'°C',  foot:`Ts ${p.tSurf}°C + ${p.tGrad}°C/km`},
+    {l:'Frac Pressure',         v:d.fracP.toFixed(0), u:'kPa', foot:`${p.fracGrad} kPa/m × ${p.topDepth} m`},
+    {l:'BHP Cap',               v:d.bhpCap.toFixed(0), u:'kPa', foot:`0.9 × frac`, cls: d.bhpCap < d.msp ? 'ok':'warn'},
+    {l:'MSP gate (σ_h,min)',    v:d.msp.toFixed(0), u:'kPa',  foot:`${p.sigmaHminGrad} kPa/m × ${p.topDepth} m`},
+    {l:'Kv / Kh',               v:d.kvkh.toFixed(3), u:'',    foot:`${p.kv} / ${p.kh}`},
+    {l:'Mobility Ratio (μb/μg)',v:d.mobRatio.toFixed(1), u:'', foot: d.mobRatio>5 ? 'unfavourable — viscous fingering':''},
+    {l:'CO₂ Inj. Rate',         v:d.dailyTonnes.toFixed(0), u:'t/d', foot:`${(d.sm3PerDay/1e6).toFixed(2)} Mm³/d sm³`},
+    {l:'Total CO₂ (10 yr)',     v:d.totalMt.toFixed(1), u:'Mt',  foot:`${(d.totalVolCO2/1e6).toFixed(2)} Mm³ res. vol`},
+    {l:'PV Utilized',           v:d.pvUtil.toFixed(1), u:'%',  foot:`vs (1 − Swi − Sgr) × bulk PV`},
+    {l:'Grid NK total',         v:d.totalNK, u:'',  foot:`${p.caprockLayers} cap + ${p.nkRes} Nisku + ${p.underburdenLayers} UB`},
+    {l:'PISC',                  v:p.piscYears, u:'yr', foot:'Class VI default 50 yr', cls: p.piscYears>=50 ? 'ok':'warn'},
+  ];
+  document.getElementById('kpiRow').innerHTML = kpis.map(k=>`
+    <div class="kpi ${k.cls||''}"><div class="lbl">${k.l}</div>
+    <div class="val">${k.v}<span class="unit">${k.u}</span></div>
+    <div class="foot">${k.foot||''}</div></div>
+  `).join('');
+}
+
+function renderCompliance(){
+  const p = PARAMS, d = derive();
+  const checks = [
+    {ok:p.caprockLayers>=2, t:'Caprock (Calmar) explicitly gridded ≥ 2 layers',
+     pass:'Caprock layers gridded — seal integrity demonstrable.',
+     fail:'Add caprock layers above K=1 — required by AER D065 for containment.'},
+    {ok:p.underburdenLayers>=1, t:'Underburden (Ireton) gridded',
+     pass:'Underburden present — downward migration accounted.',
+     fail:'Add ≥1 underburden layer below the Nisku.'},
+    {ok:p.piscYears>=50, t:'PISC ≥ 50 years (Class VI default)',
+     pass:`PISC = ${p.piscYears} yr meets Class VI.`,
+     fail:`PISC = ${p.piscYears} yr — below 50 yr Class VI default.`},
+    {ok:p.components>=3, t:'3-component fluid (CO₂ + H₂O + NaCl)',
+     pass:'NaCl tracked — salting-out captured.',
+     fail:'2-component model under-resolves brine salinity effects at 150 000 ppm.'},
+    {ok:Math.abs(p.rhoBrineSC-1100)<60, t:'Brine ρ at SC consistent with TDS',
+     pass:`ρ_brine SC = ${p.rhoBrineSC} kg/m³ consistent with ${p.salinity} ppm.`,
+     fail:`ρ_brine SC = ${p.rhoBrineSC} kg/m³ inconsistent with ${p.salinity} ppm — expected ≈1100.`},
+    {ok:p.sgr>=0.15, t:'Residual gas Sgr ≥ 0.15 (carbonate range)',
+     pass:`Sgr = ${p.sgr} — credible residual trapping.`,
+     fail:`Sgr = ${p.sgr} below carbonate range; under-represents safety benefit.`},
+    {ok:p.pe>=50, t:'Capillary entry Pe ≥ 50 kPa',
+     pass:`Pe = ${p.pe} kPa — appropriate for dolomitic carbonate.`,
+     fail:`Pe = ${p.pe} kPa low for the lithology.`},
+    {ok:Math.abs(p.rhoCO2-615)<25, t:'ρ_CO₂ at reservoir matches NIST',
+     pass:`ρ_CO₂ = ${p.rhoCO2} kg/m³ within NIST tolerance.`,
+     fail:`ρ_CO₂ = ${p.rhoCO2} kg/m³ — NIST gives ≈615 at 12.26 MPa / 55 °C.`},
+    {ok:p.boundary==='cartertracy', t:'Analytical aquifer (Carter-Tracy)',
+     pass:'Carter-Tracy outer boundary — Class-VI defensible.',
+     fail:'PV-multiplier boundary — flag as limitation; recommend Carter-Tracy.'},
+    {ok:d.bhpCap<d.msp, t:'BHP cap below σ_h,min (geomech gate)',
+     pass:`BHP cap (${d.bhpCap.toFixed(0)} kPa) < MSP gate (${d.msp.toFixed(0)} kPa).`,
+     fail:`BHP cap (${d.bhpCap.toFixed(0)} kPa) ≥ MSP gate (${d.msp.toFixed(0)} kPa) — fracture risk.`},
+    {ok:p.injRateMtpy*p.injYears>0.1 && d.pvUtil<60, t:'CO₂ volume < 60 % effective PV',
+     pass:`PV utilized = ${d.pvUtil.toFixed(1)} % — reasonable storage efficiency.`,
+     fail:`PV utilized = ${d.pvUtil.toFixed(1)} % — exceeds 60 %; revisit grid extent or rate.`},
+    {ok:true, t:'Trapping mass partitioning reported (mobile/residual/dissolved/mineral)',
+     pass:'Mass partitioning available in Tab 4 — AER MMV-ready.',
+     fail:''},
+  ];
+  document.getElementById('complianceList').innerHTML = checks.map(c=>`
+    <div class="check">
+      <span class="mk ${c.ok?'ok':'warn'}">${c.ok?'PASS':'WARN'}</span>
+      <div><strong>${c.t}</strong><br>
+        <span class="sm">${c.ok ? c.pass : c.fail}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderMassBalance(){
+  const d = derive(), p = PARAMS;
+  const rows = [
+    ['Total CO₂ injected (10 yr)',        `${d.totalMt.toFixed(2)} Mt`, '1 Mt/yr × 10 yr'],
+    ['Reservoir volume of injected CO₂',  `${(d.totalVolCO2/1e6).toFixed(3)} Mm³`, `at ρ_CO₂ = ${p.rhoCO2} kg/m³`],
+    ['Effective PV (Swi, Sgr removed)',   `${(d.effPV/1e6).toFixed(2)} Mm³`,       `φ_avg ${(d.phiAvg*100).toFixed(2)}%, (1 − Swi − Sgr) = ${(1-p.swi-p.sgr).toFixed(2)}`],
+    ['Storage efficiency (volumetric)',   `${d.pvUtil.toFixed(2)} %`,              'CO₂ vol / effective PV'],
+    ['Avg horizontal perm (geomean)',     `${d.kAvg.toFixed(1)} mD`,               `${p.hetero} heterogeneity`],
+    ['Bottom-hole margin to σ_h,min',     `${d.bhpMargin.toFixed(1)} %`,           `BHP cap ${d.bhpCap.toFixed(0)} vs MSP ${d.msp.toFixed(0)} kPa`],
+    ['Plume radius at EOI (10 yr)',       `${plumeRadius(10).toFixed(0)} m`,       'Nordbotten sharp-interface'],
+    ['Plume radius at 60 yr',             `${plumeRadius(60).toFixed(0)} m`,       'post-injection shrinkage included'],
+    ['AOR radius at 10 yr (ΔP=10 kPa)',   `${aorRadius(10).toFixed(0)} m`,         'Theis'],
+    ['AOR radius at 60 yr',               `${aorRadius(60).toFixed(0)} m`,         'Theis (superposed shut-in)'],
+  ];
+  document.getElementById('massBalance').innerHTML = rows.map(r=>`
+    <tr><td>${r[0]}</td><td class="num">${r[1]}</td><td class="sm">${r[2]}</td></tr>
+  `).join('');
+}
+
+/* ============================================================
+   CANVAS: GEOMETRY SCHEMATIC (overview)
+   ============================================================ */
+function drawGeometry(){
+  const cvs = document.getElementById('geomCanvas');
+  const ctx = cvs.getContext('2d');
+  const W = cvs.width = cvs.parentElement.clientWidth-2;
+  const H = cvs.height;
+  ctx.fillStyle = '#0a0f1a'; ctx.fillRect(0,0,W,H);
+
+  const p = PARAMS, d = derive();
+  const m = {l:60, r:60, t:30, b:35};
+  const plotW = W - m.l - m.r, plotH = H - m.t - m.b;
+
+  // Vertical scale: from top of caprock to bottom of underburden
+  const zTop = p.topDepth;
+  const zBot = zTop + p.caprockLayers*p.caprockThk + p.thickness + p.underburdenLayers*p.underburdenThk;
+  const zScale = z => m.t + (z - zTop)/(zBot - zTop) * plotH;
+
+  // Draw layers (full width)
+  let z = zTop;
+  d.cellNK.forEach((c)=>{
+    const y0 = zScale(z), y1 = zScale(z + c.dz);
+    let color = '#3a4a6e';
+    if(c.type==='caprock')   color = '#3a4a6e';
+    if(c.type==='ub')        color = '#2a3554';
+    if(c.type==='nisku'){
+      const niskuIdx = d.cellNK.indexOf(c) - p.caprockLayers;
+      const frac = niskuIdx/Math.max(1,p.nkRes-1);
+      if(frac<0.20) color = '#4fb3ff';
+      else if(frac<0.70) color = '#7fd5b8';
+      else color = '#f8c150';
+    }
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.55;
+    ctx.fillRect(m.l, y0, plotW, y1-y0);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#0a0f1a';
+    ctx.strokeRect(m.l, y0, plotW, y1-y0);
+    z += c.dz;
+  });
+
+  // Depth axis
+  ctx.fillStyle = '#9aa8c7'; ctx.font = '10px monospace';
+  ctx.textAlign = 'right';
+  [zTop, zTop + p.caprockLayers*p.caprockThk, zTop + p.caprockLayers*p.caprockThk + p.thickness, zBot].forEach(d=>{
+    ctx.fillText(d.toFixed(0)+' m', m.l - 6, zScale(d) + 3);
+    ctx.beginPath(); ctx.moveTo(m.l - 4, zScale(d)); ctx.lineTo(m.l, zScale(d));
+    ctx.strokeStyle = '#9aa8c7'; ctx.stroke();
+  });
+
+  // Distance axis (synthetic)
+  ctx.textAlign = 'center';
+  [0, 1250, 2500, 3750, 5000].forEach(x=>{
+    const xp = m.l + (x/p.areal)*plotW;
+    ctx.fillText((x/1000).toFixed(1)+' km', xp, H - 18);
+    ctx.beginPath(); ctx.moveTo(xp, H-m.b); ctx.lineTo(xp, H-m.b+4);
+    ctx.strokeStyle='#9aa8c7'; ctx.stroke();
+  });
+
+  // Wells
+  const drawWell = (xKm, label, color)=>{
+    const xp = m.l + (xKm*1000/p.areal)*plotW;
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+    const yT = m.t, yB = zScale(zTop + p.caprockLayers*p.caprockThk + p.thickness);
+    ctx.beginPath(); ctx.moveTo(xp, 0); ctx.lineTo(xp, yB); ctx.stroke();
+    // Perfs through Nisku
+    ctx.strokeStyle = color;
+    const yPerfTop = zScale(zTop + p.caprockLayers*p.caprockThk);
+    for(let yy = yPerfTop; yy < yB; yy += 4){
+      ctx.beginPath(); ctx.moveTo(xp-5, yy); ctx.lineTo(xp+5, yy); ctx.stroke();
+    }
+    ctx.fillStyle = color; ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, xp, 14);
+    ctx.lineWidth = 1;
+  };
+  drawWell(2.5, 'CO2-INJ-1', '#ff5e6c');
+  drawWell(3.8, 'OBS-MW-1', '#44d07b');
+  drawWell(0.5, 'OBS-MW-2', '#44d07b');
+
+  // Title
+  ctx.fillStyle = '#cfe1ff'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign='left';
+  ctx.fillText('Vertical schematic (synthetic E-W)', m.l, 18);
+}
+
+/* ============================================================
+   CANVAS: PLAN VIEW (radial CO₂ + grid + wells)
+   ============================================================ */
+function drawPlan(){
+  const t = parseFloat(document.getElementById('timeSlider').value);
+  const cvs = document.getElementById('planCanvas');
+  const ctx = cvs.getContext('2d');
+  const W = cvs.width = cvs.parentElement.clientWidth - 24;
+  const H = cvs.height;
+  ctx.fillStyle = '#0a0f1a'; ctx.fillRect(0,0,W,H);
+
+  const p = PARAMS;
+  const sideKm = p.areal/1000;
+  const pad = 35;
+  const plotSize = Math.min(W, H) - 2*pad;
+  const x0 = (W - plotSize)/2, y0 = (H - plotSize)/2;
+  const k = plotSize / p.areal; // px per meter
+
+  // Grid outline
+  ctx.strokeStyle = '#2a3554'; ctx.strokeRect(x0, y0, plotSize, plotSize);
+  // Light grid
+  ctx.strokeStyle = '#19223a'; ctx.lineWidth = 0.5;
+  for(let i=1;i<10;i++){
+    const xx = x0 + i*plotSize/10;
+    ctx.beginPath(); ctx.moveTo(xx,y0); ctx.lineTo(xx,y0+plotSize); ctx.stroke();
+    const yy = y0 + i*plotSize/10;
+    ctx.beginPath(); ctx.moveTo(x0,yy); ctx.lineTo(x0+plotSize,yy); ctx.stroke();
+  }
+  ctx.lineWidth = 1;
+
+  // Inj well position in domain
+  const injX = (p.injI-0.5)/p.ni * p.areal;
+  const injY = (p.injJ-0.5)/p.nj * p.areal;
+  const obs1X = (p.obs1I-0.5)/p.ni * p.areal, obs1Y = (p.obs1J-0.5)/p.nj * p.areal;
+  const obs2X = (p.obs2I-0.5)/p.ni * p.areal, obs2Y = (p.obs2J-0.5)/p.nj * p.areal;
+  const toPx = (xm,ym)=>[x0 + xm*k, y0 + ym*k];
+
+  // Pressure halo (AOR)
+  const aor = aorRadius(t);
+  if(aor>10){
+    const [cx, cy] = toPx(injX, injY);
+    const r10 = aor*k;
+    // Multi-ring halo: outer faint, inner stronger
+    [{r:r10*1.0, a:0.10, c:'#4fb3ff'}, {r:r10*0.6, a:0.18, c:'#f8c150'}, {r:r10*0.25, a:0.28, c:'#ff5e6c'}].forEach(ring=>{
+      ctx.fillStyle = ring.c; ctx.globalAlpha = ring.a;
+      ctx.beginPath(); ctx.arc(cx, cy, ring.r, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  // CO₂ plume (saturation contours)
+  const rPlume = plumeRadius(t);
+  if(rPlume>5){
+    const [cx, cy] = toPx(injX, injY);
+    const rPx = rPlume*k;
+    [{f:1.0, a:0.18, c:'#ff5e6c'}, {f:0.75, a:0.30, c:'#ff5e6c'}, {f:0.45, a:0.50, c:'#ff5e6c'}, {f:0.20, a:0.75, c:'#ff8c8c'}].forEach(ring=>{
+      ctx.fillStyle = ring.c; ctx.globalAlpha = ring.a;
+      ctx.beginPath(); ctx.arc(cx, cy, rPx*ring.f, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    // SG contour rings
+    ctx.strokeStyle = '#ff5e6c'; ctx.lineWidth = 0.8; ctx.setLineDash([4,3]);
+    [0.10, 0.50].forEach(level=>{
+      ctx.beginPath(); ctx.arc(cx, cy, rPx*(1-level*0.7), 0, Math.PI*2); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+  }
+
+  // Distance rings (1/2/3 km from injector)
+  ctx.strokeStyle = '#2a3554'; ctx.lineWidth = 0.6; ctx.setLineDash([2,3]);
+  [1000,2000,3000].forEach(rM=>{
+    const [cx, cy] = toPx(injX, injY);
+    ctx.beginPath(); ctx.arc(cx, cy, rM*k, 0, Math.PI*2); ctx.stroke();
+    ctx.fillStyle = '#9aa8c7'; ctx.font='10px monospace';
+    ctx.fillText(`${rM/1000} km`, cx + rM*k - 32, cy - 4);
+  });
+  ctx.setLineDash([]);
+
+  // Wells
+  const drawDot = (xm, ym, color, label)=>{
+    const [cx, cy] = toPx(xm, ym);
+    ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI*2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font='bold 10px monospace';
+    ctx.fillText(label, cx + 9, cy + 3);
+  };
+  drawDot(injX, injY, '#ff5e6c', 'INJ-1');
+  drawDot(obs1X, obs1Y, '#44d07b', 'MW-1');
+  drawDot(obs2X, obs2Y, '#44d07b', 'MW-2');
+
+  // North arrow + scale bar
+  ctx.fillStyle = '#cfe1ff'; ctx.font = 'bold 11px monospace';
+  ctx.fillText('N', W - 18, 22);
+  ctx.beginPath(); ctx.moveTo(W-14,30); ctx.lineTo(W-14,12); ctx.lineTo(W-10,18); ctx.moveTo(W-14,12); ctx.lineTo(W-18,18);
+  ctx.strokeStyle = '#cfe1ff'; ctx.lineWidth=1.5; ctx.stroke();
+  // Scale bar
+  ctx.lineWidth=2; ctx.strokeStyle='#cfe1ff';
+  ctx.beginPath(); ctx.moveTo(x0+10, H-12); ctx.lineTo(x0+10+1000*k, H-12); ctx.stroke();
+  ctx.fillStyle='#cfe1ff'; ctx.font='10px monospace';
+  ctx.fillText('1 km', x0+10+1000*k/2 - 12, H-16);
+
+  // Annotation
+  ctx.fillStyle='#cfe1ff'; ctx.font='bold 11px monospace';
+  ctx.fillText(`t = ${t.toFixed(2)} yr  ·  M_inj = ${(PARAMS.injRateMtpy*Math.min(t,PARAMS.injYears)).toFixed(2)} Mt  ·  r_plume = ${rPlume.toFixed(0)} m  ·  r_AOR = ${aor.toFixed(0)} m`, x0+4, y0-8);
+
+  document.getElementById('planLegend').innerHTML = `
+    <span><span class="sw" style="background:#ff5e6c"></span>CO₂ saturation (red intensity ∝ SG)</span>
+    <span><span class="sw" style="background:#4fb3ff;opacity:.4"></span>Pressure halo (AOR rings)</span>
+    <span><span class="sw" style="background:#2a3554"></span>Distance rings (1/2/3 km)</span>`;
+}
+
+/* ============================================================
+   CANVAS: CROSS-SECTION (I-K, through injector)
+   ============================================================ */
+function drawSection(){
+  const t = parseFloat(document.getElementById('timeSlider').value);
+  const cvs = document.getElementById('sectionCanvas');
+  const ctx = cvs.getContext('2d');
+  const W = cvs.width = cvs.parentElement.clientWidth - 24;
+  const H = cvs.height;
+  ctx.fillStyle = '#0a0f1a'; ctx.fillRect(0,0,W,H);
+
+  const p = PARAMS, d = derive();
+  const m = {l:60, r:30, t:30, b:35};
+  const plotW = W - m.l - m.r, plotH = H - m.t - m.b;
+
+  const xMax = p.areal;
+  const zTop = p.topDepth;
+  const zBot = zTop + p.caprockLayers*p.caprockThk + p.thickness + p.underburdenLayers*p.underburdenThk;
+
+  // Layers
+  let z = zTop;
+  d.cellNK.forEach((c, idx)=>{
+    const y0 = m.t + (z - zTop)/(zBot - zTop) * plotH;
+    const y1 = m.t + (z + c.dz - zTop)/(zBot - zTop) * plotH;
+    let color = '#3a4a6e';
+    if(c.type==='caprock')   color = '#3a4a6e';
+    if(c.type==='ub')        color = '#2a3554';
+    if(c.type==='nisku'){
+      const niskuIdx = idx - p.caprockLayers;
+      const frac = niskuIdx/Math.max(1,p.nkRes-1);
+      if(frac<0.20) color = '#4fb3ff';
+      else if(frac<0.70) color = '#7fd5b8';
+      else color = '#f8c150';
+    }
+    ctx.fillStyle = color; ctx.globalAlpha = 0.45;
+    ctx.fillRect(m.l, y0, plotW, y1-y0);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#0a0f1a';
+    ctx.strokeRect(m.l, y0, plotW, y1-y0);
+    z += c.dz;
+  });
+
+  // CO₂ tongue (gravity override) — half-ellipse anchored to top of Nisku, decays radially
+  const rPlume = plumeRadius(t);
+  if(rPlume>5){
+    const injX = (p.injI-0.5)/p.ni * p.areal;
+    const tongueLength = rPlume * 1.4; // gravity override tongue ~40 % longer than mean radius at top
+    const tongueDepthFrac = 0.45; // fraction of Nisku thickness occupied by tongue at injector
+    const nikuTop = zTop + p.caprockLayers*p.caprockThk;
+    const yTop = m.t + (nikuTop - zTop)/(zBot - zTop) * plotH;
+    const yMaxTongue = m.t + (nikuTop + tongueDepthFrac*p.thickness - zTop)/(zBot - zTop) * plotH;
+    const xToPx = xm => m.l + xm/xMax*plotW;
+    // Tongue gradient
+    const grad = ctx.createLinearGradient(0, yTop, 0, yMaxTongue);
+    grad.addColorStop(0, 'rgba(255,94,108,0.85)');
+    grad.addColorStop(1, 'rgba(255,94,108,0.20)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(xToPx(injX - tongueLength), yTop);
+    for(let xm=injX - tongueLength; xm<=injX + tongueLength; xm += xMax/200){
+      const dx = (xm - injX)/tongueLength;
+      const h = Math.max(0, (1 - dx*dx)) * (yMaxTongue - yTop);
+      ctx.lineTo(xToPx(xm), yTop + h);
+    }
+    ctx.lineTo(xToPx(injX + tongueLength), yTop);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#ff5e6c'; ctx.lineWidth = 1.2;
+    ctx.stroke();
+  }
+
+  // Caprock breakthrough check (would show as red overlay if SG > 0 in caprock — analytical proxy never breaks through unless Pe overridden very low)
+  if(p.pe < 30){
+    const yCapTop = m.t;
+    const yCapBot = m.t + (zTop + p.caprockLayers*p.caprockThk - zTop)/(zBot-zTop)*plotH;
+    ctx.fillStyle = 'rgba(255,94,108,0.3)';
+    ctx.fillRect(m.l, yCapTop, plotW, yCapBot - yCapTop);
+    ctx.fillStyle = '#ff5e6c'; ctx.font='bold 10px monospace';
+    ctx.fillText('⚠ Low Pe risks caprock breakthrough', m.l + 6, yCapTop+12);
+  }
+
+  // Injector
+  const injX = (p.injI-0.5)/p.ni * p.areal;
+  const injPx = m.l + injX/xMax * plotW;
+  ctx.strokeStyle = '#ff5e6c'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(injPx, 0); ctx.lineTo(injPx, m.t + (zTop + p.caprockLayers*p.caprockThk + p.thickness - zTop)/(zBot - zTop) * plotH);
+  ctx.stroke();
+  // Perforations through Nisku
+  const yPerfTop = m.t + (zTop + p.caprockLayers*p.caprockThk - zTop)/(zBot - zTop) * plotH;
+  const yPerfBot = m.t + (zTop + p.caprockLayers*p.caprockThk + p.thickness - zTop)/(zBot - zTop) * plotH;
+  for(let yy=yPerfTop; yy<yPerfBot; yy += 5){
+    ctx.beginPath(); ctx.moveTo(injPx-4, yy); ctx.lineTo(injPx+4, yy); ctx.stroke();
+  }
+  ctx.lineWidth = 1;
+  ctx.fillStyle = '#ff5e6c'; ctx.font='bold 10px monospace'; ctx.textAlign='center';
+  ctx.fillText('CO2-INJ-1', injPx, 14);
+
+  // Depth axis
+  ctx.fillStyle = '#9aa8c7'; ctx.font='10px monospace'; ctx.textAlign='right';
+  [zTop, zTop + p.caprockLayers*p.caprockThk, zTop + p.caprockLayers*p.caprockThk + p.thickness, zBot].forEach(d=>{
+    const y = m.t + (d - zTop)/(zBot - zTop) * plotH;
+    ctx.fillText(d.toFixed(0)+' m', m.l - 6, y + 3);
+    ctx.beginPath(); ctx.moveTo(m.l - 4, y); ctx.lineTo(m.l, y);
+    ctx.strokeStyle='#9aa8c7'; ctx.stroke();
+  });
+  // X axis
+  ctx.textAlign='center';
+  [0, 1250, 2500, 3750, 5000].forEach(x=>{
+    const xp = m.l + (x/xMax)*plotW;
+    ctx.fillText((x/1000).toFixed(1)+' km', xp, H - 18);
+  });
+
+  // Title
+  ctx.fillStyle='#cfe1ff'; ctx.font='bold 11px monospace'; ctx.textAlign='left';
+  ctx.fillText(`I–K slice  (t = ${t.toFixed(2)} yr, gravity-override tongue per Nordbotten-Celia 2006)`, m.l, 18);
+
+  document.getElementById('sectionLegend').innerHTML = `
+    <span><span class="sw" style="background:#3a4a6e"></span>Caprock</span>
+    <span><span class="sw" style="background:#4fb3ff"></span>Upper Nisku</span>
+    <span><span class="sw" style="background:#7fd5b8"></span>Mid Nisku</span>
+    <span><span class="sw" style="background:#f8c150"></span>Lower Nisku</span>
+    <span><span class="sw" style="background:#2a3554"></span>Underburden</span>
+    <span><span class="sw" style="background:#ff5e6c"></span>CO₂ gas saturation tongue</span>`;
+}
+
+/* ============================================================
+   CHART: PLUME RADIUS / AOR vs TIME
+   ============================================================ */
+let radiusChart, aorChart, cumChart, trapChart, bhpChart, pressureMapChart;
+
+function buildRadiusChart(){
+  const p = PARAMS;
+  const ts = [];
+  for(let t=0; t<=p.injYears+p.piscYears; t+=0.5) ts.push(t);
+  const rPlume = ts.map(plumeRadius);
+  const rAOR   = ts.map(aorRadius);
+  const ctx = document.getElementById('radiusChart').getContext('2d');
+  if(radiusChart) radiusChart.destroy();
+  radiusChart = new Chart(ctx,{type:'line',data:{
+    labels:ts.map(t=>t.toFixed(1)),
+    datasets:[
+      {label:'CO₂ plume radius (m)', data:rPlume, borderColor:'#ff5e6c', backgroundColor:'rgba(255,94,108,.15)', fill:true, tension:.3, pointRadius:0, borderWidth:2},
+      {label:'AOR radius (ΔP=10 kPa) (m)', data:rAOR, borderColor:'#4fb3ff', backgroundColor:'rgba(79,179,255,.10)', fill:false, tension:.3, pointRadius:0, borderWidth:2, borderDash:[4,3]}
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#e8edf7',font:{size:11}}},
+               tooltip:{mode:'index',intersect:false}},
+      scales:{
+        x:{title:{display:true,text:'Time (yr)',color:'#9aa8c7'},ticks:{color:'#9aa8c7',maxTicksLimit:12},grid:{color:'#1c2440'}},
+        y:{title:{display:true,text:'Radius (m)',color:'#9aa8c7'},ticks:{color:'#9aa8c7'},grid:{color:'#1c2440'},beginAtZero:true}
+      }}});
+}
+
+function buildAORChart(){
+  buildRadiusChart(); // same engine, just relabelled
+  const ctx = document.getElementById('aorChart').getContext('2d');
+  const p = PARAMS;
+  const ts = [];
+  for(let t=0; t<=p.injYears+p.piscYears; t+=0.5) ts.push(t);
+  const rAOR = ts.map(aorRadius);
+  if(aorChart) aorChart.destroy();
+  aorChart = new Chart(ctx,{type:'line',data:{
+    labels:ts.map(t=>t.toFixed(1)),
+    datasets:[{label:'AOR radius (m) — ΔP=10 kPa', data:rAOR, borderColor:'#4fb3ff', backgroundColor:'rgba(79,179,255,.20)', fill:true, tension:.3, pointRadius:0, borderWidth:2}]
+    },
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#e8edf7'}}},
+      scales:{
+        x:{title:{display:true,text:'Time (yr)',color:'#9aa8c7'},ticks:{color:'#9aa8c7',maxTicksLimit:12},grid:{color:'#1c2440'}},
+        y:{title:{display:true,text:'AOR radius (m)',color:'#9aa8c7'},ticks:{color:'#9aa8c7'},grid:{color:'#1c2440'},beginAtZero:true}
+      }}});
+}
+
+function buildCumChart(){
+  const p = PARAMS;
+  const ts = [], cum = [];
+  for(let t=0; t<=p.injYears+p.piscYears; t+=0.5){
+    ts.push(t.toFixed(1));
+    cum.push(p.injRateMtpy * Math.min(t,p.injYears));
+  }
+  const ctx = document.getElementById('cumChart').getContext('2d');
+  if(cumChart) cumChart.destroy();
+  cumChart = new Chart(ctx,{type:'line', data:{labels:ts, datasets:[{label:'Cumulative CO₂ (Mt)', data:cum, borderColor:'#f8c150', backgroundColor:'rgba(248,193,80,.20)', fill:true, tension:.0, pointRadius:0, borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e8edf7'}}},
+      scales:{x:{title:{display:true,text:'Time (yr)',color:'#9aa8c7'},ticks:{color:'#9aa8c7',maxTicksLimit:12},grid:{color:'#1c2440'}},
+              y:{title:{display:true,text:'Mt CO₂',color:'#9aa8c7'},ticks:{color:'#9aa8c7'},grid:{color:'#1c2440'},beginAtZero:true}}}});
+}
+
+function buildTrapChart(){
+  const p = PARAMS;
+  const ts = [], mob = [], res = [], dis = [], min = [];
+  for(let t=0; t<=p.injYears+p.piscYears; t+=0.5){
+    const tp = trapping(t);
+    ts.push(t.toFixed(1));
+    mob.push((tp.mobile*100).toFixed(2));
+    res.push((tp.residual*100).toFixed(2));
+    dis.push((tp.dissolved*100).toFixed(2));
+    min.push((tp.mineral*100).toFixed(2));
+  }
+  const ctx = document.getElementById('trapChart').getContext('2d');
+  if(trapChart) trapChart.destroy();
+  trapChart = new Chart(ctx,{type:'line', data:{labels:ts, datasets:[
+      {label:'Mobile',    data:mob, borderColor:'#ff5e6c', backgroundColor:'rgba(255,94,108,.5)',  fill:'origin',  pointRadius:0, borderWidth:1.5},
+      {label:'Residual',  data:res, borderColor:'#f8c150', backgroundColor:'rgba(248,193,80,.5)', fill:'-1',      pointRadius:0, borderWidth:1.5},
+      {label:'Dissolved', data:dis, borderColor:'#4fb3ff', backgroundColor:'rgba(79,179,255,.5)', fill:'-1',      pointRadius:0, borderWidth:1.5},
+      {label:'Mineral',   data:min, borderColor:'#b78dff', backgroundColor:'rgba(183,141,255,.5)',fill:'-1',      pointRadius:0, borderWidth:1.5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e8edf7'}}},
+      scales:{x:{title:{display:true,text:'Time (yr)',color:'#9aa8c7'},ticks:{color:'#9aa8c7',maxTicksLimit:12},grid:{color:'#1c2440'}},
+              y:{title:{display:true,text:'% of injected mass',color:'#9aa8c7'},ticks:{color:'#9aa8c7'},grid:{color:'#1c2440'},stacked:true,max:100,beginAtZero:true}}}});
+}
+
+function buildBHPChart(){
+  const p = PARAMS, d = derive();
+  // Approx: BHP rises with skin/early near-well; simple log buildup
+  const ts = [], bhp = [], frac = [], msp = [];
+  for(let t=0.001; t<=p.injYears+p.piscYears; t+=0.5){
+    ts.push(t.toFixed(1));
+    // BHP = p_init + ΔP(r=rw, t)  but cap at user BHP cap
+    const dpw = Math.min(theisDP(p.wellbore, t), d.bhpCap - d.pInit);
+    let inj = t <= p.injYears;
+    bhp.push((d.pInit + (inj?dpw:Math.max(0,dpw*0.3*Math.exp(-(t-p.injYears)/10)))).toFixed(0));
+    frac.push(d.fracP.toFixed(0));
+    msp.push(d.msp.toFixed(0));
+  }
+  const ctx = document.getElementById('bhpChart').getContext('2d');
+  if(bhpChart) bhpChart.destroy();
+  bhpChart = new Chart(ctx,{type:'line',data:{labels:ts, datasets:[
+      {label:'BHP (kPa)',         data:bhp, borderColor:'#4fb3ff', backgroundColor:'rgba(79,179,255,.15)', fill:true, tension:.2, pointRadius:0, borderWidth:2},
+      {label:'Frac P (kPa)',      data:frac, borderColor:'#ff5e6c', borderDash:[6,3], pointRadius:0, fill:false, borderWidth:1.5},
+      {label:'σ_h,min / MSP (kPa)',data:msp, borderColor:'#f8c150', borderDash:[3,3], pointRadius:0, fill:false, borderWidth:1.5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#e8edf7'}}},
+      scales:{x:{title:{display:true,text:'Time (yr)',color:'#9aa8c7'},ticks:{color:'#9aa8c7',maxTicksLimit:12},grid:{color:'#1c2440'}},
+              y:{title:{display:true,text:'Pressure (kPa)',color:'#9aa8c7'},ticks:{color:'#9aa8c7'},grid:{color:'#1c2440'}}}}});
+  // MSP callout
+  const c = document.getElementById('mspCallout');
+  if(d.bhpCap < d.msp){
+    c.className = 'callout ok';
+    c.innerHTML = `<strong>BHP cap below σ_h,min:</strong> ${d.bhpCap.toFixed(0)} &lt; ${d.msp.toFixed(0)} kPa (margin ${d.bhpMargin.toFixed(1)} %). Geomech gate <span class="badge ok">PASS</span>.`;
+  } else {
+    c.className = 'callout bad';
+    c.innerHTML = `<strong>BHP cap above σ_h,min:</strong> ${d.bhpCap.toFixed(0)} ≥ ${d.msp.toFixed(0)} kPa — fracture-propagation risk. Tighten BHP cap or lower σ_h,min gradient. <span class="badge bad">FAIL</span>.`;
+  }
+}
+
+function drawPressureMap(){
+  const t = parseFloat(document.getElementById('timeSlider').value);
+  const cvs = document.getElementById('pressureMap');
+  const ctx = cvs.getContext('2d');
+  const W = cvs.width = cvs.parentElement.clientWidth - 24;
+  const H = cvs.height;
+  ctx.fillStyle='#0a0f1a'; ctx.fillRect(0,0,W,H);
+  const p = PARAMS;
+  const pad = 35;
+  const plotSize = Math.min(W, H) - 2*pad;
+  const x0 = (W - plotSize)/2, y0 = (H - plotSize)/2;
+  const k = plotSize / p.areal;
+  const injX = (p.injI-0.5)/p.ni * p.areal;
+  const injY = (p.injJ-0.5)/p.nj * p.areal;
+  const cx = x0 + injX*k, cy = y0 + injY*k;
+
+  // Radii at thresholds
+  function rAt(dp){
+    let lo=10, hi=20000;
+    for(let i=0;i<40;i++){
+      const mid = (lo+hi)/2;
+      const cur = theisDP(mid, t);
+      if(cur > dp) lo = mid; else hi = mid;
+    }
+    return (lo+hi)/2;
+  }
+  const r1000 = rAt(1000), r100 = rAt(100), r10 = rAt(10);
+
+  // Grid frame
+  ctx.strokeStyle='#2a3554'; ctx.strokeRect(x0,y0,plotSize,plotSize);
+
+  // Halos
+  [[r10, '#4fb3ff', .15], [r100, '#f8c150', .25], [r1000, '#ff5e6c', .45]].forEach(([r,c,a])=>{
+    if(r<10) return;
+    ctx.fillStyle = c; ctx.globalAlpha = a;
+    ctx.beginPath(); ctx.arc(cx, cy, r*k, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  // Contour lines
+  [r10, r100, r1000].forEach((r,i)=>{
+    if(r<10) return;
+    ctx.strokeStyle = ['#4fb3ff','#f8c150','#ff5e6c'][i]; ctx.lineWidth=1.2; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.arc(cx, cy, r*k, 0, Math.PI*2); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Distance rings
+  ctx.strokeStyle='#2a3554'; ctx.lineWidth=0.6; ctx.setLineDash([2,3]);
+  [1000,2000,3000].forEach(rM=>{
+    ctx.beginPath(); ctx.arc(cx, cy, rM*k, 0, Math.PI*2); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Wells
+  ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI*2);
+  ctx.fillStyle='#ff5e6c'; ctx.fill();
+  ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+
+  // Annotations
+  ctx.fillStyle='#cfe1ff'; ctx.font='bold 11px monospace'; ctx.textAlign='left';
+  ctx.fillText(`t = ${t.toFixed(2)} yr  ·  AOR (ΔP≥10 kPa) = ${r10.toFixed(0)} m  ·  ΔP≥100 kPa r = ${r100.toFixed(0)} m  ·  ΔP≥1000 kPa r = ${r1000.toFixed(0)} m`, x0+4, y0-8);
+  // Scale bar
+  ctx.lineWidth=2; ctx.strokeStyle='#cfe1ff';
+  ctx.beginPath(); ctx.moveTo(x0+10, H-12); ctx.lineTo(x0+10+1000*k, H-12); ctx.stroke();
+  ctx.fillStyle='#cfe1ff'; ctx.font='10px monospace'; ctx.textAlign='center';
+  ctx.fillText('1 km', x0+10+1000*k/2, H-16);
+}
+
+/* ============================================================
+   TRAP SNAPSHOT (at slider time)
+   ============================================================ */
+function renderTrapSnapshot(){
+  const t = parseFloat(document.getElementById('timeSlider').value);
+  const tp = trapping(t);
+  const M = PARAMS.injRateMtpy * Math.min(t, PARAMS.injYears);
+  document.getElementById('trapSnapshot').innerHTML = `
+    <table class="t" style="max-width:600px"><thead><tr><th>Mechanism</th><th>Fraction</th><th>Mass (Mt)</th></tr></thead>
+    <tbody>
+      <tr><td><span class="sw" style="background:#ff5e6c;width:10px;height:10px;display:inline-block;border-radius:2px;margin-right:6px"></span>Mobile (free phase)</td><td class="num">${(tp.mobile*100).toFixed(2)} %</td><td class="num">${(tp.mobile*M).toFixed(3)}</td></tr>
+      <tr><td><span class="sw" style="background:#f8c150;width:10px;height:10px;display:inline-block;border-radius:2px;margin-right:6px"></span>Residual (capillary-trapped)</td><td class="num">${(tp.residual*100).toFixed(2)} %</td><td class="num">${(tp.residual*M).toFixed(3)}</td></tr>
+      <tr><td><span class="sw" style="background:#4fb3ff;width:10px;height:10px;display:inline-block;border-radius:2px;margin-right:6px"></span>Dissolved in brine</td><td class="num">${(tp.dissolved*100).toFixed(2)} %</td><td class="num">${(tp.dissolved*M).toFixed(3)}</td></tr>
+      <tr><td><span class="sw" style="background:#b78dff;width:10px;height:10px;display:inline-block;border-radius:2px;margin-right:6px"></span>Mineral (carbonate)</td><td class="num">${(tp.mineral*100).toFixed(2)} %</td><td class="num">${(tp.mineral*M).toFixed(3)}</td></tr>
+    </tbody></table>
+    <div class="minibar" style="margin-top:10px;max-width:600px">
+      <div class="mob" style="width:${tp.mobile*100}%"></div>
+      <div class="res" style="width:${tp.residual*100}%"></div>
+      <div class="dis" style="width:${tp.dissolved*100}%"></div>
+      <div class="min" style="width:${tp.mineral*100}%"></div>
+    </div>
+    <div class="sm" style="margin-top:6px">At t = ${t.toFixed(2)} yr · cumulative injected = ${M.toFixed(2)} Mt</div>`;
+}
+
+/* ============================================================
+   CMG-GEM .DAT FILE BUILDER
+   ============================================================ */
+function buildDeck(){
+  const p = PARAMS, d = derive();
+  const C  = s => `<span class="com">${s}</span>`;
+  const K  = s => `<span class="key">${s}</span>`;
+  const V  = s => `<span class="val">${s}</span>`;
+  const startY = p.startYear, endInj = startY + p.injYears, endSim = startY + p.injYears + p.piscYears;
+
+  const layerLines = d.cellNK.map((c,i)=>{
+    const lp = d.layerProps[i];
+    return `${C('** K=')}${i+1} ${C(lp.label.padEnd(12))} dz=${c.dz.toFixed(2)} m   K=${lp.k.toFixed(2)} mD   φ=${(lp.phi*100).toFixed(2)}%`;
+  }).join('\n');
+
+  // Dates for schedule (quarterly during inj, annual PISC)
+  const dates = [];
+  for(let y=0; y<=p.injYears; y++){
+    for(let q=0; q<4; q++){
+      if(y===0 && q===0) continue;
+      dates.push({y:startY+y, m:1+q*3, d:1, phase:'inj'});
+    }
+  }
+  for(let y=1; y<=p.piscYears; y++){
+    dates.push({y:endInj+y, m:1, d:1, phase:'pisc'});
+  }
+  const dateLines = dates.slice(0, 80).map(dt=>{
+    if(dt.y===endInj && dt.m===1 && dt.d===1){
+      return `${K('DATE')} ${V(dt.y)} ${V(dt.m)} ${V(dt.d)}    ${C('** END OF INJECTION')}\n${K('SHUTIN')} ${V("'CO2-INJ-1'")}`;
+    }
+    return `${K('DATE')} ${V(dt.y)} ${V(dt.m)} ${V(dt.d)}`;
+  }).join('\n');
+
+  const sm3 = d.sm3PerDay.toFixed(0);
+
+  const deck =
+`${C(`** ============================================================`)}
+${C(`**  WABAMUN DEEP NISKU CCS — CMG-GEM SIMULATION DECK`)}
+${C(`**  Project        : Enbridge NET / Wabamun Area`)}
+${C(`**  Location       : Twp 050-051, Rge 26-27, W4M, Alberta`)}
+${C(`**  Target         : Saline Nisku carbonate aquifer @ ${p.topDepth} m`)}
+${C(`**  Injection      : ${p.injRateMtpy} Mt/yr CO2 × ${p.injYears} yr + ${p.piscYears} yr PISC`)}
+${C(`**  AER D065 + EPA Class VI compliant — 11 fixes applied to FABLE-5 spec`)}
+${C(`**  Auto-generated : ${new Date().toISOString().split('T')[0]}`)}
+${C(`** ============================================================`)}
+
+${K('RESULTS SIMULATOR GEM')} ${V('202410')}
+${K('TITLE1')} ${V("'Wabamun Deep Nisku CCS - 1 Mt/yr CO2 - 60yr (10inj+50PISC)'")}
+${K('INUNIT')} ${V('SI')}
+${K('WRST')} ${V('2000')}
+${K('WPRN')} GRID ${V('0')}
+${K('OUTPRN')} GRID ${V('PRES SW SG XCO2 ZCO2 MFRAC')}
+${K('OUTPRN')} WELL ${V('ALL')}
+${K('OUTSRF')} GRID ${V('PRES SW SG XCO2 ZCO2 RHOG RHOW')}
+${K('OUTSRF')} SPECIAL  ${V('BLOCKVAR PRES')}
+${K('DIM')} ${V(`MDPERF ${p.ni*p.nj*d.totalNK}`)}
+
+${C(`** ===== 1.1 GRID =====`)}
+${K('GRID')} ${V(`VARI ${p.ni} ${p.nj} ${d.totalNK}`)}
+${K('KDIR')} ${V('DOWN')}
+${K('DI')}  ${K('IVAR')} ${V(`${p.ni}*${(p.areal/p.ni).toFixed(1)}`)}
+${K('DJ')}  ${K('JVAR')} ${V(`${p.nj}*${(p.areal/p.nj).toFixed(1)}`)}
+${K('DK')}  ${K('KVAR')} ${V(d.cellNK.map(c=>c.dz.toFixed(2)).join(' '))}
+${K('DTOP')} ${V(`${p.ni*p.nj}*${p.topDepth.toFixed(1)}`)}
+
+${C(`** Layer description (Caprock = Calmar, Underburden = Ireton):`)}
+${layerLines}
+
+${C(`** ===== 1.2 POROSITY / PERMEABILITY =====`)}
+${K('POR')} ${K('KVAR')} ${V(d.layerProps.map(lp=>lp.phi.toFixed(4)).join(' '))}
+${K('PERMI')} ${K('KVAR')} ${V(d.layerProps.map(lp=>lp.k.toFixed(3)).join(' '))}
+${K('PERMJ')} ${K('EQUALSI')}
+${K('PERMK')} ${K('KVAR')} ${V(d.layerProps.map(lp=>(lp.k*d.kvkh).toFixed(4)).join(' '))}
+${K('CPOR')}  ${V(p.cRock.toExponential(2))}
+${K('PRPOR')} ${V(d.pInit.toFixed(0))}
+
+${C(`** ===== 1.3 ROCK COMPRESSIBILITY / NTG =====`)}
+${K('ROCKTYPE')} ${V('1 NETPAY')}  ${C(`** NTG = ${p.ntg}`)}
+
+${C(`** ===== 1.4 FLUID MODEL (PR EOS, ${p.components}-component) =====`)}
+${K('MODEL')} ${V('PR')}
+${K('NC')}    ${V(`${p.components} ${p.components}`)}
+${p.components===3
+  ? `${K('COMPNAME')} ${V("'CO2' 'H2O' 'NaCl'")}`
+  : `${K('COMPNAME')} ${V("'CO2' 'H2O'")}`}
+${K('TRES')} ${V(d.tInit.toFixed(1))}
+${K('PRES-EOS')} ${V(d.pInit.toFixed(0))}
+${C(`** Aqueous phase`)}
+${K('AQUEOUS-DENSITY')} ${V('LINEAR')}
+${K('AQUEOUS-VISCOSITY')} ${V('LINEAR')}
+${K('SALINITY')} ${V(p.salinity)}    ${C(`** ppm NaCl`)}
+${C(`** CO2 solubility model: ${p.solubility}`)}
+${K('SOLUBILITY')} ${V(p.solubility.toUpperCase())}
+
+${C(`** ===== 1.5 ROCK-FLUID (Corey + Brooks-Corey Pc + ${p.hysteresis} hysteresis) =====`)}
+${K('ROCKFLUID')}
+${K('RPT')} ${V('1 STONE2')}
+${C(`** Water-gas drainage`)}
+${K('SWT')}
+${C(`** Sw     Krw                 Krow      Pcow (kPa)`)}
+${(() => {
+  const swt = []; const Swi=p.swi, krwMax=p.krwMax, nw=p.nw, pe=p.pe, lam=p.lambda;
+  for(let i=0;i<=10;i++){
+    const Sw = Swi + (1-Swi) * i/10;
+    const Swn = (Sw-Swi)/(1-Swi);
+    const krw = krwMax * Math.pow(Swn, nw);
+    const krow = Math.pow(1-Swn, 2);
+    const Pc = i===0 ? 1000 : pe * Math.pow(Swn, -1/lam);
+    swt.push(`${Sw.toFixed(3).padStart(7)}  ${krw.toFixed(5).padStart(8)}  ${krow.toFixed(5).padStart(8)}  ${Pc.toFixed(2).padStart(8)}`);
+  }
+  return V(swt.join('\n'));
+})()}
+${K('SLT')}
+${C(`** Sl     Krg                 Krog`)}
+${(() => {
+  const slt = []; const Sgr=p.sgr, krgMax=p.krgMax, ng=p.ng;
+  for(let i=10;i>=0;i--){
+    const Sg = Sgr + (1 - p.swi - Sgr) * i/10;
+    const Sl = 1 - Sg;
+    const Sgn = (Sg - Sgr)/(1 - p.swi - Sgr);
+    const krg = i===0 ? 0 : krgMax * Math.pow(Math.max(0,Sgn), ng);
+    const krog = Math.pow(Sgn, 2);
+    slt.push(`${Sl.toFixed(3).padStart(7)}  ${krg.toFixed(5).padStart(8)}  ${krog.toFixed(5).padStart(8)}`);
+  }
+  return V(slt.join('\n'));
+})()}
+${K('HYS_KRG')} ${V(p.hysteresis.toUpperCase())}
+${K('SGRMAX')} ${V(p.sgrMax)}
+
+${C(`** ===== 1.6 INITIAL CONDITIONS =====`)}
+${K('INITIAL')}
+${K('VERTICAL')} ${V('DEPTH_AVE EQUIL')}
+${K('REFDEPTH')} ${V(p.topDepth)}
+${K('REFPRES')}  ${V(d.pInit.toFixed(0))}
+${K('DWOC')}     ${V('5000')}
+${K('TEMPER')} ${K('CON')} ${V(d.tInit.toFixed(1))}
+
+${C(`** ===== 1.7 WELLS =====`)}
+${K('NUMERICAL')}
+${K('DTMIN')}  ${V(p.dtMin)}
+${K('DTMAX')}  ${V(p.dtMax)}
+${K('DTWELL')} ${V(p.dtWell)}
+${K('MAXSTEPS')} ${V(p.maxSteps)}
+${K('SOLVER')} ${V(p.solver)}
+
+${K('RUN')}
+
+${K('DATE')} ${V(`${startY} 1 1`)}
+
+${K('WELL')} ${V("'CO2-INJ-1'")}
+${K('INJECTOR')} ${V("'CO2-INJ-1'")}
+${K('INCOMP GAS')} ${V('1.0 0.0' + (p.components===3 ? ' 0.0':''))}
+${K('TINJW')} ${V(d.tInit.toFixed(1))}
+${K('OPERATE')} ${K('MAX STG')} ${V(`${sm3} CONT`)}     ${C(`** ${sm3} sm3/d ≈ ${d.dailyTonnes.toFixed(0)} t/d`)}
+${K('OPERATE')} ${K('MAX BHP')} ${V(`${d.bhpCap.toFixed(0)} CONT`)}   ${C(`** 0.9 × frac (${d.fracP.toFixed(0)} kPa)`)}
+${K('GEOMETRY K')} ${V(`${p.wellbore} 0.30 1.0 ${p.skin}`)}
+${K('PERF GEO')} ${V("'CO2-INJ-1'")}
+${V(`${p.injI} ${p.injJ} ${p.caprockLayers+1}:${p.caprockLayers+p.nkRes}    ${p.wellbore}  1.0`)}
+
+${K('WELL')} ${V("'OBS-MW-1'")}
+${K('PRODUCER')} ${V("'OBS-MW-1'")}
+${K('OPERATE')} ${K('SHUTIN')}
+${K('PERF GEO')} ${V("'OBS-MW-1'")}
+${V(`${p.obs1I} ${p.obs1J} ${p.caprockLayers+1}:${p.caprockLayers+p.nkRes}    ${p.wellbore}  1.0`)}
+
+${K('WELL')} ${V("'OBS-MW-2'")}
+${K('PRODUCER')} ${V("'OBS-MW-2'")}
+${K('OPERATE')} ${K('SHUTIN')}
+${K('PERF GEO')} ${V("'OBS-MW-2'")}
+${V(`${p.obs2I} ${p.obs2J} ${p.caprockLayers+1}:${p.caprockLayers+p.nkRes}    ${p.wellbore}  1.0`)}
+
+${C(`** ===== 1.8 BOUNDARY (${p.boundary}) =====`)}
+${p.boundary==='cartertracy'
+  ? `${K('AQUIFER')} ${V(`CARTER-TRACY BOUNDARY ${p.ctROuter} ${p.ctH} ${d.phiAvg.toFixed(4)} ${d.kAvg.toFixed(1)} ${p.muBrine}`)}`
+  : p.boundary==='pv1000'
+    ? `${K('VAMOD')} ${V(`1  ${p.pvMult}`)}
+${K('VATYPE')} ${V(`I=1,${p.ni} J=1 K=1:${d.totalNK}  1`)}
+${K('VATYPE')} ${V(`I=1,${p.ni} J=${p.nj} K=1:${d.totalNK}  1`)}
+${K('VATYPE')} ${V(`I=1 J=1,${p.nj} K=1:${d.totalNK}  1`)}
+${K('VATYPE')} ${V(`I=${p.ni} J=1,${p.nj} K=1:${d.totalNK}  1`)}`
+    : `${C('** Closed (no-flow) boundary')}`}
+
+${C(`** ===== 1.9 SECTORS (AER MMV) =====`)}
+${K('SECTOR')} ${V("'CAPROCK'")}      ${V(`1:${p.ni} 1:${p.nj} 1:${p.caprockLayers}`)}
+${K('SECTOR')} ${V("'UPPER_NISKU'")}  ${V(`1:${p.ni} 1:${p.nj} ${p.caprockLayers+1}:${p.caprockLayers+2}`)}
+${K('SECTOR')} ${V("'MID_NISKU'")}    ${V(`1:${p.ni} 1:${p.nj} ${p.caprockLayers+3}:${p.caprockLayers+7}`)}
+${K('SECTOR')} ${V("'LOWER_NISKU'")}  ${V(`1:${p.ni} 1:${p.nj} ${p.caprockLayers+8}:${p.caprockLayers+p.nkRes}`)}
+${K('SECTOR')} ${V("'NISKU_TOTAL'")}  ${V(`1:${p.ni} 1:${p.nj} ${p.caprockLayers+1}:${p.caprockLayers+p.nkRes}`)}
+${K('SECTOR')} ${V("'UNDERBURDEN'")}  ${V(`1:${p.ni} 1:${p.nj} ${p.caprockLayers+p.nkRes+1}:${d.totalNK}`)}
+
+${C(`** ===== 1.10 SCHEDULE =====`)}
+${dateLines}
+
+${K('DATE')} ${V(`${endSim} 1 1`)}    ${C('** END OF SIMULATION (' + (p.injYears+p.piscYears) + ' yr total)')}
+${K('STOP')}
+
+${C(`** ============================================================`)}
+${C(`**  END OF DECK — compliance summary`)}
+${C(`**  Initial P     : ${d.pInit.toFixed(0)} kPa`)}
+${C(`**  Reservoir T   : ${d.tInit.toFixed(1)} °C`)}
+${C(`**  Frac P (gate) : ${d.fracP.toFixed(0)} kPa`)}
+${C(`**  BHP cap       : ${d.bhpCap.toFixed(0)} kPa (${(d.bhpCap/d.fracP*100).toFixed(1)}% of frac)`)}
+${C(`**  MSP (σ_h,min) : ${d.msp.toFixed(0)} kPa  -> BHP/MSP margin = ${d.bhpMargin.toFixed(1)} %`)}
+${C(`**  PV utilized   : ${d.pvUtil.toFixed(2)} %  (cumulative ${d.totalMt.toFixed(2)} Mt CO2)`)}
+${C(`**  PISC          : ${p.piscYears} yr  (Class VI default = 50 yr)`)}
+${C(`** ============================================================`)}`;
+
+  return deck;
+}
+
+function renderDeck(){
+  const deck = buildDeck();
+  document.getElementById('deckPreview').innerHTML = deck;
+  const d = derive();
+  document.getElementById('deckMeta').textContent =
+    `Grid: ${PARAMS.ni}×${PARAMS.nj}×${d.totalNK} cells · ${PARAMS.injRateMtpy} Mt/yr × ${PARAMS.injYears} yr + ${PARAMS.piscYears} yr PISC`;
+}
+
+document.getElementById('downloadDeck').addEventListener('click', ()=>{
+  const raw = buildDeck().replace(/<[^>]+>/g,''); // strip syntax-highlight spans
+  const blob = new Blob([raw], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Wabamun_Deep_Nisku_${PARAMS.topDepth}m_${PARAMS.injRateMtpy}Mtpy.dat`;
+  a.click();
+});
+document.getElementById('copyDeck').addEventListener('click', ()=>{
+  const raw = buildDeck().replace(/<[^>]+>/g,'');
+  navigator.clipboard.writeText(raw);
+  alert('CMG-GEM .dat copied to clipboard.');
+});
+
+/* ============================================================
+   TAB SWITCHING + SLIDER WIRING
+   ============================================================ */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', e=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    e.target.classList.add('active');
+    document.getElementById('panel-'+e.target.dataset.tab).classList.add('active');
+    updateAll();
+  });
+});
+
+document.querySelectorAll('.snap').forEach(a=>{
+  a.addEventListener('click', e=>{
+    e.preventDefault();
+    document.getElementById('timeSlider').value = e.target.dataset.y;
+    onSliderChange();
+  });
+});
+
+document.getElementById('timeSlider').addEventListener('input', onSliderChange);
+function onSliderChange(){
+  const t = parseFloat(document.getElementById('timeSlider').value);
+  document.getElementById('timeReadout').textContent = t.toFixed(2);
+  drawPlan();
+  drawSection();
+  drawPressureMap();
+  renderTrapSnapshot();
+}
+
+document.getElementById('presetDefault').addEventListener('click', ()=>{
+  Object.assign(PARAMS, JSON.parse(JSON.stringify(REC_DEFAULTS)));
+  renderSidebar(); updateAll();
+});
+document.getElementById('presetSpec').addEventListener('click', ()=>{
+  Object.assign(PARAMS, JSON.parse(JSON.stringify(REC_DEFAULTS)), SPEC_DEFAULTS);
+  renderSidebar(); updateAll();
+});
+document.getElementById('presetReset').addEventListener('click', ()=>{
+  Object.assign(PARAMS, JSON.parse(JSON.stringify(REC_DEFAULTS)));
+  renderSidebar(); updateAll();
+});
+
+/* ============================================================
+   MASTER UPDATE
+   ============================================================ */
+function updateAll(){
+  renderKPIs();
+  renderCompliance();
+  renderMassBalance();
+  drawGeometry();
+  buildRadiusChart();
+  buildAORChart();
+  buildCumChart();
+  buildTrapChart();
+  buildBHPChart();
+  drawPlan();
+  drawSection();
+  drawPressureMap();
+  renderTrapSnapshot();
+  renderDeck();
+}
+
+// INIT
+renderSidebar();
+// expand sections 1.1-1.3 by default
+document.querySelectorAll('#paramSections .sec').forEach((s,i)=>{
+  if(i<3){ s.classList.remove('col'); s.querySelector('.ch').textContent='[−]'; }
+});
+updateAll();
+// Redraw on resize
+let rt;
+window.addEventListener('resize', ()=>{
+  clearTimeout(rt);
+  rt = setTimeout(()=>{ drawGeometry(); drawPlan(); drawSection(); drawPressureMap(); }, 150);
+});
+</script>
+</body>
+</html>

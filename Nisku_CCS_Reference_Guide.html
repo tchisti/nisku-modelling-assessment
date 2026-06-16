@@ -76,6 +76,13 @@
 </style>
 </head>
 <body>
+<div style="background:linear-gradient(90deg,#0e1629,#17223b);border-bottom:1px solid #2a3554;padding:10px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12px;color:#e8edf7">
+  <strong style="color:#fff">Scenarios:</strong>
+  <a href="index.html" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:rgba(79,179,255,.12);border:1px solid #4fb3ff;color:#4fb3ff;padding:5px 12px;border-radius:6px;font-weight:700">Shallow Nisku · 1010–1090 m</a>
+  <a href="Wabamun_Nisku_Deep_CMG_GEM_Deck.html" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:rgba(183,141,255,.12);border:1px solid #b78dff;color:#b78dff;padding:5px 12px;border-radius:6px;font-weight:700">Wabamun Deep · 1250 m (CMG-GEM Deck) <span style="background:#b78dff;color:#1a1030;font-size:9px;font-weight:800;padding:1px 5px;border-radius:8px">NEW</span></a>
+  <a href="Nisku_Quick_Capacity_Calculator.html" style="color:#9aa8c7;text-decoration:none">Capacity Calc</a>
+  <a href="Nisku_Enhanced_Reservoir_Characterization.html" style="color:#9aa8c7;text-decoration:none">Characterization</a>
+</div>
 
 <header>
   <h1>Nisku CCS — Reference Guide &amp; Data Dictionary</h1>
@@ -95,6 +102,7 @@
       <a data-sec="folders">File directory tour</a>
       <a data-sec="sources">Key source files (ranked)</a>
       <a data-sec="analogs">Regional &amp; analog studies</a>
+      <a data-sec="wabamun-deep" style="color:#b78dff">★ Wabamun Deep (D065 + Class VI)</a>
     </div>
     <div class="group">
       <div class="group-title">The Excel workbook tour</div>
@@ -376,6 +384,65 @@
     The freshest look at the regional Nisku water system, commissioned specifically for the Enbridge Wabamun project. Tells us how hydraulically connected the aquifer is, where the brine flows naturally, and what's in the water chemically.</div>
   <div class="card tech"><span class="tag tech">Technical</span>
     CDL EBWH FINAL Report. Regional pressure gradient 7.5 kPa/m (underpressured vs virgin 10.5). TDS ~210,000 mg/L Na-Ca-Cl brine. Mild to moderate compartmentalization on township-scale. Nisku connected to underlying Wabamun through fractured contacts locally.</div>
+</section>
+
+<!-- =================================================================== -->
+<!-- WABAMUN DEEP NISKU ANALOGUE & REGULATORY FRAMEWORK (NEW) -->
+<!-- =================================================================== -->
+<section id="wabamun-deep">
+  <h2>Wabamun Deep Nisku (1250 m) — AER D065 + Class VI Framework</h2>
+  <div class="lede">A parallel deep-Nisku scenario at ~1250 m TVDSS in the Wabamun area, built to AER Directive 065 and US EPA UIC Class VI standards. Lives alongside the shallow Pine/Oak/Cedar case so depth-driven differences in pressure, CO₂ density, frac margin, and PISC duration are explicit.</div>
+
+  <h3>Why a deeper scenario</h3>
+  <div class="card plain"><span class="tag plain">Plain English</span>
+    Going from 1050 m to 1250 m adds ~200 m of overburden, which means: (a) more pressure (12.3 MPa vs ~10 MPa) so CO₂ is denser and stores more efficiently per pore volume, (b) more frac margin (BHP cap 22.5 MPa vs ~17 MPa) so we can inject faster, (c) more heat (55 °C vs ~50 °C) which slightly reduces CO₂ density. Net effect — deeper is usually better for storage efficiency, but the regulatory bar (Class VI) is higher because the AOR can extend further.</div>
+  <div class="card tech"><span class="tag tech">Technical</span>
+    Hydrostatic P_init = 9.81 × 1250 = 12 263 kPa. T_init = 17.5 + 0.030 × 1250 = 55 °C. NIST-corrected ρ_CO₂ at P,T = 615 kg/m³ (vs 710 at shallow). Frac P = 20 × 1250 = 25 000 kPa; BHP cap = 22 500 kPa (0.9 × frac). MSP gate (σ_h,min × depth) = 18 × 1250 = 22 500 kPa — BHP cap sits right at MSP, so geomech becomes the binding constraint, not frac. Adjust σ_h,min gradient (or BHP cap) in the deck builder if you have site-specific stress data.</div>
+
+  <h3>11 regulatory fixes applied to the FABLE-5 spec</h3>
+  <div class="card tech"><span class="tag tech">Technical · AER D065 + Class VI</span>
+    The CLAUDE FABLE-5 simulation prompt was reviewed against AER Directive 065 and 40 CFR §146.81-95 (UIC Class VI). Eleven items were corrected before adoption as the default in the deck builder:
+    <ol style="margin:6px 0 0 18px;line-height:1.55">
+      <li><b>Brine ρ_SC = 1100 kg/m³</b> (was 1020) — consistent with 150 000 ppm TDS.</li>
+      <li><b>Calmar caprock gridded (2 layers, K = 0.001 mD, Pe = 300 kPa)</b> — required for D065 containment demonstration.</li>
+      <li><b>Ireton underburden gridded (1 layer)</b> — required for downward-migration accounting.</li>
+      <li><b>PISC = 50 yr</b> (was 5) — Class VI default; AER plume-stabilization expectation.</li>
+      <li><b>Carter-Tracy analytical aquifer</b> (PV-multiplier kept as fallback) — Class VI-defensible boundary.</li>
+      <li><b>Sgr = 0.20</b> (was 0.12) — within published Wabamun-area carbonate range; raises residual-trapping benefit.</li>
+      <li><b>Pe = 75 kPa</b> (was 20) — typical for dolomitic carbonate at φ = 7.6 %.</li>
+      <li><b>3-component fluid CO₂-H₂O-NaCl</b> (was 2) — captures salting-out at 150 000 ppm.</li>
+      <li><b>ρ_CO₂ = 615 kg/m³</b> (was 640) — NIST value at 12.26 MPa / 55 °C.</li>
+      <li><b>Static MSP gate added</b> (σ_h,min × depth) — Directive 065 fracture-propagation gate.</li>
+      <li><b>Trapping mass partitioning reported</b> (mobile / residual / dissolved / mineral) — required for AER MMV annual reports.</li>
+    </ol>
+  </div>
+
+  <h3>How shallow vs deep compare at a glance</h3>
+  <table style="margin-top:6px">
+    <tr><th>Parameter</th><th>Shallow Nisku (Pine/Oak/Cedar)</th><th>Wabamun Deep Nisku</th><th>Why it matters</th></tr>
+    <tr><td>Depth (mid-pay TVDSS)</td><td>1050 m</td><td>1250 m</td><td>Drives P, T, density, frac margin</td></tr>
+    <tr><td>Initial pressure</td><td>~10.3 MPa (hydrostatic) / ~8 MPa (subhydrostatic measured)</td><td>12.26 MPa (hydrostatic)</td><td>CO₂ phase state</td></tr>
+    <tr><td>Reservoir T</td><td>~36 °C</td><td>55 °C</td><td>CO₂ density, viscosity</td></tr>
+    <tr><td>ρ_CO₂ at P,T</td><td>~640–710 kg/m³ (depending on pressure regime)</td><td>615 kg/m³ (NIST)</td><td>Mass / pore-volume conversion</td></tr>
+    <tr><td>Frac P (20 kPa/m basis)</td><td>21 000 kPa</td><td>25 000 kPa</td><td>Injectivity ceiling</td></tr>
+    <tr><td>BHP cap (0.9 × frac)</td><td>18 900 kPa</td><td>22 500 kPa</td><td>Operating envelope</td></tr>
+    <tr><td>Caprock</td><td>Calmar (~30 m); base-pay seal Ireton below Nisku</td><td>Same Calmar above + Ireton below, both now gridded</td><td>Containment</td></tr>
+    <tr><td>Injection rate (per well)</td><td>0.5 Mt/yr typical</td><td>1.0 Mt/yr</td><td>Project throughput</td></tr>
+    <tr><td>PISC duration</td><td>~25 yr (historical default)</td><td>50 yr (Class VI default)</td><td>Long-term containment demonstration</td></tr>
+    <tr><td>Storage efficiency E</td><td>P50 ≈ 3.5 %</td><td>P50 ≈ 5.0 % (deeper, denser CO₂)</td><td>Mt-per-km² capacity</td></tr>
+  </table>
+
+  <h3>Analytical proxies used in the deck builder visualizations</h3>
+  <div class="card tech"><span class="tag tech">Technical · references</span>
+    <ul style="margin:4px 0 0 18px;line-height:1.6">
+      <li><b>Nordbotten, Celia &amp; Bachu (2005)</b> — sharp-interface radial plume in homogeneous aquifer. r²(t) = M(t)/(ρ_CO₂ · π · H · φ · (1 – S_wi – S_gr)).</li>
+      <li><b>Nordbotten &amp; Celia (2006)</b> — gravity-override tongue, self-similar dimensionless interface.</li>
+      <li><b>Theis (1935)</b> — radial pressure diffusion. ΔP(r,t) = (Q·μ)/(4πkH) · W(u). Cody-Thacher rational approximation for E₁(u). Post-injection ΔP via superposition (image well at –t_inj).</li>
+      <li><b>Spycher &amp; Pruess (2005)</b> + <b>Li &amp; Nghiem (1986)</b> — CO₂ solubility in brine with salting-out correction; default ultimate dissolved fraction 30 % at 12.26 MPa / 55 °C / 150 000 ppm.</li>
+      <li><b>40 CFR §146.81–95</b> (UIC Class VI) + <b>AER Directive 065</b> Appendix P (MMV) — set the PISC duration, the AOR threshold (ΔP ≥ 10 kPa here), and the trapping-mechanism reporting requirement.</li>
+    </ul>
+    <p style="margin-top:6px"><b>These proxies are for screening only.</b> The .dat the deck builder emits is intended to be loaded into CMG-GEM (or equivalent compositional simulator with full PR/Li-Nghiem EOS and Carter-Tracy aquifer) for the regulatory submission. The browser visualization confirms the deck is internally consistent and produces physically plausible plume extents and AOR before you commit to the full run.</p>
+  </div>
 </section>
 
 <!-- =================================================================== -->

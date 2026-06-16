@@ -99,6 +99,13 @@ input[type=number]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 </style>
 </head>
 <body>
+<div style="background:linear-gradient(90deg,#0e1629,#17223b);border-bottom:1px solid #2a3554;padding:10px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12px;color:#e8edf7">
+  <strong style="color:#fff">Scenarios:</strong>
+  <a href="index.html" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:rgba(79,179,255,.12);border:1px solid #4fb3ff;color:#4fb3ff;padding:5px 12px;border-radius:6px;font-weight:700">Shallow Nisku · 1010–1090 m</a>
+  <a href="Wabamun_Nisku_Deep_CMG_GEM_Deck.html" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:rgba(183,141,255,.12);border:1px solid #b78dff;color:#b78dff;padding:5px 12px;border-radius:6px;font-weight:700">Wabamun Deep · 1250 m (CMG-GEM Deck) <span style="background:#b78dff;color:#1a1030;font-size:9px;font-weight:800;padding:1px 5px;border-radius:8px">NEW</span></a>
+  <a href="Nisku_CCS_Reference_Guide.html" style="color:#9aa8c7;text-decoration:none">Reference Guide</a>
+  <a href="Nisku_Quick_Capacity_Calculator.html" style="color:#9aa8c7;text-decoration:none">Capacity Calc</a>
+</div>
 <div class="app">
 <nav class="side">
   <h1>Nisku Enhanced<br>Characterization</h1>
@@ -118,6 +125,8 @@ input[type=number]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
   <a href="#micp" data-tab="micp">MICP (seal capacity)</a>
   <a href="#scal" data-tab="scal">SCAL (rel-perm / Pc)</a>
   <a href="#heterogeneity" data-tab="heterogeneity">Heterogeneity &amp; layering</a>
+  <div class="grp">Deep Wabamun scenario</div>
+  <a href="#wabamun-deep" data-tab="wabamun-deep" style="color:#b78dff">★ Wabamun Deep (1250 m)</a>
   <div class="grp">Governance</div>
   <a href="#provenance" data-tab="provenance">Data provenance</a>
   <a href="#gaps" data-tab="gaps">Gap register</a>
@@ -936,6 +945,54 @@ simulation on the calibrated data, file FID-grade AER D065 amendment. Required f
 <em>with</em> the first injector. Chicken-and-egg. Commit to the drilling budget, lock in the data-acquisition program
 within the drilling AFE, and iterate the model as data returns.
 </p>
+</section>
+
+<!-- ============ WABAMUN DEEP NISKU (1250 m) — parallel scenario ============ -->
+<section id="wabamun-deep">
+<h2>★ Wabamun Deep Nisku (1250 m) — Parallel Scenario</h2>
+<p style="color:var(--mute);max-width:900px">
+A second characterization scenario built for the deeper part of the Wabamun-area Nisku saline aquifer (top of pay ~1250 m TVDSS),
+aligned with the <b>AER Directive 065 + EPA Class VI</b> regulatory framework. Lives alongside the Pine/Oak/Cedar shallow case (1010–1090 m).
+Use this scenario when the injection target is in the deeper aquifer fairway (e.g. Quest-region analogue depths) rather than the shallow Pine/Oak/Cedar zone.
+</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:14px 0">
+  <div style="background:#0e1629;border:1px solid #2a3554;border-radius:8px;padding:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9aa8c7">Depth (top of caprock)</div><div style="font-size:22px;font-weight:700;color:#fff">1250 m</div><div style="font-size:10.5px;color:#9aa8c7">vs 1010 m shallow</div></div>
+  <div style="background:#0e1629;border:1px solid #2a3554;border-radius:8px;padding:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9aa8c7">P_init (hydrostatic)</div><div style="font-size:22px;font-weight:700;color:#fff">12.26 MPa</div><div style="font-size:10.5px;color:#9aa8c7">9.81 kPa/m × 1250 m</div></div>
+  <div style="background:#0e1629;border:1px solid #2a3554;border-radius:8px;padding:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9aa8c7">T_init</div><div style="font-size:22px;font-weight:700;color:#fff">55.0 °C</div><div style="font-size:10.5px;color:#9aa8c7">17.5 + 30 °C/km × 1.25 km</div></div>
+  <div style="background:#0e1629;border:1px solid #2a3554;border-radius:8px;padding:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9aa8c7">ρ_CO₂ at P,T (NIST)</div><div style="font-size:22px;font-weight:700;color:#fff">615 kg/m³</div><div style="font-size:10.5px;color:#9aa8c7">supercritical phase</div></div>
+  <div style="background:#0e1629;border:1px solid #2a3554;border-radius:8px;padding:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9aa8c7">Frac P</div><div style="font-size:22px;font-weight:700;color:#fff">25.0 MPa</div><div style="font-size:10.5px;color:#9aa8c7">20 kPa/m × 1250 m</div></div>
+  <div style="background:#0e1629;border:1px solid #2a3554;border-radius:8px;padding:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9aa8c7">BHP cap (0.9 × frac)</div><div style="font-size:22px;font-weight:700;color:#fff">22.5 MPa</div><div style="font-size:10.5px;color:#9aa8c7">MSP gate also at 22.5 (binding)</div></div>
+  <div style="background:#0e1629;border:1px solid #2a3554;border-radius:8px;padding:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9aa8c7">Injection plan</div><div style="font-size:22px;font-weight:700;color:#fff">1 Mt/yr · 10 yr</div><div style="font-size:10.5px;color:#9aa8c7">+ 50 yr PISC (Class VI default)</div></div>
+  <div style="background:#0e1629;border:1px solid #2a3554;border-radius:8px;padding:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9aa8c7">K_h / K_v</div><div style="font-size:22px;font-weight:700;color:#fff">435 / 67 mD</div><div style="font-size:10.5px;color:#9aa8c7">Winterburn core geomean</div></div>
+</div>
+
+<h3>Rock properties — deep Wabamun Nisku (default deck values)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px">
+  <thead><tr style="background:#0e1629;color:#4fb3ff"><th style="padding:6px 8px;text-align:left">Property</th><th style="padding:6px 8px">Shallow (Pine/Oak/Cedar)</th><th style="padding:6px 8px">Deep Wabamun (default)</th><th style="padding:6px 8px">Source / note</th></tr></thead>
+  <tbody style="color:#cfe1ff">
+    <tr><td style="padding:6px 8px">Net pay thickness</td><td style="padding:6px 8px">39 – 46 m (P10–P90)</td><td style="padding:6px 8px">50 m</td><td style="padding:6px 8px">Winterburn isopach</td></tr>
+    <tr><td style="padding:6px 8px">Porosity φ (Nisku avg)</td><td style="padding:6px 8px">3.8 – 12.4 %</td><td style="padding:6px 8px">7.6 % (φ_avg, 3-zone layer cake)</td><td style="padding:6px 8px">Winterburn core (148 wells, 4 961 samples)</td></tr>
+    <tr><td style="padding:6px 8px">K_h (geomean)</td><td style="padding:6px 8px">215 mD (15-32 anchor)</td><td style="padding:6px 8px">435 mD</td><td style="padding:6px 8px">deeper, less diagenesis</td></tr>
+    <tr><td style="padding:6px 8px">K_v / K_h</td><td style="padding:6px 8px">0.029 (15-32)</td><td style="padding:6px 8px">0.155</td><td style="padding:6px 8px">vuggy/fractured fairway</td></tr>
+    <tr><td style="padding:6px 8px">S_wi</td><td style="padding:6px 8px">0.20 – 0.35</td><td style="padding:6px 8px">0.22</td><td style="padding:6px 8px">SCAL drainage endpoint</td></tr>
+    <tr><td style="padding:6px 8px">S_gr (residual CO₂)</td><td style="padding:6px 8px">0.22 (literature)</td><td style="padding:6px 8px">0.20 (fix #6 — was 0.12 in FABLE-5 spec)</td><td style="padding:6px 8px">Wabamun-area carbonate range</td></tr>
+    <tr><td style="padding:6px 8px">Capillary entry Pe</td><td style="padding:6px 8px">~50–100 kPa</td><td style="padding:6px 8px">75 kPa (fix #7)</td><td style="padding:6px 8px">dolomitic carbonate at φ=7.6 %</td></tr>
+    <tr><td style="padding:6px 8px">Caprock (Calmar)</td><td style="padding:6px 8px">Not explicitly gridded</td><td style="padding:6px 8px"><b>2 layers gridded</b> (K=0.001 mD, Pe=300 kPa)</td><td style="padding:6px 8px">D065 containment (fix #2)</td></tr>
+    <tr><td style="padding:6px 8px">Underburden (Ireton)</td><td style="padding:6px 8px">Not explicitly gridded</td><td style="padding:6px 8px"><b>1 layer gridded</b> (K=0.01 mD)</td><td style="padding:6px 8px">Downward-migration accounting (fix #3)</td></tr>
+    <tr><td style="padding:6px 8px">Brine TDS / ρ_SC</td><td style="padding:6px 8px">~210 000 ppm / 1120 kg/m³</td><td style="padding:6px 8px">150 000 ppm / 1100 kg/m³ (fix #1 — was 1020)</td><td style="padding:6px 8px">Consistency check</td></tr>
+    <tr><td style="padding:6px 8px">Mobility ratio (μ_b / μ_g)</td><td style="padding:6px 8px">~14</td><td style="padding:6px 8px">~11.1</td><td style="padding:6px 8px">unfavourable — viscous fingering + gravity override</td></tr>
+    <tr><td style="padding:6px 8px">PISC</td><td style="padding:6px 8px">25 yr</td><td style="padding:6px 8px">50 yr (fix #4 — Class VI default)</td><td style="padding:6px 8px">Plume stabilization demonstration</td></tr>
+  </tbody>
+</table>
+
+<h3>What to do with this scenario</h3>
+<ol style="color:var(--mute);max-width:900px;line-height:1.6">
+  <li>Open the <a href="Wabamun_Nisku_Deep_CMG_GEM_Deck.html" style="color:#b78dff;font-weight:700">Wabamun Deep CMG-GEM Deck Builder</a> to interact with all parameters and download a runnable CMG-GEM .dat file.</li>
+  <li>Use the deck builder's <b>Original Spec</b> preset to see the unmodified CLAUDE FABLE-5 values and the resulting compliance failures; switch to <b>Recommended</b> to see the fixes applied.</li>
+  <li>The browser visualizations (Nordbotten plume + Theis ΔP + trapping partitioning) are analytical proxies — use them to sanity-check the deck before the full CMG-GEM run.</li>
+  <li>For shallow Pine/Oak/Cedar work, stay on this characterization page and the <a href="index.html">main reservoir model</a>; the two scenarios run in parallel.</li>
+</ol>
 </section>
 
 <div class="foot">
